@@ -1,0 +1,26 @@
+INSERT INTO subjects (id, name)
+VALUES
+('00000000-0000-0000-0000-000000000001','Maths'),
+('00000000-0000-0000-0000-000000000002','English')
+ON CONFLICT (name) DO NOTHING;
+
+INSERT INTO topics (id, subject_id, name, description)
+VALUES
+('00000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000000001','Numbers','Counting and understanding numbers'),
+('00000000-0000-0000-0000-000000000102','00000000-0000-0000-0000-000000000001','Addition','Adding small numbers'),
+('00000000-0000-0000-0000-000000000103','00000000-0000-0000-0000-000000000001','Subtraction','Taking away small numbers'),
+('00000000-0000-0000-0000-000000000201','00000000-0000-0000-0000-000000000002','Phonics','Letters and simple sounds')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO skills (id, topic_id, name, description, difficulty)
+VALUES
+('00000000-0000-0000-0000-000000001001','00000000-0000-0000-0000-000000000101','Number sequencing','Before, after and missing numbers',1),
+('00000000-0000-0000-0000-000000001002','00000000-0000-0000-0000-000000000101','Compare numbers','Greater than and smaller than',1),
+('00000000-0000-0000-0000-000000001003','00000000-0000-0000-0000-000000000102','Addition within 10','Add numbers with totals up to 10',1),
+('00000000-0000-0000-0000-000000001004','00000000-0000-0000-0000-000000000102','Addition across 10','Addition where the total crosses 10',2),
+('00000000-0000-0000-0000-000000001005','00000000-0000-0000-0000-000000000103','Subtraction within 10','Take away numbers up to 10',1)
+ON CONFLICT DO NOTHING;
+
+INSERT INTO children (id, name, grade, board, medium)
+VALUES ('00000000-0000-0000-0000-000000000099','Demo Child','1','CBSE','English')
+ON CONFLICT DO NOTHING;

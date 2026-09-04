@@ -1,0 +1,61 @@
+# Dependencies
+node_modules/
+**/node_modules/
+vendor/
+**/vendor/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+**/dist/
+build/
+**/build/
+.output/
+.turbo/
+
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+.env.backup
+.env.production
+
+# Logs & Debugging
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Laravel specific
+apps/api-laravel/.phpunit.cache
+apps/api-laravel/.phpunit.result.cache
+apps/api-laravel/public/build
+apps/api-laravel/public/hot
+apps/api-laravel/public/storage
+apps/api-laravel/storage/*.key
+apps/api-laravel/storage/framework/cache/data/*
+apps/api-laravel/storage/framework/sessions/*
+apps/api-laravel/storage/framework/testing/*
+apps/api-laravel/storage/framework/views/*
+apps/api-laravel/storage/logs/*
+!apps/api-laravel/storage/**/.gitignore
+apps/api-laravel/Homestead.json
+apps/api-laravel/Homestead.yaml
+apps/api-laravel/auth.json
+
+# Editor & OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.fleet/
+*.sublime-project
+*.sublime-workspace
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
