@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type UIEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type UIEvent } from "react";
 import LearningChartsView, { LearningChart, ChartProgressData } from "./components/LearningChartsView";
 
 const API = "http://127.0.0.1:8000/api";
@@ -11,6 +11,132 @@ const placeholderLayoutClass = (layouts: Record<string, Record<string, string>>,
   const position = placeholderPosition(layouts, template, name);
   const count = placeholderNames.filter((item) => placeholderPosition(layouts, template, item) === position).length;
   return `layout-${position} layout-${position}-count-${count}`;
+};
+
+const parseMathVisual = (question: string) => {
+  if (!question) return null;
+  const multMatch = question.match(/(\d+)\s*(?:x|\*|×|groups of)\s*(\d+)/i);
+  if (multMatch) {
+    const a = parseInt(multMatch[1], 10);
+    const b = parseInt(multMatch[2], 10);
+    if (a >= 1 && a <= 30 && b >= 1 && b <= 12) {
+      return { type: "multiplication" as const, rows: a, cols: b, total: a * b };
+    }
+  }
+  const addMatch = question.match(/(\d+)\s*\+\s*(\d+)/);
+  if (addMatch) {
+    const a = parseInt(addMatch[1], 10);
+    const b = parseInt(addMatch[2], 10);
+    if (a >= 1 && a <= 15 && b >= 1 && b <= 15) {
+      return { type: "addition" as const, a, b, total: a + b };
+    }
+  }
+  return null;
+};
+
+interface FillBlankParsed {
+  hasBlank: boolean;
+  title: string;
+  prefix: string;
+  suffix: string;
+  word: string;
+}
+
+const parseFillBlank = (
+  questionText: string,
+  defaultTitle?: string,
+  imageQuestion?: string | null
+): FillBlankParsed => {
+  if (!questionText) {
+    return {
+      hasBlank: false,
+      title: imageQuestion || defaultTitle || "Fill in the blank",
+      prefix: "",
+      suffix: "",
+      word: "",
+    };
+  }
+
+  // Strip clues like "Fish picture: " or "Gate picture: " at the beginning if present
+  let cleanText = questionText.replace(/^[A-Za-z0-9\s]+(?:\s+picture|\s+image|\s+photo)\s*:\s*/i, "").trim();
+
+  const blankRegex = /_{1,}|\.{3,}|\[\s*\]|\(\s*\)/;
+
+  let extractedTitle = imageQuestion || "";
+  let targetWordOrSentence = cleanText;
+
+  // Multiline check (\n)
+  if (cleanText.includes("\n")) {
+    const lines = cleanText.split(/\n+/).map((l) => l.trim()).filter(Boolean);
+    const blankLineIndex = lines.findIndex((l) => blankRegex.test(l));
+    if (blankLineIndex !== -1) {
+      targetWordOrSentence = lines[blankLineIndex];
+      const otherLines = lines.filter((_, idx) => idx !== blankLineIndex);
+      if (otherLines.length > 0 && !extractedTitle) {
+        extractedTitle = otherLines.join(" ");
+      }
+    }
+  } else {
+    // Sentence or punctuation separation, e.g. "FI_H. Which letter is missing?" or "Which letter is missing? FI_H"
+    const parts = cleanText.split(/(?<=[.?!])\s+/).map((s) => s.trim()).filter(Boolean);
+    if (parts.length >= 2) {
+      const blankIndex = parts.findIndex((s) => blankRegex.test(s));
+      if (blankIndex !== -1) {
+        targetWordOrSentence = parts[blankIndex];
+        const otherParts = parts.filter((_, idx) => idx !== blankIndex);
+        if (otherParts.length > 0 && !extractedTitle) {
+          extractedTitle = otherParts.join(" ");
+        }
+      }
+    }
+  }
+
+  const finalTitle = extractedTitle || defaultTitle || "Fill in the blank";
+  const cleanWord = targetWordOrSentence.replace(/[.]+$/, "").trim();
+
+  const match = cleanWord.match(blankRegex);
+  if (match && match.index !== undefined) {
+    return {
+      hasBlank: true,
+      title: finalTitle,
+      prefix: cleanWord.slice(0, match.index),
+      suffix: cleanWord.slice(match.index + match[0].length),
+      word: cleanWord,
+    };
+  }
+
+  return {
+    hasBlank: false,
+    title: finalTitle,
+    prefix: cleanWord,
+    suffix: "",
+    word: cleanWord,
+  };
+};
+
+function shuffleList<T>(array: T[]): T[] {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+const renderQuestionContent = (text: string) => {
+  if (!text) return null;
+  if (text.includes("\n")) {
+    const lines = text.split(/\n+/).map((l) => l.trim()).filter(Boolean);
+    if (lines.length >= 2) {
+      return (
+        <div className="quote-question-container">
+          <div className="quote-question-instruction">{lines[0]}</div>
+          <div className="quote-question-blank-prompt">{lines.slice(1).join(" ")}</div>
+        </div>
+      );
+    }
+  }
+  return text;
 };
 
 type UserRole = "student" | "teacher";
@@ -45,7 +171,24 @@ type Skill = {
   name: string;
   topic: string;
   subject: string;
+  difficulty?: number;
+  template?: string;
+  table_range?: string;
   mastery_score: number;
+};
+
+const TEMPLATE_OPTIONS = [
+  { id: "standard", name: "Standard", title: "Standard question", description: "Clean, focused layout for everyday multiple-choice practice.", preview: "?", previewClass: "standard-preview" },
+  { id: "image_prompt", name: "Image prompt", title: "Image prompt", description: "Highlights a supporting picture before the question and answers.", preview: "▧", previewClass: "image-preview" },
+  { id: "story_card", name: "Story card", title: "Story card", description: "A warm, card-based format for contextual and story-led questions.", preview: "✦", previewClass: "story-preview" },
+  { id: "flashcard", name: "Flashcard", title: "Flashcard", description: "A focused reveal-style layout for memory and vocabulary practice.", preview: "▤", previewClass: "standard-preview" },
+  { id: "fill_blank", name: "Fill in the blank", title: "Fill in the blank", description: "Emphasizes the missing word or letter in a sentence.", preview: "_", previewClass: "image-preview" },
+  { id: "true_false", name: "True or false", title: "True or false", description: "Simple statement-based format for quick concept checks.", preview: "✓", previewClass: "story-preview" },
+];
+
+const templateLabel = (templateId?: string) => {
+  const match = TEMPLATE_OPTIONS.find((t) => t.id === templateId);
+  return match?.name || "Standard";
 };
 
 type WorksheetResult = {
@@ -99,10 +242,20 @@ export default function App() {
   const [exercises, setExercises] = useState<any[]>([]);
   const [index, setIndex] = useState(0);
   const [result, setResult] = useState<any>();
+  const [flashcardFlipped, setFlashcardFlipped] = useState(false);
+  const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
+  const [showVisualPrompt, setShowVisualPrompt] = useState(false);
+  const [practiceCount, setPracticeCount] = useState<number | "all">(10);
+
+  useEffect(() => {
+    setFlashcardFlipped(false);
+    setSelectedChoice(null);
+    setShowVisualPrompt(false);
+  }, [index, skill]);
   const [parent, setParent] = useState(() => session?.role === "teacher");
   const [parentView, setParentView] = useState("skills");
   const [studentView, setStudentView] = useState<"adventure" | "charts">("adventure");
-  const [activeChartSlug, setActiveChartSlug] = useState<string>("tables-2-10");
+  const [activeChartSlug, setActiveChartSlug] = useState<string>("tables-2-30");
   const [selectedTable, setSelectedTable] = useState<number | "all">(2);
   const [alphabetFilter, setAlphabetFilter] = useState<"all" | "vowels" | "consonants">("all");
   const [recitingTable, setRecitingTable] = useState<number | null>(null);
@@ -128,7 +281,10 @@ export default function App() {
     name: "",
     description: "",
     difficulty: 1,
+    template: "standard",
+    table_range: "2-10",
   });
+  const [wizardExerciseRange, setWizardExerciseRange] = useState<string>("all");
   const [skillMessage, setSkillMessage] = useState("");
   const [showAddSkill, setShowAddSkill] = useState(false);
   const [showAddChild, setShowAddChild] = useState(false);
@@ -144,7 +300,6 @@ export default function App() {
     difficulty: 1,
     imageUrl: "",
     imageQuestion: "",
-    template: "standard",
   });
   const [pendingDeletion, setPendingDeletion] = useState<
     | { type: "skill"; item: any }
@@ -180,7 +335,7 @@ export default function App() {
     setWizardStep(1);
     setSkillExercises([]);
     setSkillMessage("");
-    setNewSkill({ subject: "English", topic: "", name: "", description: "", difficulty: 1 });
+    setNewSkill({ subject: "English", topic: "", name: "", description: "", difficulty: 1, template: "standard" });
   };
 
   const load = async () => {
@@ -348,23 +503,45 @@ export default function App() {
     showToast("Signed out successfully");
   };
 
-  const start = async (selectedSkill: Skill) => {
-    setSkill(selectedSkill);
+  const start = async (selectedSkill: Skill, customRange?: string, customCount?: number | "all") => {
+    const isMultiplication = /multiplication|tables/i.test(selectedSkill.name);
+    const isBeforeAfterNumbers = /(before|after|missing)\s*numbers/i.test(selectedSkill.name);
+    const defaultRange = isMultiplication
+      ? "2-10"
+      : isBeforeAfterNumbers
+      ? "100-500"
+      : selectedSkill.table_range || undefined;
+    const activeRange = customRange !== undefined ? (customRange || undefined) : defaultRange;
+    const skillWithRange = { ...selectedSkill, table_range: activeRange };
+    setSkill(skillWithRange);
     setIndex(0);
     setResult(undefined);
+    setFlashcardFlipped(false);
+    setSelectedChoice(null);
+    setShowVisualPrompt(false);
+
+    const activeCount = customCount !== undefined ? customCount : practiceCount;
+
     // Reuse the questions already stored for this skill. This keeps practice
     // sessions stable and prevents duplicate rows in the edit modal.
-    const existingResponse = await fetch(`${API}/skills/${selectedSkill.id}/exercises`);
+    const rangeParam = skillWithRange.table_range ? `?range=${encodeURIComponent(skillWithRange.table_range)}&shuffle=1` : "?shuffle=1";
+    const existingResponse = await fetch(`${API}/skills/${selectedSkill.id}/exercises${rangeParam}`);
     const existing = await existingResponse.json();
     if (existingResponse.ok && existing.length) {
-      setExercises(existing.map((item: any) => ({
-        ...item,
-        skillId: item.skill_id,
-        skillName: selectedSkill.name,
-        questionType: item.question_type,
-        correctAnswer: item.correct_answer,
-        options: Array.isArray(item.options) ? item.options : JSON.parse(item.options || "[]"),
-      })));
+      // True Fisher-Yates shuffle so child gets fresh random question order every time
+      const shuffled = shuffleList(existing);
+      const sessionQuestions = activeCount === "all" ? shuffled : shuffled.slice(0, activeCount);
+      setExercises(sessionQuestions.map((item: any) => {
+        const rawOptions = Array.isArray(item.options) ? item.options : JSON.parse(item.options || "[]");
+        return {
+          ...item,
+          skillId: item.skill_id,
+          skillName: selectedSkill.name,
+          questionType: item.question_type,
+          correctAnswer: item.correct_answer,
+          options: shuffleList(rawOptions),
+        };
+      }));
       return;
     }
     const count = selectedSkill.mastery_score < 60 ? 7 : selectedSkill.mastery_score >= 80 ? 5 : 6;
@@ -376,8 +553,14 @@ export default function App() {
     setExercises((await response.json()).exercises || []);
   };
 
+  const switchTableRange = async (newRange: string) => {
+    if (!skill) return;
+    await start(skill, newRange);
+  };
+
   const answer = async (answerValue: string) => {
     if (result) return;
+    setSelectedChoice(answerValue);
     const response = await fetch(`${API}/attempts`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -396,16 +579,116 @@ export default function App() {
     );
   };
 
-  const next = () => {
-    if (index < exercises.length - 1) {
-      setIndex(index + 1);
+  const skillRef = useRef(skill);
+  skillRef.current = skill;
+  const exercisesRef = useRef(exercises);
+  exercisesRef.current = exercises;
+  const indexRef = useRef(index);
+  indexRef.current = index;
+  const resultRef = useRef(result);
+  resultRef.current = result;
+  const editingSkillRef = useRef(editingSkill);
+  editingSkillRef.current = editingSkill;
+
+  const goToPrevQuestion = useCallback(() => {
+    setIndex((current) => {
+      if (current > 0) {
+        setResult(undefined);
+        setFlashcardFlipped(false);
+        setSelectedChoice(null);
+        setShowVisualPrompt(false);
+        return current - 1;
+      }
+      return current;
+    });
+  }, []);
+
+  const goToNextQuestion = useCallback(() => {
+    setIndex((current) => {
+      const activeList = exercisesRef.current;
+      if (current < activeList.length - 1) {
+        setResult(undefined);
+        setFlashcardFlipped(false);
+        setSelectedChoice(null);
+        setShowVisualPrompt(false);
+        return current + 1;
+      }
+      return current;
+    });
+  }, []);
+
+  const next = useCallback(() => {
+    setFlashcardFlipped(false);
+    setSelectedChoice(null);
+    setShowVisualPrompt(false);
+    const currIndex = indexRef.current;
+    const activeList = exercisesRef.current;
+    if (currIndex < activeList.length - 1) {
+      setIndex(currIndex + 1);
       setResult(undefined);
     } else {
       setExercises([]);
       setSkill(undefined);
       load();
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      const activeExercises = exercisesRef.current;
+      const activeSkill = skillRef.current;
+      if (!activeSkill || !activeExercises || activeExercises.length === 0 || editingSkillRef.current) {
+        return;
+      }
+
+      if (e.key === "Escape" && exerciseFullscreen) {
+        setExerciseFullscreen(false);
+        if (document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {});
+        }
+        return;
+      }
+
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        if (resultRef.current) {
+          next();
+        } else {
+          goToNextQuestion();
+        }
+      } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        goToPrevQuestion();
+      } else if (e.key === "Enter" && resultRef.current) {
+        e.preventDefault();
+        next();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [goToPrevQuestion, goToNextQuestion, next, exerciseFullscreen]);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement && exerciseFullscreen) {
+        setExerciseFullscreen(false);
+      }
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, [exerciseFullscreen]);
 
   const analyzeWorksheet = async () => {
     const response = await fetch(`${API}/materials/worksheet/analyze`, {
@@ -441,7 +724,7 @@ export default function App() {
       setSkillExercises([]);
       setWizardStep(2);
     }
-    setNewSkill({ ...newSkill, topic: "", name: "", description: "" });
+    setNewSkill({ ...newSkill, topic: "", name: "", description: "", table_range: "2-10" });
     load();
   };
 
@@ -466,15 +749,26 @@ export default function App() {
     setSelectedExerciseIds([]);
     setShowAddSkill(true);
     setWizardStep(1);
+    setWizardExerciseRange("all");
     setNewSkill({
       subject: item.subject,
       topic: item.topic,
       name: item.name,
       description: item.description || "",
       difficulty: Number(item.difficulty) || 1,
+      template: item.template || "standard",
+      table_range: item.table_range || "2-10",
     });
-    fetch(`${API}/skills/${item.id}/exercises`)
+    fetch(`${API}/skills/${item.id}/exercises?range=all`)
       .then((response) => response.json())
+      .then(setSkillExercises);
+  };
+
+  const filterWizardQuestions = (rangeKey: string) => {
+    setWizardExerciseRange(rangeKey);
+    if (!editingSkill) return;
+    fetch(`${API}/skills/${editingSkill}/exercises?range=${rangeKey}`)
+      .then((res) => res.json())
       .then(setSkillExercises);
   };
 
@@ -495,7 +789,7 @@ export default function App() {
           difficulty: Number(exercise.difficulty),
           imageUrl: exercise.image_url || "",
           imageQuestion: exercise.image_question || "",
-          template: exercise.template || "standard",
+          template: newSkill.template || exercise.template || "standard",
         }),
       });
       const data = await response.json();
@@ -527,7 +821,7 @@ export default function App() {
     const response = await fetch(`${API}/skills/${editingSkill}/exercises`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...newQuestion, options }),
+      body: JSON.stringify({ ...newQuestion, options, template: newSkill.template || "standard" }),
     });
     const data = await response.json();
     if (!response.ok) {
@@ -543,7 +837,6 @@ export default function App() {
       difficulty: newSkill.difficulty,
       imageUrl: "",
       imageQuestion: "",
-      template: "standard",
     });
     setSkillMessage("Question added.");
   };
@@ -626,6 +919,7 @@ export default function App() {
     subject === "All"
       ? skills
       : skills.filter((item) => item.subject === subject);
+  const currentSkillTemplate = skill?.template || exercises[index]?.template || "standard";
   const visibleMisconceptions = misconceptionSubject === "All"
     ? dash.mistakes
     : dash.mistakes.filter((item: any) => item.subject === misconceptionSubject);
@@ -634,6 +928,530 @@ export default function App() {
       .toLowerCase()
       .includes(childSearch.toLowerCase()),
   );
+
+  const renderFormattedQuestion = () => {
+    if (!exercises.length || !exercises[index]) {
+      return (
+        <div className="question-loading-box">
+          <div className="question-loading-spinner" />
+          <p>Loading questions for {skill?.name}...</p>
+        </div>
+      );
+    }
+
+    const currentEx = exercises[index];
+
+    // 1. Flashcard Layout
+    if (currentSkillTemplate === "flashcard") {
+      return (
+        <div className="formatted-flashcard-stage">
+          <div className="flashcard-deck-header">
+            <span className="flashcard-deck-pill">🎴 Flashcard {index + 1} of {exercises.length}</span>
+            <button
+              className="flashcard-flip-action-btn"
+              onClick={() => setFlashcardFlipped(!flashcardFlipped)}
+              type="button"
+            >
+              {flashcardFlipped ? "↩ Show Question" : "🔄 Flip to Answer"}
+            </button>
+          </div>
+
+          <div className={`flashcard-card-box ${flashcardFlipped ? "flipped" : ""}`}>
+            {!flashcardFlipped ? (
+              <div className="flashcard-card-face front-face">
+                <span className="card-face-tag">QUESTION PROMPT</span>
+                <h2 className="flashcard-prompt-text">{renderQuestionContent(currentEx.question)}</h2>
+                {currentEx.image_url && (
+                  <img className="flashcard-card-img" src={currentEx.image_url} alt="Flashcard visual" />
+                )}
+                <div className="flashcard-front-footer">
+                  <p className="flashcard-instruction">🤔 Think of the answer, then flip to choose!</p>
+                  <button
+                    className="flashcard-large-flip-btn"
+                    onClick={() => setFlashcardFlipped(true)}
+                    type="button"
+                  >
+                    🔄 Flip to Reveal Choices
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flashcard-card-face back-face">
+                <span className="card-face-tag">ANSWER CHOICES</span>
+                <p className="flashcard-prompt-recap">“{currentEx.question}”</p>
+                <div className="flashcard-choices-grid">
+                  {currentEx.options.map((option: string) => {
+                    const isSelected = selectedChoice === option;
+                    const isCorrect = result?.correctAnswer === option;
+                    let choiceClass = "";
+                    if (result) {
+                      if (isCorrect) choiceClass = "choice-good";
+                      else if (isSelected) choiceClass = "choice-bad";
+                      else choiceClass = "choice-muted";
+                    }
+                    return (
+                      <button
+                        key={option}
+                        disabled={!!result}
+                        className={`flashcard-choice-btn ${choiceClass}`}
+                        onClick={() => {
+                          setSelectedChoice(option);
+                          answer(option);
+                        }}
+                        type="button"
+                      >
+                        <span className="choice-bullet">✦</span>
+                        <span className="choice-text">{option}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <button
+                  className="flashcard-back-flip-btn"
+                  onClick={() => setFlashcardFlipped(false)}
+                  type="button"
+                >
+                  ↩ Review Question
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // 2. Fill in the Blank Layout
+    if (currentSkillTemplate === "fill_blank") {
+      const imageUrl = currentEx.image_url || currentEx.imageUrl;
+      const imageQuestion = currentEx.image_question || currentEx.imageQuestion;
+      const { hasBlank, title, prefix, suffix, word } = parseFillBlank(
+        currentEx.question,
+        skill?.name || "Fill in the blank",
+        imageQuestion
+      );
+      const filledValue = selectedChoice || (result ? result.correctAnswer : null);
+      const isLetterBlank = Boolean(
+        currentEx.correct_answer &&
+        String(currentEx.correct_answer).length <= 2 &&
+        !/^\d+$/.test(String(currentEx.correct_answer))
+      );
+      const slotPlaceholder = isLetterBlank ? "_" : "____";
+
+      return (
+        <div className="formatted-fill-blank-stage">
+          {/* Title at the top format */}
+          <div className="fill-blank-top-section">
+            <div className="fill-blank-banner">
+              <span className="fill-blank-tag">✏️ FILL IN THE BLANK</span>
+              <button
+                type="button"
+                className="fill-blank-speak-btn"
+                onClick={() => speak(title)}
+                title="Hear question"
+                aria-label="Hear question"
+              >
+                🔊
+              </button>
+              <span className="fill-blank-progress">
+                Question {index + 1} of {exercises.length}
+              </span>
+            </div>
+            <h2 className="fill-blank-title-heading">{title}</h2>
+          </div>
+
+          {/* Image and word side by side */}
+          <div className="fill-blank-display-card">
+            <div className={`fill-blank-side-by-side ${imageUrl ? "has-image" : "no-image"}`}>
+              {imageUrl && (
+                <div className="fill-blank-image-col">
+                  <div className="fill-blank-image-frame">
+                    <img
+                      className="fill-blank-side-illustration"
+                      src={imageUrl}
+                      alt={title || "Question clue"}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="fill-blank-word-col">
+                <div className="fill-blank-word-box">
+                  {hasBlank ? (
+                    <div className="fill-blank-word-display">
+                      {prefix && <span className="word-text-segment">{prefix}</span>}
+                      <span className={`fill-blank-interactive-slot ${isLetterBlank ? "letter-slot" : "number-slot"} ${filledValue ? "filled" : "waiting"}`}>
+                        {filledValue || slotPlaceholder}
+                      </span>
+                      {suffix && <span className="word-text-segment">{suffix}</span>}
+                    </div>
+                  ) : (
+                    <div className="fill-blank-word-display">
+                      <span className="word-text-segment">{word}</span>
+                      <span className="fill-blank-arrow">➔</span>
+                      <span className={`fill-blank-interactive-slot ${isLetterBlank ? "letter-slot" : "number-slot"} ${filledValue ? "filled" : "waiting"}`}>
+                        {filledValue || slotPlaceholder}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <span className="fill-blank-cue-label">
+                  {filledValue ? "Answer selected" : "Tap an option below to fill the blank"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Options at the bottom */}
+          <div className="fill-blank-tray">
+            <p className="tray-heading">👇 Choose the missing letter or word:</p>
+            <div className="fill-blank-tokens-row">
+              {currentEx.options.map((option: string) => {
+                const isSelected = selectedChoice === option;
+                const isCorrect = result?.correctAnswer === option;
+                let tokenClass = "";
+                if (result) {
+                  if (isCorrect) tokenClass = "token-good";
+                  else if (isSelected) tokenClass = "token-bad";
+                  else tokenClass = "token-muted";
+                } else if (isSelected) {
+                  tokenClass = "token-active";
+                }
+                return (
+                  <button
+                    key={option}
+                    disabled={!!result}
+                    className={`fill-blank-token-btn ${tokenClass}`}
+                    onClick={() => {
+                      setSelectedChoice(option);
+                      answer(option);
+                    }}
+                    type="button"
+                  >
+                    <span className="token-icon">📌</span>
+                    <span className="token-value">{option}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // 3. True or False Layout
+    if (currentSkillTemplate === "true_false") {
+      return (
+        <div className="formatted-true-false-stage">
+          <div className="true-false-badge-row">
+            <span className="tf-badge">⚖️ STATEMENT CHECK</span>
+            <span className="tf-step">Check {index + 1} of {exercises.length}</span>
+          </div>
+
+          <div className="true-false-card">
+            <span className="tf-quote-icon">“</span>
+            <h2 className="true-false-statement">{currentEx.question}</h2>
+            <span className="tf-quote-icon right">”</span>
+            {currentEx.image_url && (
+              <img className="true-false-image" src={currentEx.image_url} alt="Statement clue" />
+            )}
+            <p className="tf-prompt-cue">Is this statement True or False?</p>
+          </div>
+
+          <div className="true-false-buttons-row">
+            {currentEx.options.map((option: string) => {
+              const lower = option.toLowerCase().trim();
+              const isTrueVal = lower === "true" || lower === "yes" || lower === "correct" || lower === "right";
+              const isFalseVal = lower === "false" || lower === "no" || lower === "incorrect" || lower === "wrong";
+              const isSelected = selectedChoice === option;
+              const isCorrect = result?.correctAnswer === option;
+              let verdictClass = isTrueVal ? "verdict-true" : isFalseVal ? "verdict-false" : "verdict-custom";
+              if (result) {
+                if (isCorrect) verdictClass += " result-correct";
+                else if (isSelected) verdictClass += " result-wrong";
+                else verdictClass += " result-muted";
+              }
+              return (
+                <button
+                  key={option}
+                  disabled={!!result}
+                  className={`true-false-verdict-btn ${verdictClass}`}
+                  onClick={() => {
+                    setSelectedChoice(option);
+                    answer(option);
+                  }}
+                  type="button"
+                >
+                  <span className="verdict-icon">
+                    {isTrueVal ? "✓" : isFalseVal ? "✗" : "◆"}
+                  </span>
+                  <span className="verdict-text">{option}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    // 4. Story Card Layout
+    if (currentSkillTemplate === "story_card") {
+      return (
+        <div className="formatted-story-stage">
+          <div className="story-book-frame">
+            <div className="story-ribbon-bar">
+              <span className="story-ribbon-icon">📖</span>
+              <span className="story-chapter-title">Adventure Clue · Story Card {index + 1}</span>
+            </div>
+
+            <div className="story-body-card">
+              <div className="story-passage-box">
+                <span className="story-large-quote">“</span>
+                <h2 className="story-passage-text">{currentEx.question}</h2>
+              </div>
+
+              {currentEx.image_url && (
+                <div className="story-illustration-wrap">
+                  <img className="story-illustration-img" src={currentEx.image_url} alt="Story scene" />
+                </div>
+              )}
+
+              <div className="story-prompt-divider">
+                <span>✨ How does the story resolve? Choose the correct answer:</span>
+              </div>
+
+              <div className="story-options-list">
+                {currentEx.options.map((option: string, optIndex: number) => {
+                  const letter = String.fromCharCode(65 + optIndex);
+                  const isSelected = selectedChoice === option;
+                  const isCorrect = result?.correctAnswer === option;
+                  let choiceClass = "";
+                  if (result) {
+                    if (isCorrect) choiceClass = "story-opt-good";
+                    else if (isSelected) choiceClass = "story-opt-bad";
+                    else choiceClass = "story-opt-muted";
+                  }
+                  return (
+                    <button
+                      key={option}
+                      disabled={!!result}
+                      className={`story-option-card ${choiceClass}`}
+                      onClick={() => {
+                        setSelectedChoice(option);
+                        answer(option);
+                      }}
+                      type="button"
+                    >
+                      <span className="story-letter-badge">{letter}</span>
+                      <span className="story-option-text">{option}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // 5. Image Prompt Layout
+    if (currentSkillTemplate === "image_prompt") {
+      const mathVisual = parseMathVisual(currentEx.question);
+
+      return (
+        <div className="formatted-image-stage">
+          <div className="image-prompt-header-bar">
+            <button
+              type="button"
+              className={`visual-investigation-toggle-btn ${showVisualPrompt ? "open" : "collapsed"}`}
+              onClick={() => setShowVisualPrompt(!showVisualPrompt)}
+              aria-expanded={showVisualPrompt}
+              title={showVisualPrompt ? "Collapse visual clue" : "Expand visual clue"}
+            >
+              <span className="image-prompt-tag">🖼️ VISUAL INVESTIGATION</span>
+              <span className="visual-toggle-hint">
+                {showVisualPrompt ? "Hide visual clue ▴" : "Show visual clue ▾"}
+              </span>
+            </button>
+            <span className="image-prompt-counter">Question {index + 1} of {exercises.length}</span>
+          </div>
+
+          {!showVisualPrompt ? (
+            <button
+              type="button"
+              className="visual-investigation-teaser-card"
+              onClick={() => setShowVisualPrompt(true)}
+              title="Click to view visual clue"
+            >
+              <span className="teaser-icon">🔍</span>
+              <span className="teaser-text">
+                Visual clue &amp; model available — <strong>Click to expand</strong>
+              </span>
+              <span className="teaser-expand-pill">Show ▾</span>
+            </button>
+          ) : (
+            <div className="image-prompt-canvas">
+              <div className="image-prompt-canvas-top-bar">
+                <span className="canvas-badge-info">Visual Model Active</span>
+                <button
+                  type="button"
+                  className="canvas-collapse-btn"
+                  onClick={() => setShowVisualPrompt(false)}
+                >
+                  Collapse ▴
+                </button>
+              </div>
+              {currentEx.image_url ? (
+                <div className="image-prompt-framed-photo">
+                  <img src={currentEx.image_url} alt="Question visual" className="image-prompt-main-pic" />
+                  {currentEx.image_question && (
+                    <div className="image-prompt-caption-box">
+                      <span className="caption-star">🔎</span>
+                      <span className="caption-text">{currentEx.image_question}</span>
+                    </div>
+                  )}
+                </div>
+              ) : mathVisual ? (
+                <div className="image-prompt-math-box">
+                  <div className="math-visual-banner">
+                    <span className="math-model-pill">Visual Counting Model</span>
+                    <span className="math-formula-tag">{currentEx.question}</span>
+                  </div>
+
+                  {mathVisual.type === "multiplication" ? (
+                    <div className="math-array-container">
+                      <div className="array-info-label">
+                        <strong>{mathVisual.rows} rows</strong> with <strong>{mathVisual.cols} counters</strong> in each row:
+                      </div>
+                      <div className="math-array-rows">
+                        {Array.from({ length: mathVisual.rows }).map((_, rIdx) => (
+                          <div key={rIdx} className="array-row-line">
+                            <span className="array-row-badge">Row {rIdx + 1}</span>
+                            <div className="array-row-counters">
+                              {Array.from({ length: mathVisual.cols }).map((_, cIdx) => (
+                                <span key={cIdx} className="array-star-item" title={`Item ${rIdx * mathVisual.cols + cIdx + 1}`}>⭐</span>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="math-array-footer-hint">
+                        Count the stars: {mathVisual.rows} × {mathVisual.cols} = ?
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="math-addition-container">
+                      <div className="math-add-group">
+                        <span className="add-group-pill">{mathVisual.a} items</span>
+                        <div className="add-group-items">
+                          {Array.from({ length: mathVisual.a }).map((_, i) => (
+                            <span key={i} className="add-token">🍎</span>
+                          ))}
+                        </div>
+                      </div>
+                      <span className="math-plus-symbol">+</span>
+                      <div className="math-add-group">
+                        <span className="add-group-pill">{mathVisual.b} items</span>
+                        <div className="add-group-items">
+                          {Array.from({ length: mathVisual.b }).map((_, i) => (
+                            <span key={i} className="add-token">🍏</span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="image-prompt-subject-badge-card">
+                  <div className="subject-big-icon">
+                    {skill?.subject === "Mathematics" ? "🔢" : skill?.subject === "English" ? "🔤" : "🔬"}
+                  </div>
+                  <div className="subject-badge-content">
+                    <span className="subject-pill">{skill?.subject} · {skill?.topic}</span>
+                    <h4 className="subject-badge-title">Visual Observation</h4>
+                    <p className="subject-badge-desc">Look at the challenge and select the correct answer below.</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="image-prompt-question-bar">
+            <span className="q-mark-bubble">?</span>
+            <h2 className="image-prompt-question-text">{currentEx.question}</h2>
+          </div>
+
+          <div className="image-prompt-options-grid">
+            {currentEx.options.map((option: string) => {
+              const isSelected = selectedChoice === option;
+              const isCorrect = result?.correctAnswer === option;
+              let optClass = "";
+              if (result) {
+                if (isCorrect) optClass = "good";
+                else if (isSelected) optClass = "bad";
+                else optClass = "muted";
+              }
+              return (
+                <button
+                  key={option}
+                  disabled={!!result}
+                  className={`image-prompt-btn ${optClass}`}
+                  onClick={() => {
+                    setSelectedChoice(option);
+                    answer(option);
+                  }}
+                  type="button"
+                >
+                  {option}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    // 6. Standard Layout (Default)
+    return (
+      <div className="standard-quiz-box">
+        <div className="standard-quiz-header">
+          <span className="standard-q-pill">Question {index + 1} of {exercises.length}</span>
+          <h2 className="standard-question-heading">{renderQuestionContent(currentEx.question)}</h2>
+        </div>
+        {currentEx.image_url && (
+          <img className="question-image" src={currentEx.image_url} alt="Question illustration" />
+        )}
+        {currentEx.image_question && (
+          <p className="image-question-text">{currentEx.image_question}</p>
+        )}
+        <div className="options">
+          {currentEx.options.map((option: string) => {
+            const isSelected = selectedChoice === option;
+            const isCorrect = result?.correctAnswer === option;
+            let optClass = "";
+            if (result) {
+              if (isCorrect) optClass = "good";
+              else if (isSelected) optClass = "bad";
+              else optClass = "muted";
+            }
+            return (
+              <button
+                key={option}
+                disabled={!!result}
+                className={optClass}
+                onClick={() => {
+                  setSelectedChoice(option);
+                  answer(option);
+                }}
+                type="button"
+              >
+                {option}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
 
   if (!session)
     return (
@@ -800,7 +1618,7 @@ export default function App() {
     );
 
   return (
-    <div className={`app-shell ${exerciseFullscreen ? "exercise-fullscreen" : ""}`}>
+    <div className={`app-shell ${sidebarCollapsed ? "sidebar-collapsed" : ""} ${exerciseFullscreen ? "exercise-fullscreen" : ""}`}>
       <aside className={`sidebar ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
         <div className="brand">
           <span className="brand-mark">S</span>
@@ -818,12 +1636,14 @@ export default function App() {
               <button
                 className={studentView === "adventure" ? "nav-item active" : "nav-item"}
                 onClick={() => { setStudentView("adventure"); setSkill(undefined); }}
+                title="My Learning Adventure"
               >
                 <span>◇</span> My Learning Adventure
               </button>
               <button
                 className={studentView === "charts" ? "nav-item active" : "nav-item"}
                 onClick={() => { setStudentView("charts"); setSkill(undefined); }}
+                title="Learning Charts"
               >
                 <span>📊</span> Learning Charts
               </button>
@@ -833,42 +1653,49 @@ export default function App() {
               <button
                 className={parentView === "skills" && !teacherPreview ? "nav-item active" : "nav-item"}
                 onClick={() => { setTeacherPreview(false); setParent(true); setParentView("skills"); }}
+                title="Skills & Curriculum"
               >
                 <span>📚</span> Skills &amp; Curriculum
               </button>
               <button
                 className={parentView === "children" && !teacherPreview ? "nav-item active" : "nav-item"}
                 onClick={() => { setTeacherPreview(false); setParent(true); setParentView("children"); }}
+                title="Students & Roster"
               >
                 <span>👥</span> Students &amp; Roster
               </button>
               <button
                 className={parentView === "charts" && !teacherPreview ? "nav-item active" : "nav-item"}
                 onClick={() => { setTeacherPreview(false); setParent(true); setParentView("charts"); }}
+                title="Charts & Records"
               >
                 <span>📊</span> Charts &amp; Records
               </button>
               <button
                 className={parentView === "worksheets" && !teacherPreview ? "nav-item active" : "nav-item"}
                 onClick={() => { setTeacherPreview(false); setParent(true); setParentView("worksheets"); }}
+                title="School Worksheets"
               >
                 <span>📝</span> School Worksheets
               </button>
               <button
                 className={parentView === "misconceptions" && !teacherPreview ? "nav-item active" : "nav-item"}
                 onClick={() => { setTeacherPreview(false); setParent(true); setParentView("misconceptions"); }}
+                title="Misconceptions"
               >
                 <span>🔍</span> Misconceptions
               </button>
               <button
                 className={parentView === "templates" && !teacherPreview ? "nav-item active" : "nav-item"}
                 onClick={() => { setTeacherPreview(false); setParent(true); setParentView("templates"); }}
+                title="Screen Templates"
               >
                 <span>📐</span> Screen Templates
               </button>
               <button
                 className={teacherPreview ? "nav-item active" : "nav-item"}
                 onClick={() => { setTeacherPreview(true); }}
+                title="Preview Practice"
               >
                 <span>✨</span> Preview Practice
               </button>
@@ -982,7 +1809,21 @@ export default function App() {
                       onClick={() => start(item)}
                       key={item.id}
                     >
-                      <b>{item.name}</b>
+                      <div className="skill-badge-row">
+                        <b>{item.name}</b>
+                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                          {item.table_range && /multiplication|tables/i.test(item.name) && (
+                            <span className="range-badge">Tables {item.table_range}</span>
+                          )}
+                          {item.table_range && /(before|after|missing)\s*numbers/i.test(item.name) && (
+                            <span className="range-badge">Range {item.table_range}</span>
+                          )}
+                          {/missing\s*letters/i.test(item.name) && (
+                            <span className="range-badge">500 Illustrated Words</span>
+                          )}
+                          <span className="template-badge">{templateLabel(item.template)}</span>
+                        </div>
+                      </div>
                       <small>
                         {item.topic} - {Math.round(item.mastery_score)}%
                         mastered
@@ -992,35 +1833,171 @@ export default function App() {
                 </div>
               </section>
             ) : (
-                <section className={`panel question template-${exercises[index]?.template || "standard"}`}>
-                <button className="exercise-fullscreen-toggle" onClick={() => setExerciseFullscreen(!exerciseFullscreen)} aria-label={exerciseFullscreen ? "Exit full screen" : "View exercise full screen"} title={exerciseFullscreen ? "Exit full screen" : "View exercise full screen"}>
-                  {exerciseFullscreen ? "×" : "⛶"}
-                </button>
-                <button className="question-nav question-nav-left" disabled={index === 0} onClick={() => { setIndex((current) => Math.max(0, current - 1)); setResult(undefined); }} aria-label="Previous question" title="Previous question">‹</button>
-                <button className="question-nav question-nav-right" disabled={index >= exercises.length - 1} onClick={() => { setIndex((current) => Math.min(exercises.length - 1, current + 1)); setResult(undefined); }} aria-label="Next question" title="Next question">›</button>
-                <span className="pill">{skill.name}</span>
-                <div className="question-layout">
-                  <h3 className={`layout-placeholder ${placeholderLayoutClass(templateLayouts, exercises[index]?.template || "standard", "Title")}`} data-placeholder="Title">{skill.name}</h3>
-                  <h2 className={`layout-placeholder ${placeholderLayoutClass(templateLayouts, exercises[index]?.template || "standard", "Actual question")}`} data-placeholder="Actual question">{exercises[index]?.question}</h2>
-                  {exercises[index]?.image_url && <img className={`question-image image-size-${templateLayouts[exercises[index]?.template || "standard"]?.imageSize || "medium"} layout-placeholder ${placeholderLayoutClass(templateLayouts, exercises[index]?.template || "standard", "Image")}`} data-placeholder="Image" src={exercises[index].image_url} alt="Question illustration" />}
-                  {exercises[index]?.image_question && <p className={`image-question-text image-question-size-${templateLayouts[exercises[index]?.template || "standard"]?.imageQuestionSize || "medium"} layout-placeholder ${placeholderLayoutClass(templateLayouts, exercises[index]?.template || "standard", "Image question")}`} data-placeholder="Image question">{exercises[index].image_question}</p>}
-                  <div className={`options layout-placeholder ${placeholderLayoutClass(templateLayouts, exercises[index]?.template || "standard", "Answer choices")}`} data-placeholder="Answer choices">
-                  {exercises[index]?.options.map((option: string) => (
-                    <button
-                      disabled={!!result}
-                      className={
-                        result?.correct && result.correctAnswer === option
-                          ? "good"
-                          : ""
-                      }
-                      onClick={() => answer(option)}
-                      key={option}
-                    >
-                      {option}
-                    </button>
-                  ))}
+                <section className={`panel question template-${currentSkillTemplate}`}>
+                <div className="question-header-bar">
+                  <button className="question-back-btn" onClick={() => { setSkill(undefined); setExercises([]); }} title="Back to skills">
+                    ← Back to skills
+                  </button>
+                  <div className="question-tags">
+                    <span className="pill">{skill.name}</span>
+                    {skill.table_range && /multiplication|tables/i.test(skill.name) && (
+                      <span className="range-badge">
+                        🎯 Tables {skill.table_range} Active
+                      </span>
+                    )}
+                    {skill.table_range && /(before|after|missing)\s*numbers/i.test(skill.name) && (
+                      <span className="range-badge">
+                        🎯 Numbers {skill.table_range} Active
+                      </span>
+                    )}
+                    {/missing\s*letters/i.test(skill.name) && (
+                      <span className="range-badge">
+                        📚 500 Illustrated Words Active
+                      </span>
+                    )}
+                    <span className="template-badge practice-template-badge">
+                      🎨 {templateLabel(currentSkillTemplate)} Layout
+                    </span>
+                    <span className="keyboard-nav-hint" title="Use Arrow keys on keyboard (← → ↑ ↓) to navigate between questions">
+                      <kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> Navigate
+                    </span>
                   </div>
                 </div>
+                {/multiplication|tables/i.test(skill.name) && (
+                  <div className="range-filter-bar">
+                    <span className="range-filter-label">🎯 Table Range:</span>
+                    {[
+                      ...(skill.table_range && !["2-10", "2-20", "2-30"].includes(skill.table_range) ? [{ id: skill.table_range, label: `Custom (Tables ${skill.table_range})` }] : []),
+                      { id: "2-10", label: "Tables 2–10" },
+                      { id: "2-20", label: "Tables 2–20" },
+                      { id: "2-30", label: "Tables 2–30" },
+                    ].map((tab) => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        className={`range-filter-pill ${(skill.table_range || "2-10") === tab.id ? "active" : ""}`}
+                        onClick={() => switchTableRange(tab.id)}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {/(before|after|missing)\s*numbers/i.test(skill.name) && (
+                  <>
+                    <div className="range-filter-bar">
+                      <span className="range-filter-label">🔢 Number Range:</span>
+                      {[
+                        { id: "100-500", label: "100–500 (All)" },
+                        { id: "100-200", label: "100–200" },
+                        { id: "200-300", label: "200–300" },
+                        { id: "300-400", label: "300–400" },
+                        { id: "400-500", label: "400–500" },
+                      ].map((tab) => (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          className={`range-filter-pill ${(skill.table_range || "100-500") === tab.id ? "active" : ""}`}
+                          onClick={() => switchTableRange(tab.id)}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="range-filter-bar" style={{ marginTop: 6 }}>
+                      <span className="range-filter-label">🎲 Session:</span>
+                      {[
+                        { id: 10, label: "10 Random" },
+                        { id: 20, label: "20 Random" },
+                        { id: "all", label: "All in Range" },
+                      ].map((tab) => (
+                        <button
+                          key={String(tab.id)}
+                          type="button"
+                          className={`range-filter-pill ${practiceCount === tab.id ? "active" : ""}`}
+                          onClick={() => {
+                            setPracticeCount(tab.id as any);
+                            start(skill, skill.table_range, tab.id as any);
+                          }}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+                {/missing\s*letters/i.test(skill.name) && (
+                  <div className="range-filter-bar">
+                    <span className="range-filter-label">🎲 Session:</span>
+                    {[
+                      { id: 10, label: "10 Random Words" },
+                      { id: 25, label: "25 Random Words" },
+                      { id: 50, label: "50 Random Words" },
+                      { id: "all", label: "All 500 Words" },
+                    ].map((tab) => (
+                      <button
+                        key={String(tab.id)}
+                        type="button"
+                        className={`range-filter-pill ${practiceCount === tab.id ? "active" : ""}`}
+                        onClick={() => {
+                          setPracticeCount(tab.id as any);
+                          start(skill, skill.table_range, tab.id as any);
+                        }}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <button
+                  className="exercise-fullscreen-toggle"
+                  onClick={() => {
+                    const next = !exerciseFullscreen;
+                    setExerciseFullscreen(next);
+                    if (next) {
+                      if (document.documentElement.requestFullscreen) {
+                        document.documentElement.requestFullscreen().catch(() => {});
+                      }
+                    } else {
+                      if (document.fullscreenElement) {
+                        document.exitFullscreen().catch(() => {});
+                      }
+                    }
+                  }}
+                  aria-label={exerciseFullscreen ? "Exit full screen (Esc)" : "View exercise full screen"}
+                  title={exerciseFullscreen ? "Exit full screen (Esc)" : "View exercise full screen"}
+                >
+                  {exerciseFullscreen ? "×" : "⛶"}
+                </button>
+                <button className="question-nav question-nav-left" disabled={index === 0} onClick={goToPrevQuestion} aria-label="Previous question" title="Previous question (← or ↑ Arrow Key)">‹</button>
+                <button className="question-nav question-nav-right" disabled={index >= exercises.length - 1} onClick={goToNextQuestion} aria-label="Next question" title="Next question (→ or ↓ Arrow Key)">›</button>
+                {renderFormattedQuestion()}
+                {!result && exercises.length > 1 && (
+                  <div className="question-bottom-nav-bar">
+                    <button
+                      type="button"
+                      className="question-bar-nav-btn prev"
+                      disabled={index === 0}
+                      onClick={goToPrevQuestion}
+                      title="Previous question (← or ↑ Arrow Key)"
+                    >
+                      <span className="nav-btn-icon">←</span> Previous
+                    </button>
+                    <div className="question-bar-progress-pill">
+                      <span className="nav-progress-text">Question {index + 1} of {exercises.length}</span>
+                      <span className="nav-keys-subtext">Use <kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> keys</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="question-bar-nav-btn next"
+                      disabled={index >= exercises.length - 1}
+                      onClick={goToNextQuestion}
+                      title="Next question (→ or ↓ Arrow Key)"
+                    >
+                      Next <span className="nav-btn-icon">→</span>
+                    </button>
+                  </div>
+                )}
                 {result && (
                   <div
                     className={result.correct ? "feedback goodbox" : "feedback"}
@@ -1128,6 +2105,7 @@ export default function App() {
                         <th>Skill</th>
                         <th>Subject</th>
                         <th>Topic</th>
+                        <th>Template</th>
                         <th>Difficulty</th>
                         <th>Mastery</th>
                         <th>Attempts</th>
@@ -1142,6 +2120,14 @@ export default function App() {
                           </td>
                           <td>{item.subject}</td>
                           <td>{item.topic}</td>
+                          <td>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                              <span className="template-badge">{templateLabel(item.template)}</span>
+                              {item.table_range && /multiplication|tables/i.test(item.name) && (
+                                <span className="range-badge">Tables {item.table_range}</span>
+                              )}
+                            </div>
+                          </td>
                           <td>{item.difficulty || "-"}</td>
                           <td>
                             <strong>{Math.round(item.mastery_score)}%</strong>
@@ -1173,7 +2159,7 @@ export default function App() {
                         </tr>
                       ))}
                       {!dash.skills.some((item: any) => skillManagementSubject === "All" || item.subject === skillManagementSubject) && (
-                        <tr><td colSpan={7} className="muted">No skills found for this subject.</td></tr>
+                        <tr><td colSpan={8} className="muted">No skills found for this subject.</td></tr>
                       )}
                     </tbody>
                   </table>
@@ -1315,20 +2301,27 @@ export default function App() {
                 <div className="section-toolbar">
                   <div>
                     <h3>Manage templates</h3>
-                    <p>Choose how questions are presented in the child learning screen.</p>
+                    <p>Choose how questions are presented for each skill.</p>
                   </div>
                 </div>
                 <div className="template-catalog">
-                  {[{ id: "standard", name: "Standard", title: "Standard question", description: "Clean, focused layout for everyday multiple-choice practice.", preview: "?", previewClass: "standard-preview" }, { id: "image_prompt", name: "Image prompt", title: "Image prompt", description: "Highlights a supporting picture before the question and answers.", preview: "▧", previewClass: "image-preview" }, { id: "story_card", name: "Story card", title: "Story card", description: "A warm, card-based format for contextual and story-led questions.", preview: "✦", previewClass: "story-preview" }, { id: "flashcard", name: "Flashcard", title: "Flashcard", description: "A focused reveal-style layout for memory and vocabulary practice.", preview: "▤", previewClass: "standard-preview" }, { id: "fill_blank", name: "Fill in the blank", title: "Fill in the blank", description: "Emphasizes the missing word or letter in a sentence.", preview: "_", previewClass: "image-preview" }, { id: "true_false", name: "True or false", title: "True or false", description: "Simple statement-based format for quick concept checks.", preview: "✓", previewClass: "story-preview" }].map((template) => (
-                  <div className={`template-card ${template.id === "standard" ? "active" : ""}`} key={template.id}>
-                    <div className={`template-preview ${template.previewClass}`}><span>{template.preview}</span></div>
-                    <div className="template-live-preview">{placeholderNames.slice().filter((placeholder) => (templateLayouts[template.id]?.[placeholder] || placeholderDefault[placeholder]) !== "hidden").sort((a, b) => (["top", "middle", "bottom"].indexOf(templateLayouts[template.id]?.[a] || placeholderDefault[a]) - ["top", "middle", "bottom"].indexOf(templateLayouts[template.id]?.[b] || placeholderDefault[b]))).map((placeholder) => <span key={placeholder}>{placeholder}</span>)}</div>
-                    <span className="template-badge">{template.name}</span><h4>{template.title}</h4><p>{template.description}</p>
-                    <div className="template-placeholders"><b>Placeholders &amp; preview order</b>{placeholderNames.map((placeholder) => <label key={placeholder}>{placeholder}<select value={templateLayouts[template.id]?.[placeholder] || placeholderDefault[placeholder]} onChange={(event) => updateTemplateLayout(template.id, placeholder, event.target.value)}><option value="top">Top</option><option value="middle">Middle</option><option value="bottom">Bottom</option><option value="hidden">Empty</option></select></label>)}<label>Image size<select value={templateLayouts[template.id]?.imageSize || "medium"} onChange={(event) => updateTemplateLayout(template.id, "imageSize", event.target.value)}><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select></label><label>Image question text<select value={templateLayouts[template.id]?.imageQuestionSize || "medium"} onChange={(event) => updateTemplateLayout(template.id, "imageQuestionSize", event.target.value)}><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select></label></div>
-                  </div>
-                  ))}
+                  {TEMPLATE_OPTIONS.map((template) => {
+                    const skillCount = skills.filter((s) => (s.template || "standard") === template.id).length;
+                    return (
+                      <div className={`template-card ${template.id === "standard" ? "active" : ""}`} key={template.id}>
+                        <div className={`template-preview ${template.previewClass}`}><span>{template.preview}</span></div>
+                        <div className="template-live-preview">{placeholderNames.slice().filter((placeholder) => (templateLayouts[template.id]?.[placeholder] || placeholderDefault[placeholder]) !== "hidden").sort((a, b) => (["top", "middle", "bottom"].indexOf(templateLayouts[template.id]?.[a] || placeholderDefault[a]) - ["top", "middle", "bottom"].indexOf(templateLayouts[template.id]?.[b] || placeholderDefault[b]))).map((placeholder) => <span key={placeholder}>{placeholder}</span>)}</div>
+                        <div className="template-header-badges">
+                          <span className="template-badge">{template.name}</span>
+                          <span className="template-count-badge">{skillCount} {skillCount === 1 ? "skill" : "skills"}</span>
+                        </div>
+                        <h4>{template.title}</h4><p>{template.description}</p>
+                        <div className="template-placeholders"><b>Placeholders &amp; preview order</b>{placeholderNames.map((placeholder) => <label key={placeholder}>{placeholder}<select value={templateLayouts[template.id]?.[placeholder] || placeholderDefault[placeholder]} onChange={(event) => updateTemplateLayout(template.id, placeholder, event.target.value)}><option value="top">Top</option><option value="middle">Middle</option><option value="bottom">Bottom</option><option value="hidden">Empty</option></select></label>)}<label>Image size<select value={templateLayouts[template.id]?.imageSize || "medium"} onChange={(event) => updateTemplateLayout(template.id, "imageSize", event.target.value)}><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select></label><label>Image question text<select value={templateLayouts[template.id]?.imageQuestionSize || "medium"} onChange={(event) => updateTemplateLayout(template.id, "imageQuestionSize", event.target.value)}><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select></label></div>
+                      </div>
+                    );
+                  })}
                 </div>
-                <p className="muted template-note">Select a template while creating or editing a question to apply it.</p>
+                <p className="muted template-note">Templates are configured per skill. All practice questions in a skill automatically follow that skill's template.</p>
               </>
             )}
             {parentView === "skills" && showAddSkill && (
@@ -1372,7 +2365,7 @@ export default function App() {
                       </h3>
                       {editingSkill && (
                         <p className="wizard-context">
-                          Editing <strong>{newSkill.name}</strong> under {newSkill.subject}
+                          Editing <strong>{newSkill.name}</strong> under {newSkill.subject} • <span className="template-badge">{templateLabel(newSkill.template)}</span>
                         </p>
                       )}
                     </div>
@@ -1499,6 +2492,130 @@ export default function App() {
                           <option value={2}>Medium</option>
                           <option value={3}>Hard</option>
                         </select>
+                        <select
+                          value={newSkill.template}
+                          onChange={(event) =>
+                            setNewSkill({
+                              ...newSkill,
+                              template: event.target.value,
+                            })
+                          }
+                          aria-label="Skill layout template"
+                        >
+                          <option value="standard">Template: Standard</option>
+                          <option value="image_prompt">Template: Image prompt</option>
+                          <option value="story_card">Template: Story card</option>
+                          <option value="flashcard">Template: Flashcard</option>
+                          <option value="fill_blank">Template: Fill in the blank</option>
+                          <option value="true_false">Template: True or false</option>
+                        </select>
+                        <div className="skill-template-callout" style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#e8f3f1", borderRadius: 8, fontSize: 11, color: "var(--teal)" }}>
+                          <span className="template-badge">{templateLabel(newSkill.template)}</span>
+                          <span>Layout applied to this skill: <strong>{TEMPLATE_OPTIONS.find(t => t.id === newSkill.template)?.description}</strong></span>
+                        </div>
+                        {/multiplication|tables/i.test(`${newSkill.name} ${newSkill.topic}`) && (() => {
+                          const currentRangeMatch = (newSkill.table_range || "2-10").match(/^(\d+)\s*-\s*(\d+)$/);
+                          const fromVal = currentRangeMatch ? parseInt(currentRangeMatch[1], 10) : 2;
+                          const toVal = currentRangeMatch ? parseInt(currentRangeMatch[2], 10) : 10;
+                          const minTable = Math.min(fromVal, toVal);
+                          const maxTable = Math.max(fromVal, toVal);
+                          const tableCount = maxTable - minTable + 1;
+                          const questionCount = tableCount * 10;
+
+                          const handleRangeChange = (newFrom: number, newTo: number) => {
+                            const validFrom = Math.max(2, Math.min(30, newFrom));
+                            const validTo = Math.max(2, Math.min(30, newTo));
+                            setNewSkill({
+                              ...newSkill,
+                              table_range: `${validFrom}-${validTo}`,
+                            });
+                          };
+
+                          return (
+                            <div className="table-range-selector-row">
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
+                                <label className="table-range-label">
+                                  <span className="table-range-icon">🎯</span> Select Multiplication Tables (Between 2 and 30):
+                                </label>
+                                <div className="table-range-calc-summary">
+                                  <span className="table-range-highlight-badge">
+                                    {minTable === maxTable ? `Table ${minTable}` : `Tables ${minTable} to ${maxTable}`}
+                                  </span>
+                                  <span style={{ fontSize: "12px", color: "var(--teal)", fontWeight: 700 }}>
+                                    ({tableCount} table{tableCount > 1 ? "s" : ""} · {questionCount} questions)
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Manual From & To Number Pickers */}
+                              <div className="table-range-manual-inputs-box">
+                                <div className="range-picker-group">
+                                  <label htmlFor="range-from-select" className="range-picker-label">From Table:</label>
+                                  <div className="range-picker-control-wrap">
+                                    <span className="range-picker-prefix">Table</span>
+                                    <select
+                                      id="range-from-select"
+                                      className="range-number-select"
+                                      value={fromVal}
+                                      onChange={(e) => handleRangeChange(parseInt(e.target.value, 10), toVal)}
+                                    >
+                                      {Array.from({ length: 29 }, (_, i) => i + 2).map((num) => (
+                                        <option key={num} value={num}>{num}</option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                </div>
+
+                                <div className="range-picker-arrow" aria-hidden="true">➔</div>
+
+                                <div className="range-picker-group">
+                                  <label htmlFor="range-to-select" className="range-picker-label">To Table:</label>
+                                  <div className="range-picker-control-wrap">
+                                    <span className="range-picker-prefix">Table</span>
+                                    <select
+                                      id="range-to-select"
+                                      className="range-number-select"
+                                      value={toVal}
+                                      onChange={(e) => handleRangeChange(fromVal, parseInt(e.target.value, 10))}
+                                    >
+                                      {Array.from({ length: 29 }, (_, i) => i + 2).map((num) => (
+                                        <option key={num} value={num}>{num}</option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                </div>
+
+                                <div className="range-quick-presets">
+                                  <span style={{ fontSize: "11px", fontWeight: 700, color: "#64748b" }}>Quick Presets:</span>
+                                  {[
+                                    { label: "2 to 10", from: 2, to: 10 },
+                                    { label: "3 to 10", from: 3, to: 10 },
+                                    { label: "2 to 20", from: 2, to: 20 },
+                                    { label: "11 to 20", from: 11, to: 20 },
+                                    { label: "20 to 30", from: 20, to: 30 },
+                                    { label: "2 to 30", from: 2, to: 30 },
+                                  ].map((preset) => {
+                                    const isSelected = fromVal === preset.from && toVal === preset.to;
+                                    return (
+                                      <button
+                                        key={preset.label}
+                                        type="button"
+                                        className={`range-preset-pill ${isSelected ? "active" : ""}`}
+                                        onClick={() => handleRangeChange(preset.from, preset.to)}
+                                      >
+                                        {preset.label}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+
+                              <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
+                                💡 Child will only be tested on combinations between Table <strong>{minTable}</strong> and Table <strong>{maxTable}</strong> (e.g. {minTable}×1 to {maxTable}×10). Questions shuffle every session.
+                              </p>
+                            </div>
+                          );
+                        })()}
                         <button
                           className="next"
                           onClick={() =>
@@ -1519,7 +2636,10 @@ export default function App() {
                   {editingSkill && wizardStep === 2 && (
                     <div className="question-editor">
                       <div className="question-list-heading">
-                        <h3>Questions for this skill</h3>
+                        <div className="question-list-title-wrap">
+                          <h3>Questions for this skill</h3>
+                          <span className="template-badge">{templateLabel(newSkill.template)} template</span>
+                        </div>
                         {selectedExerciseIds.length > 0 && (
                           <button
                             className="table-action danger"
@@ -1529,9 +2649,31 @@ export default function App() {
                           </button>
                         )}
                       </div>
+                      {/multiplication|tables/i.test(`${newSkill.name} ${newSkill.topic}`) && (
+                        <div className="wizard-range-filter-bar">
+                          <span className="wizard-range-filter-label">Filter Questions:</span>
+                          {[
+                            { id: "all", label: "All Tables (290)" },
+                            ...(newSkill.table_range && !["all", "2-30"].includes(newSkill.table_range) ? [{ id: newSkill.table_range, label: `Active (${newSkill.table_range})` }] : []),
+                            { id: "2-10", label: "Tables 2–10 (90)" },
+                            { id: "11-20", label: "Tables 11–20 (100)" },
+                            { id: "20-30", label: "Tables 20–30 (110)" },
+                            { id: "2-30", label: "Tables 2–30 (290)" },
+                          ].map((r) => (
+                            <button
+                              key={r.id}
+                              type="button"
+                              className={`range-filter-pill ${wizardExerciseRange === r.id ? "active" : ""}`}
+                              onClick={() => filterWizardQuestions(r.id)}
+                            >
+                              {r.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                       {skillExercises.length ? (
                         <>
-                        <div className="question-field-labels"><span>Question</span><span>Options</span><span>Correct answer</span><span>Explanation</span><span>Template and media</span></div>
+                        <div className="question-field-labels"><span>Question</span><span>Options</span><span>Correct answer</span><span>Explanation</span></div>
                         {skillExercises.map(
                           (exercise: any, exerciseIndex: number) => (
                             <div
@@ -1546,16 +2688,7 @@ export default function App() {
                                   aria-label={`Select question ${exerciseIndex + 1}`}
                                 />
                                 <strong>Question {exerciseIndex + 1}</strong>
-                                <span className="template-badge">{{ standard: "Standard", image_prompt: "Image prompt", story_card: "Story card", flashcard: "Flashcard", fill_blank: "Fill in the blank", true_false: "True or false" }[exercise.template || "standard"]}</span>
                               </div>
-                              <select
-                                className="question-template-editor"
-                                value={exercise.template || "standard"}
-                                onChange={(event) => setSkillExercises((items) => items.map((item) => item.id === exercise.id ? { ...item, template: event.target.value } : item))}
-                                aria-label="Question template"
-                              >
-                                <option value="standard">Standard</option><option value="image_prompt">Image prompt</option><option value="story_card">Story card</option><option value="flashcard">Flashcard</option><option value="fill_blank">Fill in the blank</option><option value="true_false">True or false</option>
-                              </select>
                               <fieldset className="edit-field"><legend>Question</legend><input
                                 className="unicode-input"
                                 value={exercise.question}
@@ -1629,7 +2762,7 @@ export default function App() {
                                 }
                                 placeholder="Explanation"
                               /></fieldset>
-                              {exercise.template === "image_prompt" && <><label className="question-image-editor">
+                              {(newSkill.template === "image_prompt" || exercise.image_url) && <><label className="question-image-editor">
                                 <span>Image</span>
                                 <input
                                   type="file"
@@ -1680,10 +2813,7 @@ export default function App() {
                         </p>
                       )}
                       <div className="new-question-form">
-                        <div className="composer-heading"><div><span className="eyebrow">QUESTION BUILDER</span><h4>Add a question</h4></div><span className="composer-hint">Multiple choice</span></div>
-                        <label>Child screen template <select value={newQuestion.template} onChange={(event) => setNewQuestion({ ...newQuestion, template: event.target.value })}>
-                          <option value="standard">Standard</option><option value="image_prompt">Image prompt</option><option value="story_card">Story card</option><option value="flashcard">Flashcard</option><option value="fill_blank">Fill in the blank</option><option value="true_false">True or false</option>
-                        </select></label>
+                        <div className="composer-heading"><div><span className="eyebrow">QUESTION BUILDER</span><h4>Add a question</h4></div><span className="template-badge">{templateLabel(newSkill.template)} template</span></div>
                         <label>Question text<textarea
                           className="unicode-input"
                           value={newQuestion.question}
@@ -1696,7 +2826,7 @@ export default function App() {
                           placeholder="Type the question, including Hindi or Marathi text if needed"
                           rows={3}
                         /></label>
-                        {newQuestion.template === "image_prompt" && <><label>Question image <input
+                        {newSkill.template === "image_prompt" && <><label>Question image <input
                           className="unicode-input"
                           type="file"
                           accept="image/png,image/jpeg,image/webp"

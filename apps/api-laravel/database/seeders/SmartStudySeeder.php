@@ -70,6 +70,9 @@ class SmartStudySeeder extends Seeder
             ['00000000-0000-0000-0000-000000001015', $marathiTopic, 'Marathi vowels (अ to औ)', 'Learn Marathi vowels: अ, आ, इ, ई, उ, ऊ, ए, ऐ, ओ and औ', 1],
             ['00000000-0000-0000-0000-000000001013', $marathiTopic, 'Marathi chaudakhadi', 'Learn Marathi consonants with their vowel signs', 2],
             ['00000000-0000-0000-0000-000000001009', $evsTopic, 'Living and non-living things', 'Identify living and non-living things', 1],
+            ['00000000-0000-0000-0000-000000001017', $numbers, 'Before numbers', 'Find the number that comes before (100 to 500)', 1],
+            ['00000000-0000-0000-0000-000000001018', $numbers, 'After numbers', 'Find the number that comes after (100 to 500)', 1],
+            ['00000000-0000-0000-0000-000000001019', $numbers, 'Missing numbers', 'Find the missing number in sequences (100 to 500)', 1],
         ];
         foreach ($skills as [$id, $topic, $name, $description, $difficulty]) {
             DB::table('skills')->insertOrIgnore([
@@ -78,17 +81,24 @@ class SmartStudySeeder extends Seeder
             ]);
         }
 
-        // Tables 2 to 10 with interactive "oneza / twoza" recital metadata
-        $numToWords = function (int $n): string {
+        // Tables 2 to 30 with interactive "oneza / twoza" recital metadata
+        $numToWords = function (int $n) use (&$numToWords): string {
             $ones = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
                      'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
             $tens = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
             if ($n === 0) return 'zero';
-            if ($n === 100) return 'one hundred';
             if ($n < 20) return $ones[$n];
-            $t = (int) floor($n / 10);
-            $r = $n % 10;
-            return $r === 0 ? $tens[$t] : "{$tens[$t]} {$ones[$r]}";
+            if ($n < 100) {
+                $t = (int) floor($n / 10);
+                $r = $n % 10;
+                return $r === 0 ? $tens[$t] : "{$tens[$t]} {$ones[$r]}";
+            }
+            if ($n < 1000) {
+                $h = (int) floor($n / 100);
+                $rem = $n % 100;
+                return $rem === 0 ? "{$ones[$h]} hundred" : "{$ones[$h]} hundred " . $numToWords($rem);
+            }
+            return (string) $n;
         };
         $multiplierRecite = [
             1 => 'oneza', 2 => 'twoza', 3 => 'threeza', 4 => 'fourza', 5 => 'fiveza',
@@ -112,7 +122,7 @@ class SmartStudySeeder extends Seeder
                     ];
                 }, range(1, 10))
             ];
-        }, range(2, 10));
+        }, range(2, 30));
 
         // Marathi चौदाखडी स्वर (14-Khadi Swar)
         $swarData = [
@@ -210,7 +220,8 @@ class SmartStudySeeder extends Seeder
         ];
 
         $charts = [
-            ['tables-2-10', 'Maths', 'Tables 2 to 10', 'Multiplication tables from 2 to 10 with interactive recital.', 'multiplication', $tablesData],
+            ['tables-2-30', 'Maths', 'Tables 2 to 30', 'Multiplication tables from 2 to 30 with interactive recital.', 'multiplication', $tablesData],
+            ['tables-2-10', 'Maths', 'Tables 2 to 30', 'Multiplication tables from 2 to 30 with interactive recital.', 'multiplication', $tablesData],
             ['marathi-swar', 'Marathi', 'मराठी चौदाखडी स्वर', 'मराठी चौदाखडीचे १४ स्वर (अ ते अः), मात्रा चिन्हे, उच्चार व बाराखडी/चौदाखडी.', 'chaudakhadi', $swarData],
             ['marathi-vyanjan', 'Marathi', 'मराठी व्यंजने (क ते ज्ञ)', 'क, ख, ग, घ... संपूर्ण ३६ मराठी व्यंजने चित्रांसह, उच्चार व सराव.', 'vyanjan', $vyanjanData],
             ['english-alphabet', 'English', 'A-Z Capital and Small Letters', 'Alphabet reference chart with uppercase and lowercase pairs, phonics, and words.', 'alphabet', $alphabetData],

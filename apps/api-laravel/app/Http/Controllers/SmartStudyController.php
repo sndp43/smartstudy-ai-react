@@ -46,7 +46,7 @@ class SmartStudyController extends Controller
             ->leftJoin('skill_mastery as m', function ($join) use ($childId) {
                 $join->on('m.skill_id', '=', 's.id')->where('m.child_id', '=', $childId);
             })
-            ->select('s.id', 's.name', 's.description', 's.difficulty', 't.name as topic', 'sub.name as subject')
+            ->select('s.id', 's.name', 's.description', 's.difficulty', 's.template', 's.table_range', 't.name as topic', 'sub.name as subject')
             ->selectRaw('COALESCE(m.mastery_score, 0) as mastery_score, COALESCE(m.attempts, 0) as attempts, COALESCE(m.correct_attempts, 0) as correct_attempts')
             ->orderBy('sub.name')->orderBy('t.name')->orderBy('s.difficulty')->orderBy('s.name')->get();
 
@@ -75,7 +75,7 @@ class SmartStudyController extends Controller
             ->where('child_id', $childId)
             ->get();
 
-        $tablesPracticed = $progress->where('chart_slug', 'tables-2-10')->pluck('item_key')->unique()->count();
+        $tablesPracticed = $progress->whereIn('chart_slug', ['tables-2-30', 'tables-2-10'])->pluck('item_key')->unique()->count();
         $swarPracticed = $progress->where('chart_slug', 'marathi-swar')->pluck('item_key')->unique()->count();
         $vyanjanPracticed = $progress->where('chart_slug', 'marathi-vyanjan')->pluck('item_key')->unique()->count();
         $lettersPracticed = $progress->where('chart_slug', 'english-alphabet')->pluck('item_key')->unique()->count();
@@ -96,6 +96,7 @@ class SmartStudyController extends Controller
             'summary' => [
                 'tables' => $tablesPracticed,
                 'tablesPracticed' => $tablesPracticed,
+                'tablesTotal' => 29,
                 'swar' => $swarPracticed,
                 'swarPracticed' => $swarPracticed,
                 'vyanjan' => $vyanjanPracticed,
@@ -225,8 +226,9 @@ class SmartStudyController extends Controller
 
         $exercises = collect(range(0, $count - 1))->map(function ($i) use ($skill) {
             [$question, $answer, $options] = $this->exercise($skill->name, $i);
-            $item = ['id' => (string) Str::uuid(), 'skillId' => $skill->id, 'skillName' => $skill->name, 'question' => $question, 'questionType' => 'MCQ', 'difficulty' => $skill->difficulty, 'options' => $options, 'correctAnswer' => $answer, 'explanation' => "The answer is {$answer}."];
-            DB::table('exercises')->insert(['id' => $item['id'], 'skill_id' => $skill->id, 'question' => $question, 'question_type' => 'MCQ', 'difficulty' => $skill->difficulty, 'options' => json_encode($options), 'correct_answer' => $answer, 'explanation' => $item['explanation'], 'created_at' => now(), 'updated_at' => now()]);
+            $template = $skill->template ?? 'standard';
+            $item = ['id' => (string) Str::uuid(), 'skillId' => $skill->id, 'skillName' => $skill->name, 'question' => $question, 'questionType' => 'MCQ', 'template' => $template, 'difficulty' => $skill->difficulty, 'options' => $options, 'correctAnswer' => $answer, 'explanation' => "The answer is {$answer}."];
+            DB::table('exercises')->insert(['id' => $item['id'], 'skill_id' => $skill->id, 'question' => $question, 'question_type' => 'MCQ', 'template' => $template, 'difficulty' => $skill->difficulty, 'options' => json_encode($options), 'correct_answer' => $answer, 'explanation' => $item['explanation'], 'created_at' => now(), 'updated_at' => now()]);
             return $item;
         });
 
@@ -239,8 +241,37 @@ class SmartStudyController extends Controller
         if ($name === 'Compare numbers') { $a = 2 + $i % 8; $b = 1 + ($i * 3) % 8; return ["Which number is greater: {$a} or {$b}?", (string) max($a, $b), [(string) $a, (string) $b]]; }
         if ($name === 'Addition within 10') { $a = 1 + $i % 5; $b = 1 + ($i * 2) % 5; return ["{$a} + {$b} = ?", (string) ($a + $b), collect([(string) ($a + $b), (string) ($a + $b - 1), (string) ($a + $b + 1)])->unique()->sort()->values()->all()]; }
         if ($name === 'Addition across 10') { $a = 6 + $i % 4; $b = 4 + $i % 4; return ["{$a} + {$b} = ?", (string) ($a + $b), [(string) ($a + $b - 2), (string) ($a + $b - 1), (string) ($a + $b)]]; }
-        if ($name === 'Multiplication tables 2-10') {
-            $table = 2 + ($i % 9);
+        if ($name === 'Before numbers' || str_contains(strtolower($name), 'before number')) {
+            $num = 100 + ($i % 401);
+            $correct = $num - 1;
+            $d1 = $num + 1;
+            $d2 = $num >= 102 ? $num - 2 : $num + 2;
+            $d3 = $num;
+            $options = collect([(string) $correct, (string) $d1, (string) $d2, (string) $d3])->unique()->shuffle()->values()->all();
+            return ["Write before numbers\n\n__{$num}", (string) $correct, $options];
+        }
+        if ($name === 'After numbers' || str_contains(strtolower($name), 'after number')) {
+            $num = 100 + ($i % 401);
+            $correct = $num + 1;
+            $d1 = $num - 1;
+            $d2 = $num + 2;
+            $d3 = $num;
+            $options = collect([(string) $correct, (string) $d1, (string) $d2, (string) $d3])->unique()->shuffle()->values()->all();
+            return ["Write after numbers\n\n{$num}__", (string) $correct, $options];
+        }
+        if ($name === 'Missing numbers' || str_contains(strtolower($name), 'missing number')) {
+            $num = 101 + ($i % 399); // 101 to 499
+            $correct = $num;
+            $prev = $num - 1;
+            $next = $num + 1;
+            $d1 = $num - 1;
+            $d2 = $num + 1;
+            $d3 = $num >= 103 ? $num - 2 : $num + 2;
+            $options = collect([(string) $correct, (string) $d1, (string) $d2, (string) $d3])->unique()->shuffle()->values()->all();
+            return ["Write missing numbers\n\n{$prev}, __, {$next}", (string) $correct, $options];
+        }
+        if ($name === 'Multiplication tables 2-10' || str_contains(strtolower($name), 'multiplication')) {
+            $table = 2 + ($i % 29); // 2 to 30
             $multiplier = 1 + (($i * 7) % 10);
             $answer = $table * $multiplier;
             $options = collect([$answer, max(1, $answer - $table), $answer + $table])->unique()->shuffle()->values()->map(fn ($value) => (string) $value)->all();
@@ -279,7 +310,7 @@ class SmartStudyController extends Controller
             ];
             return $items[$i % count($items)];
         }
-        if ($name === 'English missing letters') { $items = [['Gate picture: GA_E. Which letter is missing?', 'T', ['T', 'K', 'P']], ['Cake picture: CA_E. Which letter is missing?', 'K', ['K', 'V', 'T']], ['Fish picture: FI_H. Which letter is missing?', 'S', ['S', 'T', 'C']], ['Moon picture: M_ON. Which letter is missing?', 'O', ['O', 'A', 'E']], ['Star picture: ST_R. Which letter is missing?', 'A', ['A', 'E', 'I']], ['Ball picture: BA_L. Which letter is missing?', 'L', ['L', 'T', 'P']], ['Dog picture: D_G. Which letter is missing?', 'O', ['O', 'A', 'U']], ['Sun picture: S_N. Which letter is missing?', 'U', ['U', 'O', 'A']], ['Book picture: BO_K. Which letter is missing?', 'O', ['O', 'A', 'E']], ['Tree picture: TR_E. Which letter is missing?', 'E', ['E', 'A', 'I']]]; return $items[$i % count($items)]; }
+        if ($name === 'English missing letters') { $items = [["Which letter is missing?\n\nGA_E", 'T', ['T', 'K', 'P']], ["Which letter is missing?\n\nCA_E", 'K', ['K', 'V', 'T']], ["Which letter is missing?\n\nFI_H", 'S', ['S', 'T', 'C']], ["Which letter is missing?\n\nM_ON", 'O', ['O', 'A', 'E']], ["Which letter is missing?\n\nST_R", 'A', ['A', 'E', 'I']], ["Which letter is missing?\n\nBA_L", 'L', ['L', 'T', 'P']], ["Which letter is missing?\n\nD_G", 'O', ['O', 'A', 'U']], ["Which letter is missing?\n\nS_N", 'U', ['U', 'O', 'A']], ["Which letter is missing?\n\nBO_K", 'O', ['O', 'A', 'E']], ["Which letter is missing?\n\nTR_E", 'E', ['E', 'A', 'I']]]; return $items[$i % count($items)]; }
         if ($name === 'Hindi letters') { $items = [['Which is a Hindi letter?', 'Ka', ['Ka', 'Ma', 'Ta']], ['Which is a Hindi letter?', 'Ma', ['Ma', 'Pa', 'Na']], ['Which is a Hindi letter?', 'Ta', ['Ta', 'Ra', 'La']]]; return $items[$i % count($items)]; }
         if ($name === 'Marathi letters') {
             $items = [
@@ -338,7 +369,7 @@ class SmartStudyController extends Controller
 
     public function dashboard(Request $request, string $childId)
     {
-        $skills = DB::table('skills as s')->join('topics as t', 't.id', '=', 's.topic_id')->join('subjects as sub', 'sub.id', '=', 't.subject_id')->leftJoin('skill_mastery as m', function ($join) use ($childId) { $join->on('m.skill_id', '=', 's.id')->where('m.child_id', '=', $childId); })->select('s.id', 's.name', 's.description', 's.difficulty', 't.name as topic', 'sub.name as subject')->selectRaw('COALESCE(m.mastery_score, 0) as mastery_score, COALESCE(m.attempts, 0) as attempts')->orderBy('mastery_score')->get();
+        $skills = DB::table('skills as s')->join('topics as t', 't.id', '=', 's.topic_id')->join('subjects as sub', 'sub.id', '=', 't.subject_id')->leftJoin('skill_mastery as m', function ($join) use ($childId) { $join->on('m.skill_id', '=', 's.id')->where('m.child_id', '=', $childId); })->select('s.id', 's.name', 's.description', 's.difficulty', 's.template', 's.table_range', 't.name as topic', 'sub.name as subject')->selectRaw('COALESCE(m.mastery_score, 0) as mastery_score, COALESCE(m.attempts, 0) as attempts')->orderBy('mastery_score')->get();
         $page = max(1, (int) $request->query('mistakePage', 1));
         $perPage = 10;
         $mistakeQuery = DB::table('mistake_analysis as ma')->join('attempts as a', 'a.id', '=', 'ma.attempt_id')->join('exercises as e', 'e.id', '=', 'a.exercise_id')->join('skills as s', 's.id', '=', 'e.skill_id')->join('topics as t', 't.id', '=', 's.topic_id')->join('subjects as sub', 'sub.id', '=', 't.subject_id')->where('a.child_id', $childId);
@@ -437,6 +468,8 @@ class SmartStudyController extends Controller
             'name' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string', 'max:500'],
             'difficulty' => ['nullable', 'integer', 'min:1', 'max:5'],
+            'template' => ['nullable', 'string', 'in:standard,image_prompt,story_card,flashcard,fill_blank,true_false'],
+            'table_range' => ['nullable', 'string', 'max:50'],
         ]);
         $subject = DB::table('subjects')->where('name', $data['subject'])->first();
         if (!$subject) return response()->json(['error' => 'Subject not found'], 404);
@@ -445,14 +478,24 @@ class SmartStudyController extends Controller
             $topic = (object) ['id' => (string) Str::uuid(), 'subject_id' => $subject->id, 'name' => $data['topic']];
             DB::table('topics')->insert(['id' => $topic->id, 'subject_id' => $topic->subject_id, 'name' => $topic->name, 'description' => null, 'created_at' => now(), 'updated_at' => now()]);
         }
-        $skill = ['id' => (string) Str::uuid(), 'topic_id' => $topic->id, 'name' => $data['name'], 'description' => $data['description'] ?? null, 'difficulty' => $data['difficulty'] ?? 1, 'created_at' => now(), 'updated_at' => now()];
+        $template = $data['template'] ?? 'standard';
+        $tableRange = $data['table_range'] ?? '2-10';
+        $skill = ['id' => (string) Str::uuid(), 'topic_id' => $topic->id, 'name' => $data['name'], 'description' => $data['description'] ?? null, 'difficulty' => $data['difficulty'] ?? 1, 'template' => $template, 'table_range' => $tableRange, 'created_at' => now(), 'updated_at' => now()];
         DB::table('skills')->insert($skill);
         return response()->json($skill + ['subject' => $subject->name, 'topic' => $topic->name], 201);
     }
 
     public function updateSkill(Request $request, string $skillId)
     {
-        $data = $request->validate(['subject' => ['required', 'string', 'max:100'], 'topic' => ['required', 'string', 'max:100'], 'name' => ['required', 'string', 'max:150'], 'description' => ['nullable', 'string', 'max:500'], 'difficulty' => ['nullable', 'integer', 'min:1', 'max:5']]);
+        $data = $request->validate([
+            'subject' => ['required', 'string', 'max:100'],
+            'topic' => ['required', 'string', 'max:100'],
+            'name' => ['required', 'string', 'max:150'],
+            'description' => ['nullable', 'string', 'max:500'],
+            'difficulty' => ['nullable', 'integer', 'min:1', 'max:5'],
+            'template' => ['nullable', 'string', 'in:standard,image_prompt,story_card,flashcard,fill_blank,true_false'],
+            'table_range' => ['nullable', 'string', 'max:50'],
+        ]);
         $skill = DB::table('skills')->where('id', $skillId)->first();
         if (!$skill) return response()->json(['error' => 'Skill not found'], 404);
         $subject = DB::table('subjects')->where('name', $data['subject'])->first();
@@ -462,7 +505,22 @@ class SmartStudyController extends Controller
             $topic = (object) ['id' => (string) Str::uuid()];
             DB::table('topics')->insert(['id' => $topic->id, 'subject_id' => $subject->id, 'name' => $data['topic'], 'description' => null, 'created_at' => now(), 'updated_at' => now()]);
         }
-        DB::table('skills')->where('id', $skillId)->update(['topic_id' => $topic->id, 'name' => $data['name'], 'description' => $data['description'] ?? null, 'difficulty' => $data['difficulty'] ?? 1, 'updated_at' => now()]);
+        $template = $data['template'] ?? $skill->template ?? 'standard';
+        $tableRange = $data['table_range'] ?? $skill->table_range ?? '2-10';
+        DB::table('skills')->where('id', $skillId)->update([
+            'topic_id' => $topic->id,
+            'name' => $data['name'],
+            'description' => $data['description'] ?? null,
+            'difficulty' => $data['difficulty'] ?? 1,
+            'template' => $template,
+            'table_range' => $tableRange,
+            'updated_at' => now()
+        ]);
+        // Also cascade the template update to all exercises under this skill
+        DB::table('exercises')->where('skill_id', $skillId)->update([
+            'template' => $template,
+            'updated_at' => now()
+        ]);
         return response()->json(DB::table('skills as s')->join('topics as t', 't.id', '=', 's.topic_id')->join('subjects as sub', 'sub.id', '=', 't.subject_id')->where('s.id', $skillId)->select('s.*', 't.name as topic', 'sub.name as subject')->first());
     }
 
@@ -484,13 +542,59 @@ class SmartStudyController extends Controller
         return response()->json(['deleted' => true, 'skillId' => $skillId]);
     }
 
-    public function skillExercises(string $skillId)
+    public function skillExercises(Request $request, string $skillId)
     {
-        if (!DB::table('skills')->where('id', $skillId)->exists()) return response()->json(['error' => 'Skill not found'], 404);
+        $skill = DB::table('skills')->where('id', $skillId)->first();
+        if (!$skill) return response()->json(['error' => 'Skill not found'], 404);
+
+        $range = $request->query('range');
+        if ($range === null || $range === '') {
+            $range = $skill->table_range ?? null;
+        } elseif ($range === 'all') {
+            $range = null;
+        }
+
         $exercises = DB::table('exercises')->where('skill_id', $skillId)->orderBy('created_at')->get()->map(function ($exercise) {
             $exercise->options = json_decode($exercise->options ?: '[]', true);
             return $exercise;
         });
+
+        if ($range && preg_match('/^(\d+)\s*-\s*(\d+)$/', $range, $m)) {
+            $min = (int) $m[1];
+            $max = (int) $m[2];
+            if ($min > $max) {
+                [$min, $max] = [$max, $min];
+            }
+            $exercises = $exercises->filter(function ($exercise) use ($min, $max) {
+                if (preg_match('/^(\d+)\s*(?:x|\*|×)/i', $exercise->question, $match)) {
+                    $table = (int) $match[1];
+                    return $table >= $min && $table <= $max;
+                }
+                if (is_numeric($exercise->correct_answer)) {
+                    $num = (int) $exercise->correct_answer;
+                    return $num >= $min && $num <= $max;
+                }
+                if (preg_match('/(?:\b__(\d+)|(\d+)__\b|(?:before|after)[^\d]*(\d+)|(\d+))/i', $exercise->question, $match)) {
+                    $num = (int) ($match[1] ?: $match[2] ?: $match[3] ?: $match[4]);
+                    return $num >= $min && $num <= $max;
+                }
+                return true;
+            })->values();
+        }
+
+        if ($request->boolean('shuffle')) {
+            $exercises = $exercises->shuffle()->values()->map(function ($ex) {
+                if (is_array($ex->options)) {
+                    shuffle($ex->options);
+                }
+                return $ex;
+            });
+        }
+
+        if ($request->has('limit') && (int) $request->query('limit') > 0) {
+            $exercises = $exercises->take((int) $request->query('limit'))->values();
+        }
+
         return response()->json($exercises);
     }
 
@@ -498,8 +602,11 @@ class SmartStudyController extends Controller
     {
         $data = $request->validate(['question' => ['required', 'string', 'max:1000'], 'options' => ['required', 'array', 'min:2'], 'options.*' => ['string', 'max:200'], 'correctAnswer' => ['required', 'string', 'max:200'], 'explanation' => ['required', 'string', 'max:1000'], 'difficulty' => ['required', 'integer', 'min:1', 'max:5'], 'imageUrl' => ['nullable', 'string', 'max:10000000'], 'imageQuestion' => ['nullable', 'string', 'max:1000'], 'template' => ['nullable', 'in:standard,image_prompt,story_card,flashcard,fill_blank,true_false']]);
         if (!in_array($data['correctAnswer'], $data['options'], true)) return response()->json(['error' => 'Correct answer must be one of the options.'], 422);
-        $updated = DB::table('exercises')->where('id', $exerciseId)->update(['question' => $data['question'], 'options' => json_encode(array_values($data['options'])), 'correct_answer' => $data['correctAnswer'], 'explanation' => $data['explanation'], 'difficulty' => $data['difficulty'], 'image_url' => $data['imageUrl'] ?? null, 'image_question' => $data['imageQuestion'] ?? null, 'template' => $data['template'] ?? 'standard', 'updated_at' => now()]);
-        if (!$updated) return response()->json(['error' => 'Exercise not found'], 404);
+        $exercise = DB::table('exercises')->where('id', $exerciseId)->first();
+        if (!$exercise) return response()->json(['error' => 'Exercise not found'], 404);
+        $skill = DB::table('skills')->where('id', $exercise->skill_id)->first();
+        $template = $data['template'] ?? $skill->template ?? $exercise->template ?? 'standard';
+        DB::table('exercises')->where('id', $exerciseId)->update(['question' => $data['question'], 'options' => json_encode(array_values($data['options'])), 'correct_answer' => $data['correctAnswer'], 'explanation' => $data['explanation'], 'difficulty' => $data['difficulty'], 'image_url' => $data['imageUrl'] ?? null, 'image_question' => $data['imageQuestion'] ?? null, 'template' => $template, 'updated_at' => now()]);
         $exercise = DB::table('exercises')->where('id', $exerciseId)->first();
         $exercise->options = json_decode($exercise->options ?: '[]', true);
         return response()->json($exercise);
@@ -508,9 +615,11 @@ class SmartStudyController extends Controller
     public function createExercise(Request $request, string $skillId)
     {
         $data = $request->validate(['question' => ['required', 'string', 'max:1000'], 'options' => ['required', 'array', 'min:2'], 'options.*' => ['string', 'max:200'], 'correctAnswer' => ['required', 'string', 'max:200'], 'explanation' => ['required', 'string', 'max:1000'], 'difficulty' => ['required', 'integer', 'min:1', 'max:5'], 'imageUrl' => ['nullable', 'string', 'max:10000000'], 'imageQuestion' => ['nullable', 'string', 'max:1000'], 'template' => ['nullable', 'in:standard,image_prompt,story_card,flashcard,fill_blank,true_false']]);
-        if (!DB::table('skills')->where('id', $skillId)->exists()) return response()->json(['error' => 'Skill not found'], 404);
+        $skill = DB::table('skills')->where('id', $skillId)->first();
+        if (!$skill) return response()->json(['error' => 'Skill not found'], 404);
         if (!in_array($data['correctAnswer'], $data['options'], true)) return response()->json(['error' => 'Correct answer must be one of the options.'], 422);
-        $exercise = ['id' => (string) Str::uuid(), 'skill_id' => $skillId, 'question' => $data['question'], 'question_type' => 'MCQ', 'template' => $data['template'] ?? 'standard', 'difficulty' => $data['difficulty'], 'options' => json_encode(array_values($data['options'])), 'correct_answer' => $data['correctAnswer'], 'explanation' => $data['explanation'], 'image_url' => $data['imageUrl'] ?? null, 'image_question' => $data['imageQuestion'] ?? null, 'created_at' => now(), 'updated_at' => now()];
+        $template = $data['template'] ?? $skill->template ?? 'standard';
+        $exercise = ['id' => (string) Str::uuid(), 'skill_id' => $skillId, 'question' => $data['question'], 'question_type' => 'MCQ', 'template' => $template, 'difficulty' => $data['difficulty'], 'options' => json_encode(array_values($data['options'])), 'correct_answer' => $data['correctAnswer'], 'explanation' => $data['explanation'], 'image_url' => $data['imageUrl'] ?? null, 'image_question' => $data['imageQuestion'] ?? null, 'created_at' => now(), 'updated_at' => now()];
         DB::table('exercises')->insert($exercise);
         $exercise['options'] = $data['options'];
         return response()->json($exercise, 201);

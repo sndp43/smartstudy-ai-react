@@ -98,9 +98,17 @@ export function toWords(n: number): string {
     "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
   const tens = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
   if (n < 20) return ones[n] || String(n);
-  const t = Math.floor(n / 10);
-  const r = n % 10;
-  return r === 0 ? tens[t] : `${tens[t]} ${ones[r]}`;
+  if (n < 100) {
+    const t = Math.floor(n / 10);
+    const r = n % 10;
+    return r === 0 ? tens[t] : `${tens[t]} ${ones[r]}`;
+  }
+  if (n < 1000) {
+    const h = Math.floor(n / 100);
+    const rem = n % 100;
+    return rem === 0 ? `${ones[h]} hundred` : `${ones[h]} hundred ${toWords(rem)}`;
+  }
+  return String(n);
 }
 
 export function formatTableRecitePhrase(table: number, multiplier: number, product?: number, dbReciteText?: string): string {
@@ -142,6 +150,9 @@ export default function LearningChartsView({
   const [activeKhadiIndex, setActiveKhadiIndex] = useState<number | null>(null);
   const [activeVyanjanKey, setActiveVyanjanKey] = useState<string | null>(null);
   const [activeSwarKey, setActiveSwarKey] = useState<string | null>(null);
+  const [tableGroupFilter, setTableGroupFilter] = useState<"all" | "2-10" | "11-20" | "21-30">("all");
+  const [allTablesLayout, setAllTablesLayout] = useState<"columns" | "stack">("columns");
+  const [recitingMultiplier, setRecitingMultiplier] = useState<number | null>(null);
 
   const sharedAudioRef = useRef<HTMLAudioElement | null>(null);
   const activeAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -171,6 +182,7 @@ export default function LearningChartsView({
     setRecitingVyanjan(false);
     setRecitingSwar(false);
     setRecitingTable(null);
+    setRecitingMultiplier(null);
     setActiveKhadiIndex(null);
     setActiveVyanjanKey(null);
     setActiveSwarKey(null);
@@ -337,6 +349,7 @@ export default function LearningChartsView({
       for (let i = 0; i < items.length; i++) {
         if (!recitingTableRef.current) break;
         const row = items[i];
+        setRecitingMultiplier(row.multiplier);
         const phrase = formatTableRecitePhrase(tableNum, row.multiplier, row.product, row.reciteText);
         await new Promise<void>((resolve) => {
           const utterance = new SpeechSynthesisUtterance(phrase);
@@ -356,12 +369,13 @@ export default function LearningChartsView({
       }
 
       if (recitingTableRef.current) {
-        await onRecordPractice("tables-2-10", `table_${tableNum}`, `Table of ${tableNum}`);
+        await onRecordPractice(activeChart?.slug || "tables-2-30", `table_${tableNum}`, `Table of ${tableNum}`);
         showToast(`⭐ Completed recitation for Table of ${tableNum}!`);
       }
     } finally {
       recitingTableRef.current = false;
       setRecitingTable(null);
+      setRecitingMultiplier(null);
     }
   };
 
@@ -470,6 +484,9 @@ export default function LearningChartsView({
   const records = chartProgress.records || {};
   const summary = chartProgress.summary || {};
 
+  const isTablesActive = activeChartSlug === "tables-2-30" || activeChartSlug === "tables-2-10" || activeChart?.chart_type === "multiplication";
+  const tablesChartSlug = charts.find(c => c.chart_type === "multiplication")?.slug || "tables-2-30";
+
   return (
     <div className="learning-charts-container" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       {toastMessage && (
@@ -481,16 +498,16 @@ export default function LearningChartsView({
       {/* Header & Submenu Navigation */}
       <div className="chart-subnav" role="tablist" aria-label="Reference Charts Navigation">
         <button
-          className={activeChartSlug === "tables-2-10" ? "chart-subnav-tab active" : "chart-subnav-tab"}
-          onClick={() => setActiveChartSlug("tables-2-10")}
+          className={isTablesActive ? "chart-subnav-tab active" : "chart-subnav-tab"}
+          onClick={() => setActiveChartSlug(tablesChartSlug)}
           role="tab"
-          aria-selected={activeChartSlug === "tables-2-10"}
+          aria-selected={isTablesActive}
         >
           <span style={{ fontSize: "18px" }}>🔢</span>
-          <span>Tables 2–10</span>
+          <span>Tables 2–30</span>
           {summary.tablesPracticed ? (
             <span style={{ fontSize: "11px", background: "#e8f5e9", color: "#2e7d32", padding: "2px 6px", borderRadius: "10px", fontWeight: 800 }}>
-              {summary.tablesPracticed}/9
+              {summary.tablesPracticed}/29
             </span>
           ) : null}
         </button>
@@ -560,7 +577,7 @@ export default function LearningChartsView({
         <div className="chart-summary-stats">
           <div className="chart-stat-chip">
             <span>🔢 Tables:</span>
-            <strong>{summary.tablesPracticed || 0} / 9</strong>
+            <strong>{summary.tablesPracticed || 0} / 29</strong>
           </div>
           <div className="chart-stat-chip">
             <span>🕉️ 14 स्वर:</span>
@@ -581,53 +598,109 @@ export default function LearningChartsView({
         </div>
       </div>
 
-      {/* SUBMENU 1: Tables 2 to 10 */}
-      {activeChartSlug === "tables-2-10" && (
+      {/* SUBMENU 1: Tables 2 to 30 */}
+      {isTablesActive && (
         <section className="panel" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          <div>
-            <h2 style={{ margin: "0 0 6px 0", fontSize: "20px" }}>Multiplication Tables 2 to 10</h2>
-            <p style={{ margin: 0, color: "var(--muted)", fontSize: "13px" }}>
-              Select a table pill below to view, listen, recite aloud, and log practice sessions.
-            </p>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "10px" }}>
+            <div>
+              <h2 style={{ margin: "0 0 6px 0", fontSize: "20px" }}>Multiplication Tables 2 to 30</h2>
+              <p style={{ margin: 0, color: "var(--muted)", fontSize: "13px" }}>
+                Select a table pill below to view, listen, recite aloud, and log practice sessions.
+              </p>
+            </div>
+            <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+              {selectedTable === "all" && (
+                <div className="table-layout-toggle-group">
+                  <button
+                    type="button"
+                    className={`table-layout-toggle-btn ${allTablesLayout === "columns" ? "active" : ""}`}
+                    onClick={() => setAllTablesLayout("columns")}
+                    title="View as vertical columns side-by-side (poster view)"
+                  >
+                    <span>📑</span> Vertical Columns
+                  </button>
+                  <button
+                    type="button"
+                    className={`table-layout-toggle-btn ${allTablesLayout === "stack" ? "active" : ""}`}
+                    onClick={() => setAllTablesLayout("stack")}
+                    title="View as continuous vertical feed"
+                  >
+                    <span>↕️</span> Vertical Stack
+                  </button>
+                </div>
+              )}
+              <div className="table-range-quick-filters" style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
+                <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--muted)" }}>Jump to:</span>
+                {[
+                  { id: "all", label: "All (2–30)" },
+                  { id: "2-10", label: "Tables 2–10" },
+                  { id: "11-20", label: "Tables 11–20" },
+                  { id: "21-30", label: "Tables 21–30" },
+                ].map((grp) => (
+                  <button
+                    key={grp.id}
+                    type="button"
+                    className={`table-range-filter-pill ${tableGroupFilter === grp.id ? "active" : ""}`}
+                    onClick={() => setTableGroupFilter(grp.id as any)}
+                  >
+                    {grp.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Table Selector Pills */}
-          <div className="table-pills-row">
-            {[2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => {
-              const rec = records[`table_${num}`];
-              const isPracticed = !!rec && rec.practiceCount > 0;
-              return (
-                <button
-                  key={num}
-                  className={selectedTable === num ? "table-pill-btn active" : "table-pill-btn"}
-                  onClick={() => setSelectedTable(num)}
-                >
-                  Table {num} {isPracticed ? `⭐${rec.practiceCount > 1 ? ` (${rec.practiceCount})` : ""}` : ""}
-                </button>
-              );
-            })}
+          <div className="table-pills-row" style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+            {((activeChart?.chart_data?.map((t: any) => t.table) as number[]) || Array.from({ length: 29 }, (_, i) => i + 2))
+              .filter((num) => {
+                if (tableGroupFilter === "2-10") return num >= 2 && num <= 10;
+                if (tableGroupFilter === "11-20") return num >= 11 && num <= 20;
+                if (tableGroupFilter === "21-30") return num >= 21 && num <= 30;
+                return true;
+              })
+              .map((num) => {
+                const rec = records[`table_${num}`];
+                const isPracticed = !!rec && rec.practiceCount > 0;
+                return (
+                  <button
+                    key={num}
+                    className={selectedTable === num ? "table-pill-btn active" : "table-pill-btn"}
+                    onClick={() => setSelectedTable(num)}
+                  >
+                    Table {num} {isPracticed ? `⭐${rec.practiceCount > 1 ? ` (${rec.practiceCount})` : ""}` : ""}
+                  </button>
+                );
+              })}
             <button
               className={selectedTable === "all" ? "table-pill-btn active" : "table-pill-btn"}
               onClick={() => setSelectedTable("all")}
             >
-              📖 All Tables (2–10)
+              📖 All Tables {tableGroupFilter === "all" ? "(2–30)" : `(${tableGroupFilter})`}
             </button>
           </div>
 
           {/* Table Display */}
           {selectedTable === "all" ? (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "18px" }}>
-              {activeChart?.chart_data?.map((tbl: any) => {
+            <div className={allTablesLayout === "columns" ? "all-tables-vertical-grid" : "all-tables-vertical-stack"}>
+              {activeChart?.chart_data
+                ?.filter((tbl: any) => {
+                  if (tableGroupFilter === "2-10") return tbl.table >= 2 && tbl.table <= 10;
+                  if (tableGroupFilter === "11-20") return tbl.table >= 11 && tbl.table <= 20;
+                  if (tableGroupFilter === "21-30") return tbl.table >= 21 && tbl.table <= 30;
+                  return true;
+                })
+                .map((tbl: any) => {
                 const rec = records[tbl.key];
                 const isPracticed = !!rec && rec.practiceCount > 0;
                 const isReciting = recitingTable === tbl.table;
                 return (
-                  <div key={tbl.key} className="table-display-card" style={{ padding: "16px" }}>
-                    <div className="table-display-header" style={{ marginBottom: "14px", paddingBottom: "10px" }}>
+                  <div key={tbl.key} className="table-display-card vertical-table-card">
+                    <div className="table-display-header">
                       <div>
-                        <h3 style={{ fontSize: "18px" }}>{tbl.label}</h3>
+                        <h3>{tbl.label}</h3>
                         {isPracticed && (
-                          <small style={{ color: "#2e7d32", fontWeight: 700 }}>
+                          <small style={{ color: "#2e7d32", fontWeight: 700, display: "block", marginTop: "2px" }}>
                             ⭐ Practiced {rec.practiceCount} time{rec.practiceCount > 1 ? "s" : ""}
                           </small>
                         )}
@@ -637,35 +710,37 @@ export default function LearningChartsView({
                           className="recite-audio-btn"
                           onClick={() => reciteFullTable(tbl.table, tbl.items)}
                           title="Recite entire table aloud"
-                          style={{ padding: "6px 10px", fontSize: "11px" }}
+                          style={{ padding: "5px 9px", fontSize: "11px" }}
                         >
                           {isReciting ? "⏹️ Stop" : "🔊 Recite"}
                         </button>
                         <button
                           className={`mark-practiced-btn ${isPracticed ? "practiced" : ""}`}
-                          onClick={() => onRecordPractice("tables-2-10", tbl.key, tbl.label)}
+                          onClick={() => onRecordPractice(tablesChartSlug, tbl.key, tbl.label)}
                           disabled={savingChartItem === tbl.key}
-                          style={{ padding: "6px 10px", fontSize: "11px" }}
+                          style={{ padding: "5px 9px", fontSize: "11px" }}
                         >
                           {isPracticed ? `⭐ ${rec.practiceCount}x` : "☆ Practice"}
                         </button>
                       </div>
                     </div>
-                    <div className="table-equations-grid" style={{ gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                    {/* Strictly vertical equations list 1 to 10 */}
+                    <div className="table-equations-vertical-list">
                       {tbl.items?.map((item: any) => {
                         const phrase = formatTableRecitePhrase(tbl.table, item.multiplier, item.product, item.reciteText);
+                        const isRowReciting = recitingTable === tbl.table && recitingMultiplier === item.multiplier;
                         return (
                           <div
                             key={item.multiplier}
-                            className="table-equation-item"
+                            className={`table-equation-item vertical-equation-row ${isRowReciting ? "active-reciting" : ""}`}
                             onClick={() => speakPhrase(phrase)}
                             title={`Click to hear: "${phrase}"`}
-                            style={{ padding: "8px 10px", fontSize: "13px" }}
                           >
-                            <span>{item.equation}</span>
-                            <span className="product-badge" style={{ fontSize: "12px", padding: "2px 6px" }}>
-                              {item.product}
-                            </span>
+                            <span className="equation-math">{tbl.table} × {item.multiplier} =</span>
+                            <div className="equation-result-box">
+                              <span className="product-badge">{item.product}</span>
+                              <span className="audio-icon-hint" title="Listen">🔊</span>
+                            </div>
                           </div>
                         );
                       })}
@@ -687,7 +762,7 @@ export default function LearningChartsView({
               const isReciting = recitingTable === currentTableObj.table;
 
               return (
-                <div className="table-display-card">
+                <div className="table-display-card single-table-vertical-card">
                   <div className="table-display-header">
                     <div>
                       <h3>{currentTableObj.label}</h3>
@@ -712,7 +787,7 @@ export default function LearningChartsView({
                       </button>
                       <button
                         className={`mark-practiced-btn ${isPracticed ? "practiced" : ""}`}
-                        onClick={() => onRecordPractice("tables-2-10", currentTableObj.key, currentTableObj.label)}
+                        onClick={() => onRecordPractice(tablesChartSlug, currentTableObj.key, currentTableObj.label)}
                         disabled={savingChartItem === currentTableObj.key}
                       >
                         <span>{isPracticed ? "⭐" : "☆"}</span>
@@ -721,20 +796,22 @@ export default function LearningChartsView({
                     </div>
                   </div>
 
-                  <div className="table-equations-grid">
+                  {/* Strictly vertical equations list 1 to 10 */}
+                  <div className="table-equations-vertical-list">
                     {currentTableObj.items?.map((item: any) => {
                       const phrase = formatTableRecitePhrase(currentTableObj.table, item.multiplier, item.product, item.reciteText);
+                      const isRowReciting = recitingTable === currentTableObj.table && recitingMultiplier === item.multiplier;
                       return (
                         <div
                           key={item.multiplier}
-                          className="table-equation-item"
+                          className={`table-equation-item vertical-equation-row ${isRowReciting ? "active-reciting" : ""}`}
                           onClick={() => speakPhrase(phrase)}
                           title={`Click to pronounce: "${phrase}"`}
                         >
-                          <span style={{ fontSize: "16px", fontWeight: 700 }}>{item.equation}</span>
-                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span className="equation-math">{currentTableObj.table} × {item.multiplier} =</span>
+                          <div className="equation-result-box">
                             <span className="product-badge">{item.product}</span>
-                            <span style={{ fontSize: "12px", color: "var(--teal)" }}>🔊</span>
+                            <span className="audio-icon-hint" title="Listen">🔊</span>
                           </div>
                         </div>
                       );
