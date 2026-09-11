@@ -42,12 +42,14 @@ class SmartStudySeeder extends Seeder
         $hindiTopic = '00000000-0000-0000-0000-000000000202';
         $marathiTopic = '00000000-0000-0000-0000-000000000203';
         $evsTopic = '00000000-0000-0000-0000-000000000204';
+        $rhymingTopic = '00000000-0000-0000-0000-000000000205';
         DB::table('topics')->insertOrIgnore([
             ['id' => $numbers, 'subject_id' => $maths, 'name' => 'Numbers', 'description' => 'Counting and understanding numbers', 'created_at' => now(), 'updated_at' => now()],
             ['id' => $addition, 'subject_id' => $maths, 'name' => 'Addition', 'description' => 'Adding small numbers', 'created_at' => now(), 'updated_at' => now()],
             ['id' => $subtraction, 'subject_id' => $maths, 'name' => 'Subtraction', 'description' => 'Taking away small numbers', 'created_at' => now(), 'updated_at' => now()],
             ['id' => $multiplication, 'subject_id' => $maths, 'name' => 'Multiplication', 'description' => 'Learning multiplication tables', 'created_at' => now(), 'updated_at' => now()],
             ['id' => $englishTopic, 'subject_id' => $english, 'name' => 'Phonics', 'description' => 'Letters and simple sounds', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => $rhymingTopic, 'subject_id' => $english, 'name' => 'Rhyming words', 'description' => 'Words that share the same ending phonetic sound', 'created_at' => now(), 'updated_at' => now()],
             ['id' => $hindiTopic, 'subject_id' => $hindi, 'name' => 'Hindi letters', 'description' => 'Recognising Hindi letters and sounds', 'created_at' => now(), 'updated_at' => now()],
             ['id' => $marathiTopic, 'subject_id' => $marathi, 'name' => 'Marathi letters', 'description' => 'Recognising Marathi letters and sounds', 'created_at' => now(), 'updated_at' => now()],
             ['id' => $evsTopic, 'subject_id' => $evs, 'name' => 'My world', 'description' => 'People, plants, animals and places', 'created_at' => now(), 'updated_at' => now()],
@@ -73,6 +75,7 @@ class SmartStudySeeder extends Seeder
             ['00000000-0000-0000-0000-000000001017', $numbers, 'Before numbers', 'Find the number that comes before (100 to 500)', 1],
             ['00000000-0000-0000-0000-000000001018', $numbers, 'After numbers', 'Find the number that comes after (100 to 500)', 1],
             ['00000000-0000-0000-0000-000000001019', $numbers, 'Missing numbers', 'Find the missing number in sequences (100 to 500)', 1],
+            ['00000000-0000-0000-0000-000000001020', $rhymingTopic, 'Rhyming words', 'Find and create rhyming words across 200+ word family combinations', 1],
         ];
         foreach ($skills as [$id, $topic, $name, $description, $difficulty]) {
             DB::table('skills')->insertOrIgnore([

@@ -1,4 +1,7 @@
 import { useState, useRef, useEffect } from "react";
+import VisualLearningChartGrid, { VisualChartItem } from "./VisualLearningChartGrid";
+import { DEFAULT_ANIMALS, DEFAULT_VEGETABLES, DEFAULT_BIRDS, DEFAULT_EMOTIONS } from "./chartsData";
+import PhonicsLearningChartView from "./PhonicsLearningChartView";
 
 export interface ChartItem {
   key: string;
@@ -21,6 +24,12 @@ export interface ChartProgressData {
     swarPracticed?: number;
     vyanjanPracticed?: number;
     lettersPracticed?: number;
+    bodyPartsPracticed?: number;
+    animalsPracticed?: number;
+    vegetablesPracticed?: number;
+    birdsPracticed?: number;
+    emotionsPracticed?: number;
+    phonicsPracticed?: number;
     totalPracticeSessions?: number;
   };
   records?: Record<string, { practiceCount: number; lastPracticedAt: string; itemName?: string }>;
@@ -111,6 +120,589 @@ export function toWords(n: number): string {
   return String(n);
 }
 
+export const DEFAULT_BODY_PARTS = [
+  {
+    key: "part_hair",
+    name: "Hair",
+    marathi: "केस (Kes)",
+    hindi: "बाल (Baal)",
+    icon: "💇",
+    category: "head",
+    side: "left",
+    x: 50,
+    y: 5,
+    svgX: 320,
+    svgY: 55,
+    labelY: 55,
+    fact: "Grows on top of our head and keeps our head warm and protected.",
+    audioText: "Hair",
+  },
+  {
+    key: "part_forehead",
+    name: "Forehead",
+    marathi: "कपाळ (Kapaal)",
+    hindi: "माथा (Maatha)",
+    icon: "🧠",
+    category: "head",
+    side: "right",
+    x: 50,
+    y: 13,
+    svgX: 325,
+    svgY: 102,
+    labelY: 75,
+    fact: "The smooth area on our face right between our eyebrows and hair.",
+    audioText: "Forehead",
+  },
+  {
+    key: "part_head",
+    name: "Head",
+    marathi: "डोके (Doke)",
+    hindi: "सिर (Sir)",
+    icon: "🗣️",
+    category: "head",
+    side: "left",
+    x: 50,
+    y: 11,
+    svgX: 295,
+    svgY: 85,
+    labelY: 95,
+    fact: "Protects our brain and holds our face, eyes, ears, nose, and mouth.",
+    audioText: "Head",
+  },
+  {
+    key: "part_ears",
+    name: "Ears",
+    marathi: "कान (Kaan)",
+    hindi: "कान (Kaan)",
+    icon: "👂",
+    category: "sense",
+    side: "right",
+    x: 38,
+    y: 18,
+    svgX: 374,
+    svgY: 122,
+    labelY: 120,
+    fact: "Sense of Hearing: Two ears allow us to hear music, stories, and friends.",
+    audioText: "Ears. Used for listening.",
+  },
+  {
+    key: "part_eyes",
+    name: "Eyes",
+    marathi: "डोळे (Dole)",
+    hindi: "आँखें (Aankhein)",
+    icon: "👀",
+    category: "sense",
+    side: "left",
+    x: 46,
+    y: 16,
+    svgX: 302,
+    svgY: 122,
+    labelY: 135,
+    fact: "Sense of Sight: Two eyes help us see shapes, vibrant colors, and books.",
+    audioText: "Eyes. Used for seeing.",
+  },
+  {
+    key: "part_mouth",
+    name: "Mouth",
+    marathi: "तोंड (Tond)",
+    hindi: "मुँह (Munh)",
+    icon: "👄",
+    category: "head",
+    side: "right",
+    x: 50,
+    y: 22,
+    svgX: 324,
+    svgY: 154,
+    labelY: 165,
+    fact: "We use our mouth to smile, speak cheerfully, and eat delicious food.",
+    audioText: "Mouth",
+  },
+  {
+    key: "part_nose",
+    name: "Nose",
+    marathi: "नाक (Naak)",
+    hindi: "नाक (Naak)",
+    icon: "👃",
+    category: "sense",
+    side: "left",
+    x: 50,
+    y: 19,
+    svgX: 316,
+    svgY: 136,
+    labelY: 175,
+    fact: "Sense of Smell: Helps us smell fragrant flowers and breathe fresh air.",
+    audioText: "Nose. Used for smelling and breathing.",
+  },
+  {
+    key: "part_tongue",
+    name: "Tongue",
+    marathi: "जीभ (Jeebh)",
+    hindi: "जीभ (Jeebh)",
+    icon: "👅",
+    category: "sense",
+    side: "right",
+    x: 52,
+    y: 24,
+    svgX: 322,
+    svgY: 158,
+    labelY: 210,
+    fact: "Sense of Taste: Tastes sweet mangoes, salty popcorn, and sour lemons.",
+    audioText: "Tongue. Used for tasting.",
+  },
+  {
+    key: "part_teeth",
+    name: "Teeth",
+    marathi: "दात (Daat)",
+    hindi: "दाँत (Daant)",
+    icon: "🦷",
+    category: "head",
+    side: "left",
+    x: 48,
+    y: 23,
+    svgX: 316,
+    svgY: 151,
+    labelY: 215,
+    fact: "Shiny white teeth help us chew and break down nutritious food.",
+    audioText: "Teeth",
+  },
+  {
+    key: "part_shoulders",
+    name: "Shoulders",
+    marathi: "खांदे (Khaande)",
+    hindi: "कंधे (Kandhe)",
+    icon: "💪",
+    category: "upper",
+    side: "right",
+    x: 36,
+    y: 32,
+    svgX: 382,
+    svgY: 215,
+    labelY: 255,
+    fact: "Strong joints that carry school backpacks and connect our arms.",
+    audioText: "Shoulders",
+  },
+  {
+    key: "part_neck",
+    name: "Neck",
+    marathi: "मान (Maan)",
+    hindi: "गर्दन (Gardan)",
+    icon: "🧣",
+    category: "upper",
+    side: "left",
+    x: 50,
+    y: 28,
+    svgX: 312,
+    svgY: 188,
+    labelY: 255,
+    fact: "Connects our head to our torso and lets our head turn left and right.",
+    audioText: "Neck",
+  },
+  {
+    key: "part_elbow",
+    name: "Elbow",
+    marathi: "कोपरा (Kopra)",
+    hindi: "कोहनी (Kohni)",
+    icon: "🦾",
+    category: "upper",
+    side: "right",
+    x: 26,
+    y: 47,
+    svgX: 410,
+    svgY: 305,
+    labelY: 305,
+    fact: "The flexible hinge joint that lets our arm bend and fold.",
+    audioText: "Elbow",
+  },
+  {
+    key: "part_chest",
+    name: "Chest",
+    marathi: "छाती (Chhaati)",
+    hindi: "छाती (Chhaati)",
+    icon: "🫁",
+    category: "upper",
+    side: "left",
+    x: 50,
+    y: 35,
+    svgX: 312,
+    svgY: 245,
+    labelY: 295,
+    fact: "Contains our rib cage, which safely guards our heart and lungs.",
+    audioText: "Chest",
+  },
+  {
+    key: "part_stomach",
+    name: "Stomach",
+    marathi: "पोट (Pot)",
+    hindi: "पेट (Pet)",
+    icon: "🥑",
+    category: "upper",
+    side: "right",
+    x: 50,
+    y: 44,
+    svgX: 325,
+    svgY: 325,
+    labelY: 355,
+    fact: "Digests our meals to give our body energy to play and learn.",
+    audioText: "Stomach",
+  },
+  {
+    key: "part_arms",
+    name: "Arms",
+    marathi: "हात (Haat)",
+    hindi: "बाँह (Baanh)",
+    icon: "💪",
+    category: "upper",
+    side: "left",
+    x: 30,
+    y: 41,
+    svgX: 235,
+    svgY: 275,
+    labelY: 340,
+    fact: "Help us reach high objects, carry toys, and give warm hugs.",
+    audioText: "Arms",
+  },
+  {
+    key: "part_fingers",
+    name: "Fingers",
+    marathi: "बोटे (Bote)",
+    hindi: "उंगलियाँ (Ungliyan)",
+    icon: "✌️",
+    category: "upper",
+    side: "right",
+    x: 20,
+    y: 59,
+    svgX: 450,
+    svgY: 385,
+    labelY: 405,
+    fact: "Ten nimble fingers that hold crayons, turn book pages, and count.",
+    audioText: "Fingers",
+  },
+  {
+    key: "part_hands",
+    name: "Hands",
+    marathi: "हात (Haat / Panja)",
+    hindi: "हाथ (Haath)",
+    icon: "✋",
+    category: "sense",
+    side: "left",
+    x: 22,
+    y: 55,
+    svgX: 195,
+    svgY: 375,
+    labelY: 395,
+    fact: "Sense of Touch: We write, paint, clap, and feel warm or soft textures.",
+    audioText: "Hands. Used for touching and holding.",
+  },
+  {
+    key: "part_knees",
+    name: "Knees",
+    marathi: "गुडघे (Gudghe)",
+    hindi: "घुटने (Ghutne)",
+    icon: "🦿",
+    category: "lower",
+    side: "right",
+    x: 43,
+    y: 77,
+    svgX: 354,
+    svgY: 520,
+    labelY: 520,
+    fact: "Bendy joints that allow our legs to sit cross-legged, crouch, and pedal.",
+    audioText: "Knees",
+  },
+  {
+    key: "part_legs",
+    name: "Legs",
+    marathi: "पाय (Paay)",
+    hindi: "टाँगें (Taangein)",
+    icon: "🦵",
+    category: "lower",
+    side: "left",
+    x: 42,
+    y: 69,
+    svgX: 286,
+    svgY: 485,
+    labelY: 485,
+    fact: "Long and powerful limbs that let us walk, leap, run, and skip.",
+    audioText: "Legs",
+  },
+  {
+    key: "part_toes",
+    name: "Toes",
+    marathi: "पायाची बोटे (Paayachi Bote)",
+    hindi: "पैर की उंगलियाँ",
+    icon: "👣",
+    category: "lower",
+    side: "right",
+    x: 40,
+    y: 96,
+    svgX: 365,
+    svgY: 655,
+    labelY: 645,
+    fact: "Ten small toes at the front of our feet that assist our balance.",
+    audioText: "Toes",
+  },
+  {
+    key: "part_feet",
+    name: "Feet",
+    marathi: "पावले (Paavle)",
+    hindi: "पैर (Pair)",
+    icon: "🦶",
+    category: "lower",
+    side: "left",
+    x: 41,
+    y: 92,
+    svgX: 278,
+    svgY: 645,
+    labelY: 645,
+    fact: "Firm bases that support our body weight and let us stand upright.",
+    audioText: "Feet",
+  },
+];
+
+export interface PosterBodyPart {
+  key: string;
+  name: string;
+  marathi: string;
+  hindi: string;
+  category: "head" | "sense" | "upper" | "lower";
+  pill: { x: number; y: number; w: number; h: number };
+  line: { x1: number; y1: number; x2: number; y2: number };
+  boyHotspot: { cx: number; cy: number; r: number };
+  themeColor: string;
+  fact: string;
+  icon: string;
+  audioText?: string;
+}
+
+export const POSTER_BODY_PARTS: PosterBodyPart[] = [
+  // Left Column (7 parts)
+  {
+    key: "part_head",
+    name: "Head",
+    marathi: "डोके (Doke)",
+    hindi: "सिर (Sir)",
+    category: "head",
+    pill: { x: 50, y: 204, w: 175, h: 64 },
+    line: { x1: 225, y1: 236, x2: 385, y2: 240 },
+    boyHotspot: { cx: 400, cy: 260, r: 45 },
+    themeColor: "#7c3aed",
+    fact: "Our head holds our brain, eyes, nose, mouth, and ears!",
+    icon: "👦",
+    audioText: "Head",
+  },
+  {
+    key: "part_eyes",
+    name: "Eyes",
+    marathi: "डोळे (Dole)",
+    hindi: "आँखें (Aankhen)",
+    category: "sense",
+    pill: { x: 50, y: 296, w: 175, h: 64 },
+    line: { x1: 225, y1: 327, x2: 418, y2: 338 },
+    boyHotspot: { cx: 440, cy: 345, r: 28 },
+    themeColor: "#0284c7",
+    fact: "Sense of Sight! Two curious eyes help us see colorful pictures and smiles.",
+    icon: "👀",
+    audioText: "Eyes. Used for seeing.",
+  },
+  {
+    key: "part_nose",
+    name: "Nose",
+    marathi: "नाक (Naak)",
+    hindi: "नाक (Naak)",
+    category: "sense",
+    pill: { x: 50, y: 386, w: 175, h: 64 },
+    line: { x1: 225, y1: 417, x2: 485, y2: 378 },
+    boyHotspot: { cx: 495, cy: 375, r: 22 },
+    themeColor: "#16a34a",
+    fact: "Sense of Smell! Our cute nose smells fragrant flowers and delicious food.",
+    icon: "👃",
+    audioText: "Nose. Used for smelling.",
+  },
+  {
+    key: "part_mouth",
+    name: "Mouth",
+    marathi: "तोंड (Tond)",
+    hindi: "मुँह (Munh)",
+    category: "sense",
+    pill: { x: 50, y: 454, w: 180, h: 64 },
+    line: { x1: 230, y1: 485, x2: 472, y2: 422 },
+    boyHotspot: { cx: 505, cy: 415, r: 28 },
+    themeColor: "#e11d48",
+    fact: "We use our smiling mouth to laugh, sing, talk cheerfully, and eat tasty snacks!",
+    icon: "👄",
+    audioText: "Mouth",
+  },
+  {
+    key: "part_arms",
+    name: "Arms",
+    marathi: "हात / बाहू (Haat)",
+    hindi: "बाजू (Baaju)",
+    category: "upper",
+    pill: { x: 50, y: 546, w: 175, h: 64 },
+    line: { x1: 225, y1: 577, x2: 356, y2: 577 },
+    boyHotspot: { cx: 375, cy: 575, r: 32 },
+    themeColor: "#ea580c",
+    fact: "Strong arms help us lift our toys, reach high shelves, and give big warm hugs!",
+    icon: "💪",
+    audioText: "Arms",
+  },
+  {
+    key: "part_hands",
+    name: "Hands",
+    marathi: "हात (Haat)",
+    hindi: "हाथ (Haath)",
+    category: "sense",
+    pill: { x: 50, y: 622, w: 180, h: 64 },
+    line: { x1: 230, y1: 653, x2: 326, y2: 648 },
+    boyHotspot: { cx: 330, cy: 650, r: 35 },
+    themeColor: "#db2777",
+    fact: "Sense of Touch! Hands help us draw, hold pencils, wave hello, and clap happily!",
+    icon: "✋",
+    audioText: "Hands",
+  },
+  {
+    key: "part_fingers",
+    name: "Fingers",
+    marathi: "बोटे (Bote)",
+    hindi: "उंगलियाँ (Ungliyan)",
+    category: "upper",
+    pill: { x: 50, y: 696, w: 184, h: 64 },
+    line: { x1: 234, y1: 727, x2: 318, y2: 715 },
+    boyHotspot: { cx: 310, cy: 715, r: 32 },
+    themeColor: "#65a30d",
+    fact: "We have 10 nimble fingers to count 1-2-3, turn pages, and paint pictures!",
+    icon: "🖐️",
+    audioText: "Fingers",
+  },
+  // Right Column (9 parts)
+  {
+    key: "part_hair",
+    name: "Hair",
+    marathi: "केस (Kes)",
+    hindi: "बाल (Baal)",
+    category: "head",
+    pill: { x: 592, y: 200, w: 175, h: 64 },
+    line: { x1: 592, y1: 231, x2: 522, y2: 238 },
+    boyHotspot: { cx: 515, cy: 235, r: 48 },
+    themeColor: "#d97706",
+    fact: "Soft hair grows on top of our head to keep us warm and protected from the sun.",
+    icon: "💇",
+    audioText: "Hair",
+  },
+  {
+    key: "part_ears",
+    name: "Ears",
+    marathi: "कान (Kaan)",
+    hindi: "कान (Kaan)",
+    category: "sense",
+    pill: { x: 592, y: 293, w: 175, h: 64 },
+    line: { x1: 592, y1: 324, x2: 625, y2: 365 },
+    boyHotspot: { cx: 635, cy: 365, r: 26 },
+    themeColor: "#e11d48",
+    fact: "Sense of Hearing! Two ears help us listen to music, stories, and friends talking.",
+    icon: "👂",
+    audioText: "Ears. Used for listening.",
+  },
+  {
+    key: "part_neck",
+    name: "Neck",
+    marathi: "मान (Maan)",
+    hindi: "गर्दन (Gardan)",
+    category: "upper",
+    pill: { x: 592, y: 373, w: 175, h: 64 },
+    line: { x1: 592, y1: 404, x2: 530, y2: 452 },
+    boyHotspot: { cx: 518, cy: 455, r: 24 },
+    themeColor: "#16a34a",
+    fact: "Our neck connects our head to our body so we can look up, down, and around!",
+    icon: "🧣",
+    audioText: "Neck",
+  },
+  {
+    key: "part_shoulders",
+    name: "Shoulders",
+    marathi: "खांदे (Khaande)",
+    hindi: "कंधे (Kandhe)",
+    category: "upper",
+    pill: { x: 580, y: 450, w: 195, h: 64 },
+    line: { x1: 580, y1: 481, x2: 590, y2: 476 },
+    boyHotspot: { cx: 595, cy: 476, r: 28 },
+    themeColor: "#7c3aed",
+    fact: "Shoulders support our arms and carry our school backpack every morning.",
+    icon: "👕",
+    audioText: "Shoulders",
+  },
+  {
+    key: "part_tummy",
+    name: "Tummy",
+    marathi: "पोट (Pot)",
+    hindi: "पेट (Pet)",
+    category: "upper",
+    pill: { x: 592, y: 533, w: 178, h: 64 },
+    line: { x1: 592, y1: 564, x2: 542, y2: 574 },
+    boyHotspot: { cx: 515, cy: 575, r: 35 },
+    themeColor: "#0284c7",
+    fact: "Our tummy (stomach) digests healthy fruits, vegetables, and milk into energy!",
+    icon: "🥣",
+    audioText: "Tummy",
+  },
+  {
+    key: "part_legs",
+    name: "Legs",
+    marathi: "पाय (Paay)",
+    hindi: "टाँगें (Taangen)",
+    category: "lower",
+    pill: { x: 592, y: 613, w: 175, h: 64 },
+    line: { x1: 592, y1: 644, x2: 582, y2: 642 },
+    boyHotspot: { cx: 565, cy: 655, r: 35 },
+    themeColor: "#d97706",
+    fact: "Strong legs help us stand tall, run in the playground, jump high, and dance!",
+    icon: "🦵",
+    audioText: "Legs",
+  },
+  {
+    key: "part_knees",
+    name: "Knees",
+    marathi: "गुडघे (Gudaghe)",
+    hindi: "घुटने (Ghutne)",
+    category: "lower",
+    pill: { x: 592, y: 684, w: 178, h: 64 },
+    line: { x1: 592, y1: 715, x2: 552, y2: 742 },
+    boyHotspot: { cx: 552, cy: 742, r: 26 },
+    themeColor: "#c026d3",
+    fact: "Bendy knee joints let us sit on the floor, squat down, and pedal our bicycle.",
+    icon: "🧎",
+    audioText: "Knees",
+  },
+  {
+    key: "part_feet",
+    name: "Feet",
+    marathi: "पावले (Paavale)",
+    hindi: "पैर (Pair)",
+    category: "lower",
+    pill: { x: 592, y: 753, w: 175, h: 64 },
+    line: { x1: 592, y1: 784, x2: 565, y2: 802 },
+    boyHotspot: { cx: 560, cy: 860, r: 32 },
+    themeColor: "#16a34a",
+    fact: "Feet support our entire body and give us firm balance as we step forward.",
+    icon: "🦶",
+    audioText: "Feet",
+  },
+  {
+    key: "part_toes",
+    name: "Toes",
+    marathi: "पायाची बोटे (Paayachi Bote)",
+    hindi: "पैर की उंगलियाँ (Pair Ki Ungliyan)",
+    category: "lower",
+    pill: { x: 592, y: 823, w: 175, h: 64 },
+    line: { x1: 592, y1: 854, x2: 580, y2: 874 },
+    boyHotspot: { cx: 585, cy: 900, r: 26 },
+    themeColor: "#0284c7",
+    fact: "Ten wiggly toes on our feet help us balance when walking and running barefoot!",
+    icon: "👣",
+    audioText: "Toes",
+  },
+];
+
 export function formatTableRecitePhrase(table: number, multiplier: number, product?: number, dbReciteText?: string): string {
   if (dbReciteText && dbReciteText.toLowerCase().includes("za")) {
     return dbReciteText;
@@ -154,6 +746,18 @@ export default function LearningChartsView({
   const [allTablesLayout, setAllTablesLayout] = useState<"columns" | "stack">("columns");
   const [recitingMultiplier, setRecitingMultiplier] = useState<number | null>(null);
 
+  // Body Parts chart state
+  const [bodyChartMode, setBodyChartMode] = useState<"poster" | "vector">("poster");
+  const [hoveredPartKey, setHoveredPartKey] = useState<string | null>("part_head");
+  const [selectedPartKey, setSelectedPartKey] = useState<string>("part_head");
+  const [autoSpeakOnHover, setAutoSpeakOnHover] = useState<boolean>(true);
+  const [bodyCategoryFilter, setBodyCategoryFilter] = useState<"all" | "sense" | "head" | "upper" | "lower">("all");
+  const [recitingBodyParts, setRecitingBodyParts] = useState<boolean>(false);
+  const [quizActive, setQuizActive] = useState<boolean>(false);
+  const [quizTargetKey, setQuizTargetKey] = useState<string | null>(null);
+  const [quizScore, setQuizScore] = useState<number>(0);
+  const [quizFeedback, setQuizFeedback] = useState<string | null>(null);
+
   const sharedAudioRef = useRef<HTMLAudioElement | null>(null);
   const activeAudioRef = useRef<HTMLAudioElement | null>(null);
   const pendingAudioResolverRef = useRef<(() => void) | null>(null);
@@ -161,6 +765,8 @@ export default function LearningChartsView({
   const recitingVyanjanRef = useRef<boolean>(false);
   const recitingSwarRef = useRef<boolean>(false);
   const recitingTableRef = useRef<boolean>(false);
+  const recitingBodyPartsRef = useRef<boolean>(false);
+  const hoverTimerRef = useRef<any>(null);
 
   useEffect(() => {
     return () => {
@@ -178,14 +784,21 @@ export default function LearningChartsView({
     recitingVyanjanRef.current = false;
     recitingSwarRef.current = false;
     recitingTableRef.current = false;
+    recitingBodyPartsRef.current = false;
     setRecitingKhadi(false);
     setRecitingVyanjan(false);
     setRecitingSwar(false);
     setRecitingTable(null);
     setRecitingMultiplier(null);
+    setRecitingBodyParts(false);
     setActiveKhadiIndex(null);
     setActiveVyanjanKey(null);
     setActiveSwarKey(null);
+
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
 
     if (pendingAudioResolverRef.current) {
       const resolver = pendingAudioResolverRef.current;
@@ -480,12 +1093,208 @@ export default function LearningChartsView({
     }
   };
 
-  const activeChart = charts.find((c) => c.slug === activeChartSlug) || charts[0];
+  const speakBodyPart = (name: string) => {
+    if ("speechSynthesis" in window) {
+      try {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(name);
+        utterance.rate = 0.92;
+        utterance.pitch = 1.06;
+        const voices = window.speechSynthesis.getVoices();
+        const preferred = voices.find((v) => v.lang === "en-IN" || v.lang.startsWith("en-IN")) ||
+          voices.find((v) => /female|samantha|zira|karen|susan|victoria|google us english|microsoft.*female/i.test(`${v.name}`));
+        if (preferred) utterance.voice = preferred;
+        window.speechSynthesis.speak(utterance);
+        return;
+      } catch (e) {}
+    }
+    speakPhrase(name, "en-US");
+  };
+
+  const handlePartHover = (part: any) => {
+    setHoveredPartKey(part.key);
+    setSelectedPartKey(part.key);
+    if (autoSpeakOnHover) {
+      if (hoverTimerRef.current) {
+        clearTimeout(hoverTimerRef.current);
+      }
+      hoverTimerRef.current = setTimeout(() => {
+        speakBodyPart(part.name);
+      }, 50);
+    }
+  };
+
+  const handlePartSelect = (part: any) => {
+    setSelectedPartKey(part.key);
+    setHoveredPartKey(part.key);
+    speakBodyPart(part.name);
+  };
+
+  const handlePuppyHover = () => {
+    setHoveredPartKey("puppy");
+    if (autoSpeakOnHover) {
+      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = setTimeout(() => {
+        speakBodyPart("Puppy! A cute and loyal little dog! Woof woof!");
+      }, 50);
+    }
+  };
+
+  const startQuizGame = () => {
+    setQuizActive(true);
+    setQuizScore(0);
+    setQuizFeedback(null);
+    pickNextQuizTarget();
+  };
+
+  const stopQuizGame = () => {
+    setQuizActive(false);
+    setQuizTargetKey(null);
+    setQuizFeedback(null);
+    stopAllAudio();
+  };
+
+  const pickNextQuizTarget = (parts = POSTER_BODY_PARTS) => {
+    const randomIndex = Math.floor(Math.random() * parts.length);
+    const target = parts[randomIndex];
+    setQuizTargetKey(target.key);
+    setQuizFeedback(`Can you find the ${target.name}? Hover or click on the ${target.name}!`);
+    speakBodyPart(`Can you find the ${target.name}? Point to the ${target.name}!`);
+  };
+
+  const handleQuizAnswer = (partKey: string) => {
+    if (!quizActive || !quizTargetKey) return;
+    const target = POSTER_BODY_PARTS.find((p) => p.key === quizTargetKey);
+    if (!target) return;
+
+    if (partKey === quizTargetKey) {
+      setQuizScore((prev) => prev + 1);
+      setQuizFeedback(`🎉 Great job! You found the ${target.name}! ⭐`);
+      speakBodyPart(`Awesome! That is the ${target.name}!`);
+      onRecordPractice("body-parts", target.key, target.name);
+      setTimeout(() => {
+        if (quizActive) pickNextQuizTarget();
+      }, 1600);
+    } else {
+      const selected = POSTER_BODY_PARTS.find((p) => p.key === partKey);
+      setQuizFeedback(`That's the ${selected?.name || "body part"}! Try finding the ${target.name}!`);
+      speakBodyPart(`That is the ${selected?.name || "body part"}. Try finding the ${target.name}!`);
+    }
+  };
+
+  const reciteAllPosterParts = async () => {
+    if (recitingBodyParts) {
+      stopAllAudio();
+      return;
+    }
+    stopAllAudio();
+    recitingBodyPartsRef.current = true;
+    setRecitingBodyParts(true);
+    showToast("🔊 Reciting all 16 Body Parts from top to bottom...");
+
+    try {
+      for (let i = 0; i < POSTER_BODY_PARTS.length; i++) {
+        if (!recitingBodyPartsRef.current) break;
+        const part = POSTER_BODY_PARTS[i];
+        setHoveredPartKey(part.key);
+        setSelectedPartKey(part.key);
+        await new Promise<void>((resolve) => {
+          const utterance = new SpeechSynthesisUtterance(part.name);
+          utterance.rate = 0.88;
+          utterance.pitch = 1.06;
+          const voices = window.speechSynthesis.getVoices();
+          const preferred = voices.find((v) => v.lang === "en-IN" || v.lang.startsWith("en-IN")) ||
+            voices.find((voice) =>
+              /female|samantha|zira|karen|susan|victoria|google us english|microsoft.*female/i.test(
+                `${voice.name} ${voice.voiceURI}`
+              )
+            );
+          if (preferred) utterance.voice = preferred;
+          utterance.onend = () => setTimeout(resolve, 450);
+          utterance.onerror = () => resolve();
+          window.speechSynthesis.speak(utterance);
+        });
+      }
+
+      if (recitingBodyPartsRef.current) {
+        await onRecordPractice("body-parts", "body_parts_all", "All 16 Body Parts");
+        showToast("⭐ Completed recitation for all Body Parts!");
+      }
+    } finally {
+      recitingBodyPartsRef.current = false;
+      setRecitingBodyParts(false);
+    }
+  };
+
+  const reciteAllBodyParts = async (bodyPartsList: any[]) => {
+    if (recitingBodyParts) {
+      stopAllAudio();
+      return;
+    }
+    stopAllAudio();
+    recitingBodyPartsRef.current = true;
+    setRecitingBodyParts(true);
+    showToast("🔊 Reciting all Body Parts...");
+
+    try {
+      for (let i = 0; i < bodyPartsList.length; i++) {
+        if (!recitingBodyPartsRef.current) break;
+        const part = bodyPartsList[i];
+        setHoveredPartKey(part.key);
+        setSelectedPartKey(part.key);
+        await new Promise<void>((resolve) => {
+          const utterance = new SpeechSynthesisUtterance(part.name);
+          utterance.rate = 0.88;
+          const voices = window.speechSynthesis.getVoices();
+          const preferred = voices.find((v) => v.lang === "en-IN" || v.lang.startsWith("en-IN")) ||
+            voices.find((voice) =>
+              /female|samantha|zira|karen|susan|victoria|google uk english female|microsoft.*female/i.test(
+                `${voice.name} ${voice.voiceURI}`
+              )
+            );
+          if (preferred) utterance.voice = preferred;
+          utterance.onend = () => setTimeout(resolve, 380);
+          utterance.onerror = () => resolve();
+          window.speechSynthesis.speak(utterance);
+        });
+        if (!recitingBodyPartsRef.current) break;
+      }
+
+      if (recitingBodyPartsRef.current) {
+        await onRecordPractice("body-parts", "body_parts_all", "All 21 Body Parts");
+        showToast("⭐ Completed recitation for all Body Parts!");
+      }
+    } finally {
+      recitingBodyPartsRef.current = false;
+      setRecitingBodyParts(false);
+    }
+  };
+
+  const activeChart = charts.find((c) => c.slug === activeChartSlug) ||
+    (activeChartSlug === "body-parts"
+      ? {
+          id: "body-parts",
+          slug: "body-parts",
+          subject: "Science",
+          title: "Human Body Parts",
+          description: "Explore 21 body parts and 5 sense organs with audio pronunciations in English, Marathi, and Hindi.",
+          chart_type: "anatomy",
+          chart_data: DEFAULT_BODY_PARTS,
+        }
+      : charts[0]);
   const records = chartProgress.records || {};
   const summary = chartProgress.summary || {};
 
   const isTablesActive = activeChartSlug === "tables-2-30" || activeChartSlug === "tables-2-10" || activeChart?.chart_type === "multiplication";
   const tablesChartSlug = charts.find(c => c.chart_type === "multiplication")?.slug || "tables-2-30";
+
+  const mergeChartData = (apiList: any[] | undefined, defaultList: VisualChartItem[]): VisualChartItem[] => {
+    if (!apiList || apiList.length === 0) return defaultList;
+    return defaultList.map((defItem) => {
+      const apiMatch = apiList.find((a) => a.key === defItem.key);
+      return apiMatch ? { ...defItem, ...apiMatch, image: defItem.image || apiMatch.image } : defItem;
+    });
+  };
 
   return (
     <div className="learning-charts-container" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -497,6 +1306,81 @@ export default function LearningChartsView({
 
       {/* Header & Submenu Navigation */}
       <div className="chart-subnav" role="tablist" aria-label="Reference Charts Navigation">
+        <button
+          className={activeChartSlug === "body-parts" ? "chart-subnav-tab active" : "chart-subnav-tab"}
+          onClick={() => setActiveChartSlug("body-parts")}
+          role="tab"
+          aria-selected={activeChartSlug === "body-parts"}
+        >
+          <span style={{ fontSize: "18px" }}>👦</span>
+          <span>Body Parts (अवयव)</span>
+          {summary.bodyPartsPracticed ? (
+            <span style={{ fontSize: "11px", background: "#fef3c7", color: "#b45309", padding: "2px 6px", borderRadius: "10px", fontWeight: 800 }}>
+              {summary.bodyPartsPracticed}/21
+            </span>
+          ) : null}
+        </button>
+
+        <button
+          className={activeChartSlug === "animals" ? "chart-subnav-tab active" : "chart-subnav-tab"}
+          onClick={() => setActiveChartSlug("animals")}
+          role="tab"
+          aria-selected={activeChartSlug === "animals"}
+        >
+          <span style={{ fontSize: "18px" }}>🦁</span>
+          <span>Animals (प्राणी)</span>
+          {summary.animalsPracticed ? (
+            <span style={{ fontSize: "11px", background: "#fef3c7", color: "#b45309", padding: "2px 6px", borderRadius: "10px", fontWeight: 800 }}>
+              {summary.animalsPracticed}/24
+            </span>
+          ) : null}
+        </button>
+
+        <button
+          className={activeChartSlug === "vegetables" ? "chart-subnav-tab active" : "chart-subnav-tab"}
+          onClick={() => setActiveChartSlug("vegetables")}
+          role="tab"
+          aria-selected={activeChartSlug === "vegetables"}
+        >
+          <span style={{ fontSize: "18px" }}>🥕</span>
+          <span>Vegetables (भाज्या)</span>
+          {summary.vegetablesPracticed ? (
+            <span style={{ fontSize: "11px", background: "#ecfdf5", color: "#047857", padding: "2px 6px", borderRadius: "10px", fontWeight: 800 }}>
+              {summary.vegetablesPracticed}/20
+            </span>
+          ) : null}
+        </button>
+
+        <button
+          className={activeChartSlug === "birds" ? "chart-subnav-tab active" : "chart-subnav-tab"}
+          onClick={() => setActiveChartSlug("birds")}
+          role="tab"
+          aria-selected={activeChartSlug === "birds"}
+        >
+          <span style={{ fontSize: "18px" }}>🦜</span>
+          <span>Birds (पक्षी)</span>
+          {summary.birdsPracticed ? (
+            <span style={{ fontSize: "11px", background: "#e0f2fe", color: "#0369a1", padding: "2px 6px", borderRadius: "10px", fontWeight: 800 }}>
+              {summary.birdsPracticed}/16
+            </span>
+          ) : null}
+        </button>
+
+        <button
+          className={activeChartSlug === "emotions" ? "chart-subnav-tab active" : "chart-subnav-tab"}
+          onClick={() => setActiveChartSlug("emotions")}
+          role="tab"
+          aria-selected={activeChartSlug === "emotions"}
+        >
+          <span style={{ fontSize: "18px" }}>😊</span>
+          <span>Emotions (भावना)</span>
+          {summary.emotionsPracticed ? (
+            <span style={{ fontSize: "11px", background: "#fdf4ff", color: "#a21caf", padding: "2px 6px", borderRadius: "10px", fontWeight: 800 }}>
+              {summary.emotionsPracticed}/16
+            </span>
+          ) : null}
+        </button>
+
         <button
           className={isTablesActive ? "chart-subnav-tab active" : "chart-subnav-tab"}
           onClick={() => setActiveChartSlug(tablesChartSlug)}
@@ -556,6 +1440,21 @@ export default function LearningChartsView({
             </span>
           ) : null}
         </button>
+
+        <button
+          className={activeChartSlug === "phonics" ? "chart-subnav-tab active" : "chart-subnav-tab"}
+          onClick={() => setActiveChartSlug("phonics")}
+          role="tab"
+          aria-selected={activeChartSlug === "phonics"}
+        >
+          <span style={{ fontSize: "18px" }}>🗣️</span>
+          <span>Phonics (CVC शब्द)</span>
+          {summary.phonicsPracticed ? (
+            <span style={{ fontSize: "11px", background: "#fee2e2", color: "#b91c1c", padding: "2px 6px", borderRadius: "10px", fontWeight: 800 }}>
+              {summary.phonicsPracticed}/{summary.phonicsTotal || 249}
+            </span>
+          ) : null}
+        </button>
       </div>
 
       {/* Summary Metrics Bar */}
@@ -575,6 +1474,10 @@ export default function LearningChartsView({
         </div>
 
         <div className="chart-summary-stats">
+          <div className="chart-stat-chip">
+            <span>🫀 Body Parts:</span>
+            <strong>{summary.bodyPartsPracticed || 0} / 21</strong>
+          </div>
           <div className="chart-stat-chip">
             <span>🔢 Tables:</span>
             <strong>{summary.tablesPracticed || 0} / 29</strong>
@@ -1273,6 +2176,914 @@ export default function LearningChartsView({
               })}
           </div>
         </section>
+      )}
+
+      {/* SUBMENU 5: Human Body Parts Chart */}
+      {activeChartSlug === "body-parts" && (() => {
+        const bodyPartsList: any[] = (activeChart?.chart_data && activeChart.chart_data.length > 0)
+          ? activeChart.chart_data
+          : DEFAULT_BODY_PARTS;
+
+        const displayedParts = bodyPartsList.filter((p: any) => {
+          if (bodyCategoryFilter === "all") return true;
+          return p.category === bodyCategoryFilter;
+        });
+
+        const allPartsPool = [...POSTER_BODY_PARTS, ...DEFAULT_BODY_PARTS];
+        const currentPart = allPartsPool.find((p: any) => p.key === (selectedPartKey || hoveredPartKey)) || POSTER_BODY_PARTS[0];
+        const currentRec = records[currentPart?.key];
+        const isCurrentPracticed = !!currentRec && currentRec.practiceCount > 0;
+
+        return (
+          <section className="panel body-parts-panel" style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+            {/* Header & Controls */}
+            <div className="body-parts-header-row">
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                  <span style={{ fontSize: "26px" }}>👦</span>
+                  <h2 style={{ margin: 0, fontSize: "22px", color: "var(--ink)", fontWeight: 800 }}>
+                    Human Body Parts &amp; 5 Senses (मानवी शरीराचे अवयव)
+                  </h2>
+                </div>
+                <p style={{ margin: 0, color: "var(--muted)", fontSize: "13px" }}>
+                  Hover over any body part or label to hear its name pronounced aloud automatically! Learn English, Marathi, and Hindi names.
+                </p>
+              </div>
+
+              <div className="body-parts-action-toolbar">
+                {/* View Mode Toggle */}
+                <div className="body-view-mode-toggle" role="group" aria-label="View mode">
+                  <button
+                    type="button"
+                    className={`body-mode-btn ${bodyChartMode === "poster" ? "active" : ""}`}
+                    onClick={() => setBodyChartMode("poster")}
+                    title="Vibrant 3D Poster View"
+                  >
+                    <span>🌟 3D Poster View</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`body-mode-btn ${bodyChartMode === "vector" ? "active" : ""}`}
+                    onClick={() => setBodyChartMode("vector")}
+                    title="Vector Diagram View"
+                  >
+                    <span>✏️ Vector View</span>
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  className={`body-toggle-hover-btn ${autoSpeakOnHover ? "active" : ""}`}
+                  onClick={() => setAutoSpeakOnHover(!autoSpeakOnHover)}
+                  title="Toggle automatic pronunciation when hovering over body parts"
+                >
+                  <span style={{ fontSize: "16px" }}>{autoSpeakOnHover ? "🔊" : "🔈"}</span>
+                  <span>{autoSpeakOnHover ? "Hover to Speak: ON" : "Hover to Speak: OFF"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`body-recite-btn ${recitingBodyParts ? "reciting" : ""}`}
+                  onClick={() => (bodyChartMode === "poster" ? reciteAllPosterParts() : reciteAllBodyParts(displayedParts))}
+                  title="Recite all body parts aloud sequentially"
+                >
+                  <span>{recitingBodyParts ? "⏹️ Stop Reciting" : "▶️ Recite All"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`body-quiz-btn ${quizActive ? "active" : ""}`}
+                  onClick={() => (quizActive ? stopQuizGame() : startQuizGame())}
+                  title="Interactive quiz: Can you find the body part?"
+                >
+                  <span>{quizActive ? "⏹️ Exit Quiz" : "🎯 Quiz Game"}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Quiz Banner if active */}
+            {quizActive && (
+              <div className="body-quiz-banner">
+                <div className="body-quiz-banner-left">
+                  <span style={{ fontSize: "28px" }}>🎯</span>
+                  <div>
+                    <div style={{ fontSize: "17px", fontWeight: 800, color: "#1e293b" }}>
+                      {quizFeedback || "Find the body part!"}
+                    </div>
+                    <div style={{ fontSize: "12px", color: "#64748b" }}>
+                      Hover or click on the body part on the poster to answer!
+                    </div>
+                  </div>
+                </div>
+                <div className="body-quiz-score-badge">
+                  <span>⭐ Score: <strong>{quizScore}</strong></span>
+                </div>
+              </div>
+            )}
+
+            {/* Category Filter Pills (when in vector view or for filtering cards) */}
+            <div className="body-category-pills-bar">
+              <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--muted)" }}>Filter Parts:</span>
+              {[
+                { id: "all", label: "All Parts (21)", icon: "✨" },
+                { id: "sense", label: "5 Sense Organs (5)", icon: "👀" },
+                { id: "head", label: "Head & Face (6)", icon: "🗣️" },
+                { id: "upper", label: "Upper Body & Arms (6)", icon: "💪" },
+                { id: "lower", label: "Lower Body & Legs (4)", icon: "🦵" },
+              ].map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  className={`body-category-pill ${bodyCategoryFilter === cat.id ? "active" : ""}`}
+                  onClick={() => setBodyCategoryFilter(cat.id as any)}
+                >
+                  <span>{cat.icon}</span>
+                  <span>{cat.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Main Interactive Stage: 3D Poster View or Vector Diagram + Spotlight Card */}
+            <div className="body-parts-stage-container">
+              {bodyChartMode === "poster" ? (
+                /* === 3D POSTER VIEW (Default): Looks identical to the reference poster image === */
+                <div className="body-poster-viewer-box">
+                  <div className="body-anatomy-header-hint">
+                    <span>✨ 3D Boy Body Parts Poster — Hover over any body part, arrow, or label to hear its name!</span>
+                  </div>
+
+                  <div className="poster-relative-stage">
+                    {/* Underlying High-Res Poster Image */}
+                    <img
+                      src="/assets/body-parts-boy-poster.jpg"
+                      alt="Human Boy Body Parts Poster"
+                      className="poster-base-image"
+                      draggable={false}
+                    />
+
+                    {/* SVG Interactive Overlay covering 100% with viewBox="0 0 818 1024" */}
+                    <svg
+                      viewBox="0 0 818 1024"
+                      className="poster-interactive-svg-overlay"
+                      preserveAspectRatio="xMidYMid meet"
+                    >
+                      <defs>
+                        <filter id="posterHighlightGlow" x="-20%" y="-20%" width="140%" height="140%">
+                          <feDropShadow dx="0" dy="0" stdDeviation="6" floodColor="#f59e0b" floodOpacity="0.85" />
+                        </filter>
+                        <radialGradient id="hotspotRadarGrad" cx="50%" cy="50%" r="50%">
+                          <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.85" />
+                          <stop offset="60%" stopColor="#ea580c" stopOpacity="0.45" />
+                          <stop offset="100%" stopColor="#ea580c" stopOpacity="0" />
+                        </radialGradient>
+                      </defs>
+
+                      {/* 16 Interactive Poster Body Parts */}
+                      {POSTER_BODY_PARTS.map((part) => {
+                        const isHovered = hoveredPartKey === part.key;
+                        const isSelected = selectedPartKey === part.key;
+                        const isQuizTarget = quizActive && quizTargetKey === part.key;
+                        const isHighlighted = isHovered || isSelected || isQuizTarget;
+
+                        return (
+                          <g
+                            key={`poster-part-${part.key}`}
+                            className={`poster-part-group ${isHighlighted ? "active" : ""}`}
+                            style={{ cursor: "pointer" }}
+                            onMouseEnter={() => (quizActive ? handleQuizAnswer(part.key) : handlePartHover(part))}
+                            onClick={() => (quizActive ? handleQuizAnswer(part.key) : handlePartSelect(part))}
+                          >
+                            {/* 1. Pill Hitbox & Highlight */}
+                            {isHighlighted && (
+                              <rect
+                                x={part.pill.x - 3}
+                                y={part.pill.y - 3}
+                                width={part.pill.w + 6}
+                                height={part.pill.h + 6}
+                                rx={34}
+                                fill="rgba(255, 255, 255, 0.15)"
+                                stroke={part.themeColor}
+                                strokeWidth={5}
+                                filter="url(#posterHighlightGlow)"
+                                className="poster-pill-glow-outline"
+                              />
+                            )}
+                            {/* Pill Hitbox (Transparent, captures hover) */}
+                            <rect
+                              x={part.pill.x}
+                              y={part.pill.y}
+                              width={part.pill.w}
+                              height={part.pill.h}
+                              rx={32}
+                              fill="transparent"
+                              className="poster-pill-hitbox"
+                            >
+                              <title>{`${part.name} (${part.marathi.split("(")[0].trim()}) — Hover to hear pronunciation`}</title>
+                            </rect>
+
+                            {/* 2. Pointer Line Hitbox & Highlight */}
+                            {isHighlighted && (
+                              <line
+                                x1={part.line.x1}
+                                y1={part.line.y1}
+                                x2={part.line.x2}
+                                y2={part.line.y2}
+                                stroke={part.themeColor}
+                                strokeWidth={5}
+                                strokeDasharray="8 4"
+                                strokeLinecap="round"
+                                className="poster-line-active-glow"
+                              />
+                            )}
+                            {/* Line Hitbox */}
+                            <line
+                              x1={part.line.x1}
+                              y1={part.line.y1}
+                              x2={part.line.x2}
+                              y2={part.line.y2}
+                              stroke="transparent"
+                              strokeWidth={24}
+                              strokeLinecap="round"
+                              className="poster-line-hitbox"
+                            />
+
+                            {/* 3. Boy Body Part Hitbox & Hotspot Ring */}
+                            {isHighlighted && (
+                              <g className="poster-hotspot-highlight-group">
+                                <circle
+                                  cx={part.boyHotspot.cx}
+                                  cy={part.boyHotspot.cy}
+                                  r={part.boyHotspot.r + 14}
+                                  fill="url(#hotspotRadarGrad)"
+                                  className="poster-radar-pulse"
+                                />
+                                <circle
+                                  cx={part.boyHotspot.cx}
+                                  cy={part.boyHotspot.cy}
+                                  r={part.boyHotspot.r}
+                                  fill={part.themeColor}
+                                  fillOpacity={0.4}
+                                  stroke="#ffffff"
+                                  strokeWidth={3}
+                                />
+                                <circle
+                                  cx={part.boyHotspot.cx}
+                                  cy={part.boyHotspot.cy}
+                                  r={6}
+                                  fill="#ffffff"
+                                />
+                              </g>
+                            )}
+                            {/* Boy Hotspot Hitbox */}
+                            <circle
+                              cx={part.boyHotspot.cx}
+                              cy={part.boyHotspot.cy}
+                              r={part.boyHotspot.r}
+                              fill="transparent"
+                              className="poster-hotspot-hitbox"
+                            >
+                              <title>{`Boy's ${part.name} — Hover to hear`}</title>
+                            </circle>
+                          </g>
+                        );
+                      })}
+
+                      {/* Bonus: Puppy Dog Easter Egg! */}
+                      <g
+                        className="poster-puppy-group"
+                        style={{ cursor: "pointer" }}
+                        onMouseEnter={handlePuppyHover}
+                        onClick={handlePuppyHover}
+                      >
+                        {hoveredPartKey === "puppy" && (
+                          <g>
+                            <circle
+                              cx={210}
+                              cy={870}
+                              r={75}
+                              fill="rgba(245, 158, 11, 0.25)"
+                              stroke="#f59e0b"
+                              strokeWidth={3}
+                              filter="url(#posterHighlightGlow)"
+                              className="poster-puppy-glow"
+                            />
+                            <text
+                              x={210}
+                              y={795}
+                              textAnchor="middle"
+                              fontSize="16"
+                              fill="#ffffff"
+                              fontWeight="bold"
+                              filter="drop-shadow(0 2px 4px rgba(0,0,0,0.8))"
+                            >
+                              🐶 Woof Woof!
+                            </text>
+                          </g>
+                        )}
+                        <circle
+                          cx={210}
+                          cy={870}
+                          r={65}
+                          fill="transparent"
+                          className="poster-puppy-hitbox"
+                        >
+                          <title>Cute Puppy Dog! Hover to hear!</title>
+                        </circle>
+                      </g>
+                    </svg>
+                  </div>
+                </div>
+              ) : (
+                /* === VECTOR DIAGRAM VIEW === */
+                <div className="body-anatomy-viewer-box">
+                  <div className="body-anatomy-header-hint">
+                    <span>👦 Human Boy Body Parts Chart — Hover over any body part or arrow to hear its name!</span>
+                  </div>
+
+                  <div className="body-svg-wrapper">
+                    <svg
+                      viewBox="0 0 640 740"
+                      className="body-interactive-svg"
+                      preserveAspectRatio="xMidYMid meet"
+                    >
+                      <defs>
+                        <radialGradient id="bodyBgGlow" cx="50%" cy="45%" r="55%">
+                          <stop offset="0%" stopColor="#ecfdf5" stopOpacity="0.95" />
+                          <stop offset="65%" stopColor="#f0f9ff" stopOpacity="0.6" />
+                          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+                        </radialGradient>
+                        <linearGradient id="boyTeeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#2563eb" />
+                          <stop offset="50%" stopColor="#0ea5e9" />
+                          <stop offset="100%" stopColor="#0284c7" />
+                        </linearGradient>
+                        <linearGradient id="boyShortsGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" stopColor="#1e3a8a" />
+                          <stop offset="100%" stopColor="#172554" />
+                        </linearGradient>
+                        <filter id="boyGlowFilter" x="-20%" y="-20%" width="140%" height="140%">
+                          <feDropShadow dx="0" dy="3" stdDeviation="4" floodColor="#ea580c" floodOpacity="0.4" />
+                        </filter>
+
+                        {/* Arrowhead Markers */}
+                        <marker
+                          id="boy-arrow"
+                          viewBox="0 0 10 10"
+                          refX="7"
+                          refY="5"
+                          markerWidth="8"
+                          markerHeight="8"
+                          orient="auto"
+                        >
+                          <path d="M 0 1 L 9 5 L 0 9 L 2 5 Z" fill="#0284c7" />
+                        </marker>
+
+                        <marker
+                          id="boy-arrow-active"
+                          viewBox="0 0 10 10"
+                          refX="7"
+                          refY="5"
+                          markerWidth="9"
+                          markerHeight="9"
+                          orient="auto"
+                        >
+                          <path d="M 0 1 L 9 5 L 0 9 L 2 5 Z" fill="#ea580c" />
+                        </marker>
+
+                        <marker
+                          id="boy-arrow-sense"
+                          viewBox="0 0 10 10"
+                          refX="7"
+                          refY="5"
+                          markerWidth="8"
+                          markerHeight="8"
+                          orient="auto"
+                        >
+                          <path d="M 0 1 L 9 5 L 0 9 L 2 5 Z" fill="#f59e0b" />
+                        </marker>
+                      </defs>
+
+                      {/* Ambient circular backdrop */}
+                      <ellipse cx="320" cy="370" rx="260" ry="340" fill="url(#bodyBgGlow)" />
+
+                      {/* === Human Boy Vector Illustration === */}
+                      <g className="boy-body-figure">
+                        {/* Neck */}
+                        <rect x="309" y="174" width="22" height="26" rx="5" fill="#fecba1" />
+
+                        {/* Boy Head Base */}
+                        <ellipse cx="320" cy="120" rx="55" ry="60" fill="#fecba1" />
+
+                        {/* Rosy Boy Cheeks */}
+                        <circle cx="282" cy="134" r="8" fill="#fda4af" opacity="0.5" />
+                        <circle cx="358" cy="134" r="8" fill="#fda4af" opacity="0.5" />
+
+                        {/* Cool Boy Hair */}
+                        <path
+                          d="M 265 110 C 255 45, 385 45, 375 110 C 362 68, 344 58, 320 60 C 296 58, 278 68, 265 110 Z"
+                          fill="#2d1a10"
+                        />
+                        {/* Hair Locks / Spikes on top */}
+                        <path
+                          d="M 285 75 Q 295 55 310 65 Q 325 50 340 68 Q 355 58 360 78"
+                          stroke="#2d1a10"
+                          strokeWidth="7"
+                          strokeLinecap="round"
+                          fill="none"
+                        />
+                        {/* Boy Hair Fringe / Bangs */}
+                        <path
+                          d="M 268 110 Q 280 85 300 95 Q 320 80 340 92 Q 360 85 372 110 Q 358 98 335 102 Q 315 90 288 104 Z"
+                          fill="#3f2618"
+                        />
+
+                        {/* Eyebrows */}
+                        <path d="M 290 106 Q 302 101 312 106" stroke="#2d1a10" strokeWidth="3" strokeLinecap="round" fill="none" />
+                        <path d="M 328 106 Q 338 101 350 106" stroke="#2d1a10" strokeWidth="3" strokeLinecap="round" fill="none" />
+
+                        {/* Curious Big Eyes */}
+                        <g className="boy-eyes">
+                          <ellipse cx="302" cy="122" rx="7.5" ry="8.5" fill="#1e293b" />
+                          <circle cx="300" cy="119" r="2.8" fill="#ffffff" />
+                          <ellipse cx="338" cy="122" rx="7.5" ry="8.5" fill="#1e293b" />
+                          <circle cx="336" cy="119" r="2.8" fill="#ffffff" />
+                        </g>
+
+                        {/* Ears */}
+                        <ellipse cx="265" cy="122" rx="8" ry="13" fill="#fecba1" stroke="#f87171" strokeWidth="1.5" />
+                        <ellipse cx="375" cy="122" rx="8" ry="13" fill="#fecba1" stroke="#f87171" strokeWidth="1.5" />
+
+                        {/* Nose */}
+                        <path d="M 316 130 Q 320 138 324 130" stroke="#f472b6" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+
+                        {/* Smiling Boy Mouth with Teeth & Tongue */}
+                        <path d="M 308 146 Q 320 162 332 146" stroke="#be123c" strokeWidth="2.5" fill="#e11d48" />
+                        <path d="M 312 146 Q 320 151 328 146" fill="#ffffff" />
+                        <ellipse cx="320" cy="154" rx="5" ry="3" fill="#fb7185" />
+
+                        {/* Shoulders & Cool Sporty Tee */}
+                        <path
+                          d="M 285 196 L 255 218 L 225 270 L 258 282 L 278 244 L 278 345 L 362 345 L 362 244 L 382 282 L 415 270 L 385 218 L 355 196 Q 320 206 285 196 Z"
+                          fill="url(#boyTeeGrad)"
+                        />
+                        {/* White Collar Trim */}
+                        <path d="M 302 196 Q 320 208 338 196" stroke="#ffffff" strokeWidth="4" fill="none" />
+                        {/* Chest Emblem: Superhero Star */}
+                        <circle cx="320" cy="245" r="16" fill="#ffffff" opacity="0.25" />
+                        <text x="320" y="250" fontSize="13" textAnchor="middle" fill="#ffffff" fontWeight="900">★</text>
+
+                        {/* Arms & Hands with 5 spread fingers */}
+                        {/* Left Arm */}
+                        <path d="M 245 275 L 210 355" stroke="#fecba1" strokeWidth="18" strokeLinecap="round" />
+                        <circle cx="245" cy="275" r="9" fill="#fecba1" />
+                        {/* Left Hand & 5 fingers */}
+                        <circle cx="202" cy="370" r="12" fill="#fecba1" />
+                        <path d="M 208 360 Q 218 362 216 372" stroke="#fecba1" strokeWidth="5" strokeLinecap="round" fill="none" />
+                        <path d="M 198 375 L 188 382" stroke="#fecba1" strokeWidth="5" strokeLinecap="round" />
+                        <path d="M 202 380 L 194 390" stroke="#fecba1" strokeWidth="5" strokeLinecap="round" />
+                        <path d="M 207 380 L 202 392" stroke="#fecba1" strokeWidth="5" strokeLinecap="round" />
+                        <path d="M 212 378 L 212 388" stroke="#fecba1" strokeWidth="4.5" strokeLinecap="round" />
+
+                        {/* Right Arm */}
+                        <path d="M 395 275 L 430 355" stroke="#fecba1" strokeWidth="18" strokeLinecap="round" />
+                        <circle cx="395" cy="275" r="9" fill="#fecba1" />
+                        {/* Right Hand & 5 fingers */}
+                        <circle cx="438" cy="370" r="12" fill="#fecba1" />
+                        <path d="M 432 360 Q 422 362 424 372" stroke="#fecba1" strokeWidth="5" strokeLinecap="round" fill="none" />
+                        <path d="M 442 375 L 452 382" stroke="#fecba1" strokeWidth="5" strokeLinecap="round" />
+                        <path d="M 438 380 L 446 390" stroke="#fecba1" strokeWidth="5" strokeLinecap="round" />
+                        <path d="M 433 380 L 438 392" stroke="#fecba1" strokeWidth="5" strokeLinecap="round" />
+                        <path d="M 428 378 L 428 388" stroke="#fecba1" strokeWidth="4.5" strokeLinecap="round" />
+
+                        {/* Sporty Athletic Shorts */}
+                        <path
+                          d="M 278 342 L 362 342 L 368 445 L 328 445 L 320 385 L 312 445 L 272 445 Z"
+                          fill="url(#boyShortsGrad)"
+                        />
+                        {/* Side Athletic Racing Stripes */}
+                        <path d="M 280 345 L 274 442" stroke="#ffffff" strokeWidth="3" />
+                        <path d="M 360 345 L 366 442" stroke="#ffffff" strokeWidth="3" />
+
+                        {/* Boy Legs */}
+                        <path d="M 292 445 L 290 615" stroke="#fecba1" strokeWidth="24" strokeLinecap="round" />
+                        <circle cx="290" cy="520" r="12" fill="#fde047" opacity="0.35" />
+
+                        <path d="M 348 445 L 350 615" stroke="#fecba1" strokeWidth="24" strokeLinecap="round" />
+                        <circle cx="350" cy="520" r="12" fill="#fde047" opacity="0.35" />
+
+                        {/* White Crew Socks with Red Stripes */}
+                        <rect x="278" y="605" width="24" height="18" rx="4" fill="#ffffff" stroke="#cbd5e1" strokeWidth="1" />
+                        <line x1="278" y1="612" x2="302" y2="612" stroke="#ef4444" strokeWidth="2" />
+
+                        <rect x="338" y="605" width="24" height="18" rx="4" fill="#ffffff" stroke="#cbd5e1" strokeWidth="1" />
+                        <line x1="338" y1="612" x2="362" y2="612" stroke="#ef4444" strokeWidth="2" />
+
+                        {/* Cool Boy Running Sneakers & Toes */}
+                        {/* Left Sneaker */}
+                        <path d="M 264 622 L 302 622 Q 306 648 264 648 Z" fill="#ef4444" />
+                        <path d="M 260 644 L 306 644 Q 308 654 260 654 Z" fill="#ffffff" stroke="#cbd5e1" strokeWidth="1" />
+                        <line x1="280" y1="626" x2="292" y2="626" stroke="#ffffff" strokeWidth="2" />
+
+                        {/* Right Sneaker */}
+                        <path d="M 338 622 L 376 622 Q 380 648 338 648 Z" fill="#ef4444" />
+                        <path d="M 334 644 L 380 644 Q 382 654 334 654 Z" fill="#ffffff" stroke="#cbd5e1" strokeWidth="1" />
+                        <line x1="348" y1="626" x2="360" y2="626" stroke="#ffffff" strokeWidth="2" />
+                      </g>
+
+                      {/* === ARROWS & LABELS: By default shows boy picture with body parts name with arrow === */}
+                      {displayedParts.map((part: any) => {
+                        const isHovered = hoveredPartKey === part.key;
+                        const isSelected = selectedPartKey === part.key;
+                        const isHighlighted = isHovered || isSelected;
+                        const isSense = part.category === "sense";
+
+                        const pillW = 140;
+                        const pillH = 30;
+                        const isLeft = part.side === "left";
+                        const pillX = isLeft ? 12 : 488;
+                        const pillY = part.labelY - 15;
+                        const lineStartX = isLeft ? pillX + pillW : pillX;
+                        const lineStartY = part.labelY;
+                        const lineEndX = part.svgX;
+                        const lineEndY = part.svgY;
+
+                        const arrowMarker = isHighlighted
+                          ? "url(#boy-arrow-active)"
+                          : isSense
+                          ? "url(#boy-arrow-sense)"
+                          : "url(#boy-arrow)";
+
+                        const strokeColor = isHighlighted
+                          ? "#ea580c"
+                          : isSense
+                          ? "#f59e0b"
+                          : "#0284c7";
+
+                        const strokeWidth = isHighlighted ? 3.5 : 2;
+
+                        return (
+                          <g
+                            key={`boy-part-arrow-group-${part.key}`}
+                            className={`boy-arrow-pin-group ${isHighlighted ? "active" : ""}`}
+                            style={{ cursor: "pointer" }}
+                            onMouseEnter={() => handlePartHover(part)}
+                            onClick={() => handlePartSelect(part)}
+                          >
+                            {/* Visible Arrow pointing from label directly to boy's body */}
+                            <line
+                              x1={lineStartX}
+                              y1={lineStartY}
+                              x2={lineEndX}
+                              y2={lineEndY}
+                              stroke={strokeColor}
+                              strokeWidth={strokeWidth}
+                              markerEnd={arrowMarker}
+                              strokeLinecap="round"
+                              className={`boy-pointer-arrow ${isHighlighted ? "highlighted" : ""}`}
+                            />
+
+                            {/* Label Pill by default visible with Part Name and Icon */}
+                            <g className="boy-label-pill-btn">
+                              <rect
+                                x={pillX}
+                                y={pillY}
+                                width={pillW}
+                                height={pillH}
+                                rx={15}
+                                fill={isHighlighted ? "#ea580c" : isSense ? "#fffbeb" : "#ffffff"}
+                                stroke={isHighlighted ? "#c2410c" : isSense ? "#f59e0b" : "#38bdf8"}
+                                strokeWidth={isHighlighted ? 2.5 : 1.5}
+                                filter={isHighlighted ? "url(#boyGlowFilter)" : "drop-shadow(0 2px 5px rgba(0,0,0,0.06))"}
+                              />
+                              <text x={pillX + 10} y={part.labelY + 5} fontSize="14">
+                                {part.icon}
+                              </text>
+                              <text
+                                x={pillX + 32}
+                                y={part.labelY + 5}
+                                fontSize="12.5"
+                                fontWeight={isHighlighted ? "800" : "700"}
+                                fill={isHighlighted ? "#ffffff" : isSense ? "#92400e" : "#0f172a"}
+                                fontFamily="Outfit, Manrope, system-ui, sans-serif"
+                              >
+                                {part.name}
+                              </text>
+                              <text
+                                x={pillX + pillW - 8}
+                                y={part.labelY + 5}
+                                fontSize="10"
+                                textAnchor="end"
+                                fill={isHighlighted ? "rgba(255,255,255,0.9)" : "#64748b"}
+                                fontFamily="'Noto Sans Devanagari', sans-serif"
+                              >
+                                {part.marathi.split(" ")[0]}
+                              </text>
+                            </g>
+
+                            {/* Hotspot Target Circle on the boy's body */}
+                            <g className="boy-body-hotspot">
+                              <circle
+                                cx={part.svgX}
+                                cy={part.svgY}
+                                r={isHighlighted ? 15 : 8}
+                                fill={isHighlighted ? "rgba(234, 88, 12, 0.4)" : "rgba(2, 132, 199, 0.25)"}
+                                className="boy-pulse-ring"
+                              />
+                              <circle
+                                cx={part.svgX}
+                                cy={part.svgY}
+                                r={isHighlighted ? 7 : 5}
+                                fill={isHighlighted ? "#ea580c" : isSense ? "#f59e0b" : "#0284c7"}
+                                stroke="#ffffff"
+                                strokeWidth={1.8}
+                              />
+                              <title>{`${part.name} — ${part.marathi} (Hover to hear pronunciation)`}</title>
+                            </g>
+                          </g>
+                        );
+                      })}
+                    </svg>
+                  </div>
+                </div>
+              )}
+
+              {/* Right Column: Spotlight Info Card */}
+              <div className="body-spotlight-card">
+                <div className="body-spotlight-header">
+                  <div className="body-spotlight-icon-wrap">
+                    <span className="body-spotlight-icon">{currentPart.icon}</span>
+                  </div>
+                  <div className="body-spotlight-titles">
+                    <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap", marginBottom: "4px" }}>
+                      <span className={`body-part-category-tag ${currentPart.category}`}>
+                        {currentPart.category === "sense" ? "👀 5 Senses Organ" : currentPart.category === "head" ? "🗣️ Head & Face" : currentPart.category === "upper" ? "💪 Upper Body" : "🦵 Lower Body"}
+                      </span>
+                      {isCurrentPracticed ? (
+                        <span className="body-practiced-chip">
+                          ⭐ Practiced {currentRec.practiceCount}x
+                        </span>
+                      ) : null}
+                    </div>
+                    <h3 className="body-spotlight-name">{currentPart.name}</h3>
+                  </div>
+                </div>
+
+                {/* Multilingual Vocabulary Box */}
+                <div className="body-multilingual-box">
+                  <div className="body-lang-row">
+                    <span className="lang-code-tag en">EN</span>
+                    <strong className="lang-term">{currentPart.name}</strong>
+                    <button
+                      type="button"
+                      className="lang-speak-mini-btn"
+                      onClick={() => speakPhrase(currentPart.audioText || currentPart.name, "en-US")}
+                      title="Pronounce in English"
+                    >
+                      <span>🔊 Say</span>
+                    </button>
+                  </div>
+
+                  <div className="body-lang-row">
+                    <span className="lang-code-tag mr">MR</span>
+                    <strong className="lang-term devanagari">{currentPart.marathi}</strong>
+                    <button
+                      type="button"
+                      className="lang-speak-mini-btn"
+                      onClick={() => speakPhrase(currentPart.marathi.split("(")[0].trim(), "mr-IN")}
+                      title="Pronounce in Marathi"
+                    >
+                      <span>🔊 ऐका</span>
+                    </button>
+                  </div>
+
+                  <div className="body-lang-row">
+                    <span className="lang-code-tag hi">HI</span>
+                    <strong className="lang-term devanagari">{currentPart.hindi}</strong>
+                    <button
+                      type="button"
+                      className="lang-speak-mini-btn"
+                      onClick={() => speakPhrase(currentPart.hindi.split("(")[0].trim(), "hi-IN")}
+                      title="Pronounce in Hindi"
+                    >
+                      <span>🔊 सुनें</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Fact / Function Explanation */}
+                <div className="body-fact-box">
+                  <span className="fact-bulb">💡</span>
+                  <div className="fact-text">
+                    <strong>Did You Know?</strong>
+                    <p>{currentPart.fact}</p>
+                  </div>
+                </div>
+
+                {/* Actions: Pronounce & Record Practice */}
+                <div className="body-spotlight-actions">
+                  <button
+                    type="button"
+                    className="body-speak-big-btn"
+                    onClick={() => speakPhrase(currentPart.audioText || currentPart.name, "en-US")}
+                  >
+                    <span>🔊 Pronounce Aloud</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`body-practice-btn ${isCurrentPracticed ? "practiced" : ""}`}
+                    onClick={() => onRecordPractice("body-parts", currentPart.key, currentPart.name)}
+                    disabled={savingChartItem === currentPart.key}
+                  >
+                    <span>{isCurrentPracticed ? "⭐ Practiced" : "☆ Mark Practiced"}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Section: All 21 Body Parts Cards Grid (Visible by default!) */}
+            <div className="body-parts-grid-section">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", marginBottom: "12px" }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: "17px", color: "var(--ink)" }}>
+                    All Body Parts ({displayedParts.length})
+                  </h3>
+                  <small style={{ color: "var(--muted)" }}>
+                    Hover over any card to hear its name immediately!
+                  </small>
+                </div>
+                <span style={{ fontSize: "12px", color: "#0284c7", fontWeight: 700 }}>
+                  👆 Tap card or button for full pronunciation
+                </span>
+              </div>
+
+              <div className="body-parts-card-grid">
+                {displayedParts.map((part: any) => {
+                  const rec = records[part.key];
+                  const isPracticed = !!rec && rec.practiceCount > 0;
+                  const isSelected = selectedPartKey === part.key;
+                  const isHovered = hoveredPartKey === part.key;
+
+                  return (
+                    <div
+                      key={part.key}
+                      className={`body-part-card ${isPracticed ? "practiced" : ""} ${isSelected ? "selected" : ""} ${isHovered ? "hovered" : ""}`}
+                      onMouseEnter={() => handlePartHover(part)}
+                      onClick={() => handlePartSelect(part)}
+                      title={`Click to pronounce: ${part.name}`}
+                    >
+                      <div className="body-card-top-row">
+                        <span className={`body-card-category-dot ${part.category}`} title={part.category} />
+                        <span className="body-card-star" title={isPracticed ? `Practiced ${rec.practiceCount}x` : "Not practiced yet"}>
+                          {isPracticed ? `⭐ ${rec.practiceCount > 1 ? rec.practiceCount : ""}` : "☆"}
+                        </span>
+                      </div>
+
+                      <div className="body-card-icon">{part.icon}</div>
+                      <div className="body-card-name">{part.name}</div>
+                      <div className="body-card-marathi">{part.marathi}</div>
+                      <div className="body-card-hindi">{part.hindi}</div>
+
+                      <div className="body-card-buttons">
+                        <button
+                          type="button"
+                          className="body-card-sound-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            speakPhrase(part.audioText || part.name, "en-US");
+                          }}
+                          title="Listen pronunciation"
+                        >
+                          <span>🔊</span>
+                          <span>Say</span>
+                        </button>
+                        <button
+                          type="button"
+                          className={`body-card-star-btn ${isPracticed ? "practiced" : ""}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRecordPractice("body-parts", part.key, part.name);
+                          }}
+                          disabled={savingChartItem === part.key}
+                          title="Mark practiced"
+                        >
+                          <span>{isPracticed ? "⭐" : "☆"}</span>
+                          <span>{isPracticed ? `${rec.practiceCount}x` : "Practice"}</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+        );
+      })()}
+
+      {/* SUBMENU 6: Animals Chart */}
+      {activeChartSlug === "animals" && (
+        <VisualLearningChartGrid
+          chartSlug="animals"
+          title="Animals & Sounds"
+          marathiTitle="प्राणी आणि आवाज"
+          description="Interactive visual chart for wild, farm, and water animals. Click any animal picture to hear its name called out aloud! Click to practice."
+          icon="🦁"
+          items={mergeChartData(activeChart?.chart_data, DEFAULT_ANIMALS)}
+          categories={[
+            { id: "all", label: "All Animals (सर्व)", icon: "🐾" },
+            { id: "wild", label: "Wild Animals (जंगली)", icon: "🦁" },
+            { id: "domestic", label: "Farm & Pets (पाळीव)", icon: "🐄" },
+            { id: "water", label: "Ocean & Water (जलचर)", icon: "🐬" },
+          ]}
+          chartProgressRecords={chartProgress.records}
+          onRecordPractice={onRecordPractice}
+          savingChartItem={savingChartItem}
+          childName={childName}
+          chartType="animals"
+        />
+      )}
+
+      {/* SUBMENU 7: Vegetables Chart */}
+      {activeChartSlug === "vegetables" && (
+        <VisualLearningChartGrid
+          chartSlug="vegetables"
+          title="Healthy Vegetables"
+          marathiTitle="पौष्टिक भाज्या"
+          description="Interactive visual chart of nutritious everyday vegetables. Click any vegetable picture to hear its name and discover healthy benefits!"
+          icon="🥕"
+          items={mergeChartData(activeChart?.chart_data, DEFAULT_VEGETABLES)}
+          categories={[
+            { id: "all", label: "All Vegetables (सर्व भाज्या)", icon: "🥗" },
+            { id: "root", label: "Root (कंदमुळे)", icon: "🥕" },
+            { id: "leafy", label: "Leafy Greens (पालेभाज्या)", icon: "🥬" },
+            { id: "fruit", label: "Fresh & Fruity (फळभाज्या)", icon: "🍅" },
+            { id: "bulb", label: "Bulbs & Spices", icon: "🧅" },
+          ]}
+          chartProgressRecords={chartProgress.records}
+          onRecordPractice={onRecordPractice}
+          savingChartItem={savingChartItem}
+          childName={childName}
+          chartType="vegetables"
+        />
+      )}
+
+      {/* SUBMENU 8: Birds Chart */}
+      {activeChartSlug === "birds" && (
+        <VisualLearningChartGrid
+          chartSlug="birds"
+          title="Beautiful Birds"
+          marathiTitle="सुंदर पक्षी"
+          description="Interactive visual chart of wondrous birds. Click any bird picture to hear its name and authentic bird call sound!"
+          icon="🦜"
+          items={mergeChartData(activeChart?.chart_data, DEFAULT_BIRDS)}
+          categories={[
+            { id: "all", label: "All Birds (सर्व पक्षी)", icon: "🪶" },
+            { id: "garden", label: "Garden & Town", icon: "🦚" },
+            { id: "wild", label: "Wild & Hunters", icon: "🦅" },
+            { id: "water", label: "Water Birds", icon: "🦆" },
+            { id: "flightless", label: "Unique / Flightless", icon: "🐧" },
+          ]}
+          chartProgressRecords={chartProgress.records}
+          onRecordPractice={onRecordPractice}
+          savingChartItem={savingChartItem}
+          childName={childName}
+          chartType="birds"
+        />
+      )}
+
+      {/* SUBMENU 9: Emotions & Feelings Chart */}
+      {activeChartSlug === "emotions" && (
+        <VisualLearningChartGrid
+          chartSlug="emotions"
+          title="Feelings & Emotions"
+          marathiTitle="भावना आणि मनःस्थिती"
+          description="Interactive feelings chart helping children identify emotions, physical cues, and positive calming coping tools. Click any feeling face to hear it called out!"
+          icon="😊"
+          items={mergeChartData(activeChart?.chart_data, DEFAULT_EMOTIONS)}
+          categories={[
+            { id: "all", label: "All Feelings (सर्व भावना)", icon: "🌈" },
+            { id: "positive", label: "Sunny & Joyful (आनंदी)", icon: "☀️" },
+            { id: "calm", label: "Calm & Peaceful (शांत)", icon: "🌊" },
+            { id: "big_feelings", label: "Big Feelings (गहन भावना)", icon: "🌧️" },
+          ]}
+          chartProgressRecords={chartProgress.records}
+          onRecordPractice={onRecordPractice}
+          savingChartItem={savingChartItem}
+          childName={childName}
+          chartType="emotions"
+        />
+      )}
+
+      {/* SUBMENU 10: Phonics Short Vowels & CVC Word Families Chart */}
+      {activeChartSlug === "phonics" && (
+        <PhonicsLearningChartView
+          chartSlug="phonics"
+          chartProgressRecords={chartProgress.records}
+          onRecordPractice={onRecordPractice}
+          savingChartItem={savingChartItem}
+          childName={childName}
+          apiUrl={apiUrl}
+        />
       )}
     </div>
   );

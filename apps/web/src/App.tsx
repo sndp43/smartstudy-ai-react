@@ -34,6 +34,33 @@ const parseMathVisual = (question: string) => {
   return null;
 };
 
+const CHART_METADATA: Record<string, { label: string; icon: string }> = {
+  "body-parts": { label: "Body Parts (अवयव)", icon: "👦" },
+  "animals": { label: "Animals (प्राणी)", icon: "🦁" },
+  "vegetables": { label: "Vegetables (भाज्या)", icon: "🥕" },
+  "birds": { label: "Birds (पक्षी)", icon: "🦜" },
+  "emotions": { label: "Emotions (भावना)", icon: "😊" },
+  "tables-2-30": { label: "Tables 2–30 (पाढे)", icon: "🔢" },
+  "tables-2-10": { label: "Tables 2–10", icon: "🔢" },
+  "marathi-swar": { label: "१४ स्वर (Swar)", icon: "🕉️" },
+  "marathi-vyanjan": { label: "व्यंजन (Vyanjan)", icon: "🪷" },
+  "english-alphabet": { label: "English A–Z", icon: "🔤" },
+  "phonics": { label: "Phonics (CVC शब्द)", icon: "🗣️" },
+};
+
+const DEFAULT_CHART_SUBMENUS = [
+  { slug: "body-parts", label: "Body Parts (अवयव)", icon: "👦" },
+  { slug: "animals", label: "Animals (प्राणी)", icon: "🦁" },
+  { slug: "vegetables", label: "Vegetables (भाज्या)", icon: "🥕" },
+  { slug: "birds", label: "Birds (पक्षी)", icon: "🦜" },
+  { slug: "emotions", label: "Emotions (भावना)", icon: "😊" },
+  { slug: "tables-2-30", label: "Tables 2–30 (पाढे)", icon: "🔢" },
+  { slug: "marathi-swar", label: "१४ स्वर (Swar)", icon: "🕉️" },
+  { slug: "marathi-vyanjan", label: "व्यंजन (Vyanjan)", icon: "🪷" },
+  { slug: "english-alphabet", label: "English A–Z", icon: "🔤" },
+  { slug: "phonics", label: "Phonics (CVC शब्द)", icon: "🗣️" },
+];
+
 interface FillBlankParsed {
   hasBlank: boolean;
   title: string;
@@ -184,6 +211,7 @@ const TEMPLATE_OPTIONS = [
   { id: "flashcard", name: "Flashcard", title: "Flashcard", description: "A focused reveal-style layout for memory and vocabulary practice.", preview: "▤", previewClass: "standard-preview" },
   { id: "fill_blank", name: "Fill in the blank", title: "Fill in the blank", description: "Emphasizes the missing word or letter in a sentence.", preview: "_", previewClass: "image-preview" },
   { id: "true_false", name: "True or false", title: "True or false", description: "Simple statement-based format for quick concept checks.", preview: "✓", previewClass: "story-preview" },
+  { id: "rhyme_card", name: "Rhyme Card", title: "Rhyme card with collapsed answer", description: "Interactive rhyme builder where the answer and phonetic clue are in a collapsed state.", preview: "🎵", previewClass: "story-preview" },
 ];
 
 const templateLabel = (templateId?: string) => {
@@ -245,21 +273,31 @@ export default function App() {
   const [flashcardFlipped, setFlashcardFlipped] = useState(false);
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   const [showVisualPrompt, setShowVisualPrompt] = useState(false);
+  const [rhymeAnswerCollapsed, setRhymeAnswerCollapsed] = useState(true);
   const [practiceCount, setPracticeCount] = useState<number | "all">(10);
 
   useEffect(() => {
     setFlashcardFlipped(false);
     setSelectedChoice(null);
     setShowVisualPrompt(false);
+    setRhymeAnswerCollapsed(true);
   }, [index, skill]);
   const [parent, setParent] = useState(() => session?.role === "teacher");
   const [parentView, setParentView] = useState("skills");
   const [studentView, setStudentView] = useState<"adventure" | "charts">("adventure");
-  const [activeChartSlug, setActiveChartSlug] = useState<string>("tables-2-30");
+  const [activeChartSlug, setActiveChartSlug] = useState<string>("body-parts");
+  const [chartsNavOpen, setChartsNavOpen] = useState(true);
   const [selectedTable, setSelectedTable] = useState<number | "all">(2);
   const [alphabetFilter, setAlphabetFilter] = useState<"all" | "vowels" | "consonants">("all");
   const [recitingTable, setRecitingTable] = useState<number | null>(null);
   const [charts, setCharts] = useState<LearningChart[]>([]);
+  const availableChartSubmenus = charts.length > 0
+    ? charts.map((c) => ({
+        slug: c.slug,
+        label: CHART_METADATA[c.slug]?.label || c.title,
+        icon: CHART_METADATA[c.slug]?.icon || "📊",
+      }))
+    : DEFAULT_CHART_SUBMENUS;
   const [chartProgress, setChartProgress] = useState<ChartProgressData>({ summary: {}, records: {} });
   const [savingChartItem, setSavingChartItem] = useState<string | null>(null);
   const [misconceptionSubject, setMisconceptionSubject] = useState("All");
@@ -506,10 +544,13 @@ export default function App() {
   const start = async (selectedSkill: Skill, customRange?: string, customCount?: number | "all") => {
     const isMultiplication = /multiplication|tables/i.test(selectedSkill.name);
     const isBeforeAfterNumbers = /(before|after|missing)\s*numbers/i.test(selectedSkill.name);
+    const isRhymingWords = /rhyme|rhyming/i.test(selectedSkill.name);
     const defaultRange = isMultiplication
       ? "2-10"
       : isBeforeAfterNumbers
       ? "100-500"
+      : isRhymingWords
+      ? "all"
       : selectedSkill.table_range || undefined;
     const activeRange = customRange !== undefined ? (customRange || undefined) : defaultRange;
     const skillWithRange = { ...selectedSkill, table_range: activeRange };
@@ -519,6 +560,7 @@ export default function App() {
     setFlashcardFlipped(false);
     setSelectedChoice(null);
     setShowVisualPrompt(false);
+    setRhymeAnswerCollapsed(true);
 
     const activeCount = customCount !== undefined ? customCount : practiceCount;
 
@@ -597,6 +639,7 @@ export default function App() {
         setFlashcardFlipped(false);
         setSelectedChoice(null);
         setShowVisualPrompt(false);
+        setRhymeAnswerCollapsed(true);
         return current - 1;
       }
       return current;
@@ -611,6 +654,7 @@ export default function App() {
         setFlashcardFlipped(false);
         setSelectedChoice(null);
         setShowVisualPrompt(false);
+        setRhymeAnswerCollapsed(true);
         return current + 1;
       }
       return current;
@@ -1410,7 +1454,164 @@ export default function App() {
       );
     }
 
-    // 6. Standard Layout (Default)
+    // 6. Rhyme Card Layout (with Collapsible Answer State)
+    if (currentSkillTemplate === "rhyme_card" || /rhyme/i.test(skill?.name || "")) {
+      const targetWordMatch = currentEx.question.match(/(?:rhymes with|rhyming pair for|rhyming match for|words for|sound of)\s+([A-Za-z]+)/i);
+      const targetWord = targetWordMatch ? targetWordMatch[1] : (currentEx.question.split(" ").pop()?.replace(/[^a-zA-Z]/g, "") || "Word");
+      const familyClue = currentEx.image_question || "Rhyming Sound Family";
+      const correctRaw = currentEx.correct_answer || currentEx.correctAnswer || "";
+      const trioWords = String(correctRaw).split(",").map((w) => w.trim()).filter(Boolean);
+
+      return (
+        <div className="formatted-rhyme-stage">
+          {/* Header Bar */}
+          <div className="rhyme-stage-header">
+            <span className="rhyme-badge">🎵 RHYME TRIO CHALLENGE</span>
+            <div className="rhyme-header-actions">
+              <button
+                type="button"
+                className="rhyme-speaker-btn"
+                onClick={() => speak(`${currentEx.question}. Find 3 words that rhyme with ${targetWord}.`)}
+                title="Hear question"
+                aria-label="Hear question"
+              >
+                🔊 Listen
+              </button>
+              <span className="rhyme-counter">Question {index + 1} of {exercises.length}</span>
+            </div>
+          </div>
+
+          {/* Hero Target Word Card */}
+          <div className="rhyme-hero-box">
+            <div className="rhyme-music-notes" aria-hidden="true">
+              <span>🎶</span>
+              <span>✨</span>
+              <span>🎵</span>
+            </div>
+            <p className="rhyme-prompt-subtitle">{currentEx.question}</p>
+            <div className="rhyme-target-word-display">
+              <span className="rhyme-sparkle-left">✨</span>
+              <span className="rhyme-target-word">{targetWord}</span>
+              <span className="rhyme-sparkle-right">✨</span>
+            </div>
+            <p className="rhyme-instruction-hint">
+              Find <strong>3 words</strong> that rhyme with <strong>{targetWord}</strong>!
+            </p>
+          </div>
+
+          {/* Collapsible Answer State Drawer */}
+          <div className="rhyme-collapse-wrapper">
+            <div className="rhyme-collapse-bar">
+              <button
+                type="button"
+                className={`rhyme-collapse-toggle-btn ${rhymeAnswerCollapsed && !result ? "collapsed" : "expanded"}`}
+                onClick={() => setRhymeAnswerCollapsed(!rhymeAnswerCollapsed)}
+                aria-expanded={!rhymeAnswerCollapsed || !!result}
+                title={rhymeAnswerCollapsed && !result ? "Expand to peek 3 rhyming words & clue" : "Collapse answer drawer"}
+              >
+                <span className="toggle-icon">{rhymeAnswerCollapsed && !result ? "👁️" : "🙈"}</span>
+                <span className="toggle-label">
+                  {rhymeAnswerCollapsed && !result
+                    ? "Peek 3 Rhyming Words & Clue ▾"
+                    : "Hide 3 Rhyming Words ▴"}
+                </span>
+                <span className="toggle-state-pill">
+                  {rhymeAnswerCollapsed && !result ? "Hidden (Collapsed)" : "Revealed"}
+                </span>
+              </button>
+            </div>
+
+            {(!rhymeAnswerCollapsed || !!result) && (
+              <div className="rhyme-revealed-card animate-fade-in">
+                <div className="rhyme-revealed-header">
+                  <span className="revealed-badge-icon">💡</span>
+                  <div>
+                    <h4 className="revealed-title">3 Rhyming Words Solution &amp; Phonics Clue</h4>
+                    <p className="revealed-subtitle">{familyClue}</p>
+                  </div>
+                </div>
+
+                <div className="rhyme-pair-spotlight trio-spotlight">
+                  <div className="rhyme-spotlight-item target">
+                    <span className="spotlight-tag">Prompt Word</span>
+                    <span className="spotlight-word">{targetWord}</span>
+                  </div>
+                  <span className="rhyme-spotlight-connector">➔ 3 Rhyming Words ➔</span>
+                  <div className="rhyme-trio-chips">
+                    {trioWords.map((word: string, wIdx: number) => (
+                      <span key={wIdx} className="rhyme-trio-chip">
+                        <span className="chip-badge">#{wIdx + 1}</span>
+                        <strong className="chip-word">{word}</strong>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rhyme-explanation-box">
+                  <p className="rhyme-explanation-text">
+                    💬 {currentEx.explanation || `${targetWord} rhymes with ${trioWords.join(', ')}! All three words share the same ending sound.`}
+                  </p>
+                  <button
+                    type="button"
+                    className="rhyme-recite-pair-btn"
+                    onClick={() => speak(`${targetWord} rhymes with ${trioWords.join(', ')}! All three words share the same sound family.`)}
+                  >
+                    🔊 Hear All 3 Rhymes
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Answer Options Grid */}
+          <div className="rhyme-options-section">
+            <p className="rhyme-options-heading">👇 Choose the 3 words that rhyme with <strong>{targetWord}</strong>:</p>
+            <div className="rhyme-options-grid">
+              {currentEx.options.map((option: string, optIdx: number) => {
+                const isSelected = selectedChoice === option;
+                const isCorrect = (result?.correctAnswer || currentEx.correct_answer) === option;
+                let optClass = "";
+                if (result) {
+                  if (isCorrect) optClass = "rhyme-opt-good";
+                  else if (isSelected) optClass = "rhyme-opt-bad";
+                  else optClass = "rhyme-opt-muted";
+                } else if (isSelected) {
+                  optClass = "rhyme-opt-active";
+                }
+
+                const wordsInOption = option.split(",").map((w) => w.trim());
+
+                return (
+                  <button
+                    key={option}
+                    disabled={!!result}
+                    className={`rhyme-option-btn ${optClass}`}
+                    onClick={() => {
+                      setSelectedChoice(option);
+                      setRhymeAnswerCollapsed(false);
+                      answer(option);
+                    }}
+                    type="button"
+                  >
+                    <span className="rhyme-opt-bullet">{String.fromCharCode(65 + optIdx)}</span>
+                    <div className="rhyme-opt-words-row">
+                      {wordsInOption.map((wPart: string, pIdx: number) => (
+                        <span key={pIdx} className="rhyme-word-pill">
+                          {wPart}
+                        </span>
+                      ))}
+                    </div>
+                    {result && isCorrect && <span className="rhyme-opt-check">✓ 3 Rhymes!</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // 7. Standard Layout (Default)
     return (
       <div className="standard-quiz-box">
         <div className="standard-quiz-header">
@@ -1640,13 +1841,57 @@ export default function App() {
               >
                 <span>◇</span> My Learning Adventure
               </button>
-              <button
-                className={studentView === "charts" ? "nav-item active" : "nav-item"}
-                onClick={() => { setStudentView("charts"); setSkill(undefined); }}
-                title="Learning Charts"
-              >
-                <span>📊</span> Learning Charts
-              </button>
+              <div className="nav-group">
+                <button
+                  className={`nav-item nav-parent ${studentView === "charts" ? "active" : ""}`}
+                  onClick={() => {
+                    if (studentView !== "charts") {
+                      setStudentView("charts");
+                      setSkill(undefined);
+                      setChartsNavOpen(true);
+                    } else {
+                      setChartsNavOpen((prev) => !prev);
+                    }
+                  }}
+                  title="Learning Charts"
+                >
+                  <div className="nav-parent-title">
+                    <span>📊</span> Learning Charts
+                  </div>
+                  <span
+                    className={`nav-chevron ${chartsNavOpen ? "open" : ""}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setChartsNavOpen((prev) => !prev);
+                    }}
+                    title={chartsNavOpen ? "Collapse submenus" : "Expand submenus"}
+                  >
+                    ▶
+                  </span>
+                </button>
+                {chartsNavOpen && (
+                  <div className="nav-submenu" role="menu" aria-label="Learning charts submenus">
+                    {availableChartSubmenus.map((chartItem) => {
+                      const isSubActive = studentView === "charts" && activeChartSlug === chartItem.slug;
+                      return (
+                        <button
+                          key={chartItem.slug}
+                          className={`nav-sub-item ${isSubActive ? "active" : ""}`}
+                          onClick={() => {
+                            setStudentView("charts");
+                            setSkill(undefined);
+                            setActiveChartSlug(chartItem.slug);
+                          }}
+                          title={chartItem.label}
+                        >
+                          <span className="sub-icon">{chartItem.icon}</span>
+                          <span className="sub-label">{chartItem.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </>
           ) : (
             <>
@@ -1664,13 +1909,59 @@ export default function App() {
               >
                 <span>👥</span> Students &amp; Roster
               </button>
-              <button
-                className={parentView === "charts" && !teacherPreview ? "nav-item active" : "nav-item"}
-                onClick={() => { setTeacherPreview(false); setParent(true); setParentView("charts"); }}
-                title="Charts & Records"
-              >
-                <span>📊</span> Charts &amp; Records
-              </button>
+              <div className="nav-group">
+                <button
+                  className={`nav-item nav-parent ${parentView === "charts" && !teacherPreview ? "active" : ""}`}
+                  onClick={() => {
+                    if (parentView !== "charts" || teacherPreview) {
+                      setTeacherPreview(false);
+                      setParent(true);
+                      setParentView("charts");
+                      setChartsNavOpen(true);
+                    } else {
+                      setChartsNavOpen((prev) => !prev);
+                    }
+                  }}
+                  title="Charts & Records"
+                >
+                  <div className="nav-parent-title">
+                    <span>📊</span> Charts &amp; Records
+                  </div>
+                  <span
+                    className={`nav-chevron ${chartsNavOpen ? "open" : ""}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setChartsNavOpen((prev) => !prev);
+                    }}
+                    title={chartsNavOpen ? "Collapse submenus" : "Expand submenus"}
+                  >
+                    ▶
+                  </span>
+                </button>
+                {chartsNavOpen && (
+                  <div className="nav-submenu" role="menu" aria-label="Charts & records submenus">
+                    {availableChartSubmenus.map((chartItem) => {
+                      const isSubActive = parentView === "charts" && !teacherPreview && activeChartSlug === chartItem.slug;
+                      return (
+                        <button
+                          key={chartItem.slug}
+                          className={`nav-sub-item ${isSubActive ? "active" : ""}`}
+                          onClick={() => {
+                            setTeacherPreview(false);
+                            setParent(true);
+                            setParentView("charts");
+                            setActiveChartSlug(chartItem.slug);
+                          }}
+                          title={chartItem.label}
+                        >
+                          <span className="sub-icon">{chartItem.icon}</span>
+                          <span className="sub-label">{chartItem.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
               <button
                 className={parentView === "worksheets" && !teacherPreview ? "nav-item active" : "nav-item"}
                 onClick={() => { setTeacherPreview(false); setParent(true); setParentView("worksheets"); }}
@@ -1948,6 +2239,51 @@ export default function App() {
                       </button>
                     ))}
                   </div>
+                )}
+                {/rhyme|rhyming/i.test(skill.name) && (
+                  <>
+                    <div className="range-filter-bar">
+                      <span className="range-filter-label">🎵 Sound Family:</span>
+                      {[
+                        { id: "all", label: "All Families (320+)" },
+                        { id: "short-a", label: "Short A (-at, -an...)" },
+                        { id: "short-e", label: "Short E (-ed, -en...)" },
+                        { id: "short-i", label: "Short I (-ig, -in...)" },
+                        { id: "short-o-u", label: "Short O & U (-og, -un...)" },
+                        { id: "long-vowels", label: "Long Vowels (-ake, -ight...)" },
+                      ].map((tab) => (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          className={`range-filter-pill ${(skill.table_range || "all") === tab.id ? "active" : ""}`}
+                          onClick={() => switchTableRange(tab.id)}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="range-filter-bar" style={{ marginTop: 6 }}>
+                      <span className="range-filter-label">🎲 Session:</span>
+                      {[
+                        { id: 10, label: "10 Random" },
+                        { id: 25, label: "25 Random" },
+                        { id: 50, label: "50 Random" },
+                        { id: "all", label: "All in Family" },
+                      ].map((tab) => (
+                        <button
+                          key={String(tab.id)}
+                          type="button"
+                          className={`range-filter-pill ${practiceCount === tab.id ? "active" : ""}`}
+                          onClick={() => {
+                            setPracticeCount(tab.id as any);
+                            start(skill, skill.table_range, tab.id as any);
+                          }}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
                 )}
                 <button
                   className="exercise-fullscreen-toggle"
@@ -2508,6 +2844,7 @@ export default function App() {
                           <option value="flashcard">Template: Flashcard</option>
                           <option value="fill_blank">Template: Fill in the blank</option>
                           <option value="true_false">Template: True or false</option>
+                          <option value="rhyme_card">Template: Rhyme card (Collapsed answer)</option>
                         </select>
                         <div className="skill-template-callout" style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#e8f3f1", borderRadius: 8, fontSize: 11, color: "var(--teal)" }}>
                           <span className="template-badge">{templateLabel(newSkill.template)}</span>
@@ -2659,6 +2996,28 @@ export default function App() {
                             { id: "11-20", label: "Tables 11–20 (100)" },
                             { id: "20-30", label: "Tables 20–30 (110)" },
                             { id: "2-30", label: "Tables 2–30 (290)" },
+                          ].map((r) => (
+                            <button
+                              key={r.id}
+                              type="button"
+                              className={`range-filter-pill ${wizardExerciseRange === r.id ? "active" : ""}`}
+                              onClick={() => filterWizardQuestions(r.id)}
+                            >
+                              {r.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {/rhyme|rhyming/i.test(`${newSkill.name} ${newSkill.topic}`) && (
+                        <div className="wizard-range-filter-bar">
+                          <span className="wizard-range-filter-label">Filter Families:</span>
+                          {[
+                            { id: "all", label: "All Families (320+)" },
+                            { id: "short-a", label: "Short A (-at, -an...)" },
+                            { id: "short-e", label: "Short E (-ed, -en...)" },
+                            { id: "short-i", label: "Short I (-ig, -in...)" },
+                            { id: "short-o-u", label: "Short O & U (-og, -un...)" },
+                            { id: "long-vowels", label: "Long Vowels (-ake, -ight...)" },
                           ].map((r) => (
                             <button
                               key={r.id}

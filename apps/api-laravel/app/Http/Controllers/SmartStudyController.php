@@ -79,6 +79,12 @@ class SmartStudyController extends Controller
         $swarPracticed = $progress->where('chart_slug', 'marathi-swar')->pluck('item_key')->unique()->count();
         $vyanjanPracticed = $progress->where('chart_slug', 'marathi-vyanjan')->pluck('item_key')->unique()->count();
         $lettersPracticed = $progress->where('chart_slug', 'english-alphabet')->pluck('item_key')->unique()->count();
+        $bodyPartsPracticed = $progress->where('chart_slug', 'body-parts')->pluck('item_key')->unique()->count();
+        $animalsPracticed = $progress->where('chart_slug', 'animals')->pluck('item_key')->unique()->count();
+        $vegetablesPracticed = $progress->where('chart_slug', 'vegetables')->pluck('item_key')->unique()->count();
+        $birdsPracticed = $progress->where('chart_slug', 'birds')->pluck('item_key')->unique()->count();
+        $emotionsPracticed = $progress->where('chart_slug', 'emotions')->pluck('item_key')->unique()->count();
+        $phonicsPracticed = $progress->where('chart_slug', 'phonics')->pluck('item_key')->unique()->count();
         $totalSessions = (int) $progress->sum('practice_count');
 
         $recordsMap = [];
@@ -103,6 +109,24 @@ class SmartStudyController extends Controller
                 'vyanjanPracticed' => $vyanjanPracticed,
                 'letters' => $lettersPracticed,
                 'lettersPracticed' => $lettersPracticed,
+                'bodyParts' => $bodyPartsPracticed,
+                'bodyPartsPracticed' => $bodyPartsPracticed,
+                'bodyPartsTotal' => 21,
+                'animals' => $animalsPracticed,
+                'animalsPracticed' => $animalsPracticed,
+                'animalsTotal' => 24,
+                'vegetables' => $vegetablesPracticed,
+                'vegetablesPracticed' => $vegetablesPracticed,
+                'vegetablesTotal' => 20,
+                'birds' => $birdsPracticed,
+                'birdsPracticed' => $birdsPracticed,
+                'birdsTotal' => 16,
+                'emotions' => $emotionsPracticed,
+                'emotionsPracticed' => $emotionsPracticed,
+                'emotionsTotal' => 16,
+                'phonics' => $phonicsPracticed,
+                'phonicsPracticed' => $phonicsPracticed,
+                'phonicsTotal' => 249,
                 'totalPracticed' => $totalSessions,
                 'totalPracticeSessions' => $totalSessions,
             ],
@@ -345,6 +369,22 @@ class SmartStudyController extends Controller
             return $items[$i % count($items)];
         }
         if ($name === 'Living and non-living things') { $items = [['Which one is living?', 'Plant', ['Plant', 'Chair', 'Ball']], ['Which one is not living?', 'Book', ['Dog', 'Tree', 'Book']], ['Which one is living?', 'Bird', ['Rock', 'Bird', 'Cup']]]; return $items[$i % count($items)]; }
+        if ($name === 'Rhyming words' || str_contains(strtolower($name), 'rhyme')) {
+            $rhymeTrios = [
+                ['Cat', 'Bat, Hat, Mat', ['Bat, Hat, Mat', 'Dog, Frog, Log', 'Sun, Run, Fun', 'Pig, Big, Wig']],
+                ['Sun', 'Run, Bun, Fun', ['Run, Bun, Fun', 'Bed, Red, Fed', 'Cake, Bake, Lake', 'Pen, Hen, Ten']],
+                ['King', 'Ring, Sing, Wing', ['Ring, Sing, Wing', 'Ball, Tall, Fall', 'Moon, Spoon, Noon', 'Pot, Hot, Dot']],
+                ['Cake', 'Bake, Lake, Make', ['Bake, Lake, Make', 'Car, Star, Far', 'Net, Pet, Wet', 'Lip, Tip, Sip']],
+                ['Night', 'Light, Right, Bright', ['Light, Right, Bright', 'Pin, Bin, Tin', 'Mop, Top, Hop', 'Bug, Mug, Hug']],
+                ['Bell', 'Yell, Tell, Well', ['Yell, Tell, Well', 'Kick, Sick, Pick', 'Cool, Pool, Tool', 'Lock, Clock, Rock']],
+                ['Dog', 'Frog, Log, Fog', ['Frog, Log, Fog', 'Mice, Rice, Nice', 'Hen, Pen, Den', 'Day, Play, Say']],
+                ['Star', 'Car, Far, Jar', ['Car, Far, Jar', 'Pink, Sink, Wink', 'Duck, Luck, Buck', 'Sit, Hit, Fit']],
+                ['Ball', 'Tall, Fall, Wall', ['Tall, Fall, Wall', 'Pig, Dig, Wig', 'Nut, Hut, Cut', 'Cap, Map, Tap']],
+                ['Moon', 'Spoon, Noon, Soon', ['Spoon, Noon, Soon', 'Book, Look, Cook', 'Bear, Tear, Fear', 'Core, More, Store']],
+            ];
+            $item = $rhymeTrios[$i % count($rhymeTrios)];
+            return ["Which 3 words rhyme with {$item[0]}?", $item[1], $item[2]];
+        }
         $a = 5 + $i % 5; $b = 1 + $i % 4; return ["{$a} - {$b} = ?", (string) ($a - $b), [(string) ($a - $b - 1), (string) ($a - $b), (string) ($a - $b + 1)]];
     }
 
@@ -468,7 +508,7 @@ class SmartStudyController extends Controller
             'name' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string', 'max:500'],
             'difficulty' => ['nullable', 'integer', 'min:1', 'max:5'],
-            'template' => ['nullable', 'string', 'in:standard,image_prompt,story_card,flashcard,fill_blank,true_false'],
+            'template' => ['nullable', 'string', 'in:standard,image_prompt,story_card,flashcard,fill_blank,true_false,rhyme_card'],
             'table_range' => ['nullable', 'string', 'max:50'],
         ]);
         $subject = DB::table('subjects')->where('name', $data['subject'])->first();
@@ -493,7 +533,7 @@ class SmartStudyController extends Controller
             'name' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string', 'max:500'],
             'difficulty' => ['nullable', 'integer', 'min:1', 'max:5'],
-            'template' => ['nullable', 'string', 'in:standard,image_prompt,story_card,flashcard,fill_blank,true_false'],
+            'template' => ['nullable', 'string', 'in:standard,image_prompt,story_card,flashcard,fill_blank,true_false,rhyme_card'],
             'table_range' => ['nullable', 'string', 'max:50'],
         ]);
         $skill = DB::table('skills')->where('id', $skillId)->first();
@@ -559,6 +599,12 @@ class SmartStudyController extends Controller
             return $exercise;
         });
 
+        if ($range && in_array($range, ['short-a', 'short-e', 'short-i', 'short-o-u', 'long-vowels'], true)) {
+            $exercises = $exercises->filter(function ($exercise) use ($range) {
+                return str_contains(strtolower($exercise->image_question ?? ''), $range);
+            })->values();
+        }
+
         if ($range && preg_match('/^(\d+)\s*-\s*(\d+)$/', $range, $m)) {
             $min = (int) $m[1];
             $max = (int) $m[2];
@@ -600,7 +646,7 @@ class SmartStudyController extends Controller
 
     public function updateExercise(Request $request, string $exerciseId)
     {
-        $data = $request->validate(['question' => ['required', 'string', 'max:1000'], 'options' => ['required', 'array', 'min:2'], 'options.*' => ['string', 'max:200'], 'correctAnswer' => ['required', 'string', 'max:200'], 'explanation' => ['required', 'string', 'max:1000'], 'difficulty' => ['required', 'integer', 'min:1', 'max:5'], 'imageUrl' => ['nullable', 'string', 'max:10000000'], 'imageQuestion' => ['nullable', 'string', 'max:1000'], 'template' => ['nullable', 'in:standard,image_prompt,story_card,flashcard,fill_blank,true_false']]);
+        $data = $request->validate(['question' => ['required', 'string', 'max:1000'], 'options' => ['required', 'array', 'min:2'], 'options.*' => ['string', 'max:200'], 'correctAnswer' => ['required', 'string', 'max:200'], 'explanation' => ['required', 'string', 'max:1000'], 'difficulty' => ['required', 'integer', 'min:1', 'max:5'], 'imageUrl' => ['nullable', 'string', 'max:10000000'], 'imageQuestion' => ['nullable', 'string', 'max:1000'], 'template' => ['nullable', 'in:standard,image_prompt,story_card,flashcard,fill_blank,true_false,rhyme_card']]);
         if (!in_array($data['correctAnswer'], $data['options'], true)) return response()->json(['error' => 'Correct answer must be one of the options.'], 422);
         $exercise = DB::table('exercises')->where('id', $exerciseId)->first();
         if (!$exercise) return response()->json(['error' => 'Exercise not found'], 404);
@@ -614,7 +660,7 @@ class SmartStudyController extends Controller
 
     public function createExercise(Request $request, string $skillId)
     {
-        $data = $request->validate(['question' => ['required', 'string', 'max:1000'], 'options' => ['required', 'array', 'min:2'], 'options.*' => ['string', 'max:200'], 'correctAnswer' => ['required', 'string', 'max:200'], 'explanation' => ['required', 'string', 'max:1000'], 'difficulty' => ['required', 'integer', 'min:1', 'max:5'], 'imageUrl' => ['nullable', 'string', 'max:10000000'], 'imageQuestion' => ['nullable', 'string', 'max:1000'], 'template' => ['nullable', 'in:standard,image_prompt,story_card,flashcard,fill_blank,true_false']]);
+        $data = $request->validate(['question' => ['required', 'string', 'max:1000'], 'options' => ['required', 'array', 'min:2'], 'options.*' => ['string', 'max:200'], 'correctAnswer' => ['required', 'string', 'max:200'], 'explanation' => ['required', 'string', 'max:1000'], 'difficulty' => ['required', 'integer', 'min:1', 'max:5'], 'imageUrl' => ['nullable', 'string', 'max:10000000'], 'imageQuestion' => ['nullable', 'string', 'max:1000'], 'template' => ['nullable', 'in:standard,image_prompt,story_card,flashcard,fill_blank,true_false,rhyme_card']]);
         $skill = DB::table('skills')->where('id', $skillId)->first();
         if (!$skill) return response()->json(['error' => 'Skill not found'], 404);
         if (!in_array($data['correctAnswer'], $data['options'], true)) return response()->json(['error' => 'Correct answer must be one of the options.'], 422);
