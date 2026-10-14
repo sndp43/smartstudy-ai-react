@@ -267,11 +267,19 @@ export function PhonicsStoriesChartView({ childId, onBack }: PhonicsStoriesChart
             {/* Illustrated Storybook Hero Banner */}
             <View style={styles.heroIllustrationContainer}>
               {currentPage.imageKey && PHONICS_PAGE_IMAGES[currentPage.imageKey] ? (
-                <Image
-                  source={PHONICS_PAGE_IMAGES[currentPage.imageKey]}
-                  style={styles.heroStoryImage}
-                  resizeMode="cover"
-                />
+                <>
+                  <Image
+                    source={PHONICS_PAGE_IMAGES[currentPage.imageKey]}
+                    style={styles.heroStoryImageBg}
+                    blurRadius={16}
+                    resizeMode="cover"
+                  />
+                  <Image
+                    source={PHONICS_PAGE_IMAGES[currentPage.imageKey]}
+                    style={styles.heroStoryImage}
+                    resizeMode="contain"
+                  />
+                </>
               ) : (
                 <View style={styles.heroCardFallback}>
                   <Text style={{ fontSize: 50, marginBottom: 6 }}>{currentPage.illustrationIcon}</Text>
@@ -492,7 +500,7 @@ const styles = StyleSheet.create({
   },
   heroIllustrationContainer: {
     width: '100%',
-    height: 230,
+    height: 320,
     borderRadius: 14,
     overflow: 'hidden',
     position: 'relative',
@@ -500,6 +508,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#0F172A',
     borderWidth: 2,
     borderColor: 'rgba(255,255,255,0.18)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  heroStoryImageBg: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+    opacity: 0.65,
   },
   heroStoryImage: {
     width: '100%',

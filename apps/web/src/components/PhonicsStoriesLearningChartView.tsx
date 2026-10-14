@@ -506,20 +506,36 @@ export default function PhonicsStoriesLearningChartView({
                 }}
               >
                 <div>
-                  <div style={{ position: "relative", width: "100%", height: "120px", borderRadius: "10px", overflow: "hidden", marginBottom: "8px" }}>
-                    {story.coverImage && ![
-                      'zack-black-duck.jpg',
-                      'queen-green-bee.jpg',
-                      'goat-yellow-boat.jpg',
-                      'king-shiny-ring.jpg',
-                      'rain-on-train.jpg',
-                      'mark-spark-barn.jpg'
-                    ].some(f => story.coverImage?.includes(f)) ? (
-                      <img
-                        src={story.coverImage}
-                        alt={story.title}
-                        style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.3s ease" }}
-                      />
+                  <div style={{ position: "relative", width: "100%", height: "120px", borderRadius: "10px", overflow: "hidden", marginBottom: "8px", background: story.headerBg }}>
+                    {story.coverImage ? (
+                      <>
+                        <img
+                          src={story.coverImage}
+                          alt=""
+                          aria-hidden="true"
+                          style={{
+                            position: "absolute",
+                            inset: 0,
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            filter: "blur(12px) brightness(0.65)",
+                            transform: "scale(1.1)",
+                          }}
+                        />
+                        <img
+                          src={story.coverImage}
+                          alt={story.title}
+                          style={{
+                            position: "relative",
+                            zIndex: 1,
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "contain",
+                            transition: "transform 0.3s ease",
+                          }}
+                        />
+                      </>
                     ) : (
                       <div
                         style={{
@@ -692,25 +708,51 @@ export default function PhonicsStoriesLearningChartView({
             style={{
               position: "relative",
               width: "100%",
-              maxWidth: isFullscreen ? "800px" : "680px",
+              maxWidth: isFullscreen ? "800px" : "640px",
+              aspectRatio: "4 / 3",
               borderRadius: "16px",
               overflow: "hidden",
-              boxShadow: "0 12px 28px rgba(0,0,0,0.12)",
+              boxShadow: "0 12px 28px rgba(0,0,0,0.14)",
               border: "4px solid #fff",
+              backgroundColor: "#0F172A",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
             {currentPage.image ? (
-              <img
-                src={currentPage.image}
-                alt={`${currentStory.title} - Page ${currentPageIndex + 1}`}
-                style={{
-                  width: "100%",
-                  maxHeight: isFullscreen ? "420px" : "360px",
-                  objectFit: "cover",
-                  display: "block",
-                  transition: "opacity 0.25s ease",
-                }}
-              />
+              <>
+                {/* Ambient softly blurred background to blend subtle aspect variances */}
+                <img
+                  src={currentPage.image}
+                  alt=""
+                  aria-hidden="true"
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    filter: "blur(22px) brightness(0.65)",
+                    transform: "scale(1.1)",
+                    opacity: 0.85,
+                  }}
+                />
+                {/* Main illustration with 100% full view - never clipped */}
+                <img
+                  src={currentPage.image}
+                  alt={`${currentStory.title} - Page ${currentPageIndex + 1}`}
+                  style={{
+                    position: "relative",
+                    zIndex: 1,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "contain",
+                    display: "block",
+                    transition: "opacity 0.25s ease",
+                  }}
+                />
+              </>
             ) : (
               <div
                 style={{
