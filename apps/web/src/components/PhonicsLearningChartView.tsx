@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { speak as voiceSpeak, stopSpeech as voiceStopSpeech } from "../services/voiceService";
 import {
   PHONICS_DATA,
   ONSET_PHONIC_SOUNDS,
@@ -122,97 +123,15 @@ export default function PhonicsLearningChartView({
     };
   }, []);
 
-  // Primary High-Fidelity Audio Engine (Uses /api/tts studio audio like Vyanjans + slow playback rate)
+  // Primary High-Fidelity Audio Engine (Uses configurable voiceService, defaulting to 14 Swar Lady voice)
   const playPhonicsAudio = (phrase: string, speedOverride?: number, langOverride?: string): Promise<void> => {
-    return new Promise((resolve) => {
-      const currentSpeed = speedOverride !== undefined ? speedOverride : speechSpeed;
-      const targetLang = langOverride || (voiceEngine === "vyanjan" ? "mr" : "en");
-
-      // Stop existing audio or browser speech
-      if (sharedAudioRef.current) {
-        try {
-          sharedAudioRef.current.pause();
-          sharedAudioRef.current.currentTime = 0;
-        } catch (e) {}
-      }
-      if ("speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
-      }
-
-      const apiBase = apiUrl || "http://127.0.0.1:8000/api";
-      const ttsUrl = `${apiBase}/tts?lang=${targetLang}&text=${encodeURIComponent(phrase)}`;
-
-      if (!sharedAudioRef.current) {
-        sharedAudioRef.current = new Audio();
-      }
-      const audio = sharedAudioRef.current;
-      audio.playbackRate = currentSpeed; // Sets smooth slow playback (e.g. 0.80x)
-
-      let finished = false;
-      let timer: any = null;
-
-      const finish = () => {
-        if (!finished) {
-          finished = true;
-          if (timer) clearTimeout(timer);
-          audio.onended = null;
-          audio.onerror = null;
-          resolve();
-        }
-      };
-
-      // 8-second safety timeout
-      timer = setTimeout(finish, 8000);
-      audio.onended = finish;
-
-      audio.onerror = () => {
-        fallbackSpeechSynthesis(phrase, currentSpeed, targetLang, finish);
-      };
-
-      try {
-        audio.pause();
-        audio.src = ttsUrl;
-        audio.load();
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-          playPromise.catch((err) => {
-            console.warn("HTML5 Audio play error, falling back to speech synthesis:", err);
-            fallbackSpeechSynthesis(phrase, currentSpeed, targetLang, finish);
-          });
-        }
-      } catch (err) {
-        fallbackSpeechSynthesis(phrase, currentSpeed, targetLang, finish);
-      }
+    const currentSpeed = speedOverride !== undefined ? speedOverride : speechSpeed;
+    const targetLang = langOverride || (voiceEngine === "vyanjan" ? "mr" : "en");
+    return voiceSpeak(phrase, {
+      lang: targetLang,
+      rate: currentSpeed,
+      apiUrl,
     });
-  };
-
-  // Browser SpeechSynthesis Fallback with matching slow rate
-  const fallbackSpeechSynthesis = (phrase: string, rate: number, lang: string, onDone: () => void) => {
-    if (!("speechSynthesis" in window)) {
-      onDone();
-      return;
-    }
-    try {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(phrase);
-      utterance.rate = rate;
-      utterance.pitch = 1.0;
-      utterance.lang = lang === "mr" ? "mr-IN" : "en-US";
-
-      const voices = window.speechSynthesis.getVoices();
-      const preferred = lang === "mr"
-        ? voices.find((v) => v.lang.startsWith("mr") || v.lang.startsWith("hi"))
-        : voices.find((v) => /natural.*english|google us english|zira|samantha|karen|jenny|aria|david/i.test(v.name)) ||
-          voices.find((v) => v.lang === "en-US") ||
-          voices.find((v) => v.lang.startsWith("en"));
-      if (preferred) utterance.voice = preferred;
-
-      utterance.onend = onDone;
-      utterance.onerror = onDone;
-      window.speechSynthesis.speak(utterance);
-    } catch (err) {
-      onDone();
-    }
   };
 
   // Stop all active reciting or audio
@@ -233,6 +152,7 @@ export default function PhonicsLearningChartView({
     if ("speechSynthesis" in window) {
       window.speechSynthesis.cancel();
     }
+    voiceStopSpeech();
   };
 
   // 1. Click on Vowel Header Banner (e.g. 'short a', 'short e')

@@ -1,9 +1,21 @@
 {
   "name": "smartstudy-ai",
   "private": true,
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev:web": "npm run dev --workspace=apps/web",
-    "build:web": "npm run build --workspace=apps/web"
+    "build:web": "npm run build --workspace=apps/web",
+    "tv:start": "npm run start --workspace=apps/tv",
+    "tv:android": "cross-env JAVA_HOME=\"C:\\Users\\sndpm\\.jdk\\jdk-17.0.12+7\" ANDROID_HOME=\"C:\\Users\\sndpm\\AppData\\Local\\Android\\Sdk\" npm run android --workspace=apps/tv",
+    "tv:android-release": "cross-env JAVA_HOME=\"C:\\Users\\sndpm\\.jdk\\jdk-17.0.12+7\" ANDROID_HOME=\"C:\\Users\\sndpm\\AppData\\Local\\Android\\Sdk\" npm run android --workspace=apps/tv -- --mode=release"
+  },
+  "devDependencies": {
+    "@react-native-community/cli": "^15.0.1",
+    "@react-native-community/cli-platform-android": "^15.0.1",
+    "@react-native-community/cli-platform-ios": "^15.0.1",
+    "cross-env": "^10.1.0"
   }
 }

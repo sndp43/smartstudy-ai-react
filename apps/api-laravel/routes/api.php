@@ -18,8 +18,12 @@ use App\Http\Controllers\SmartStudyController;
 Route::get('/health', [SmartStudyController::class, 'health']);
 
 // Role Authentication
+Route::post('/auth/register', [SmartStudyController::class, 'register']);
+Route::post('/auth/parent/register', [SmartStudyController::class, 'register']);
+Route::post('/auth/parent/login', [SmartStudyController::class, 'parentLogin']);
 Route::post('/auth/teacher/login', [SmartStudyController::class, 'teacherLogin']);
 Route::post('/auth/student/login', [SmartStudyController::class, 'studentLogin']);
+Route::post('/auth/logout', [SmartStudyController::class, 'logout']);
 Route::get('/teachers', [SmartStudyController::class, 'teachers']);
 
 // Learners & Reports

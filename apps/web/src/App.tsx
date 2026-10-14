@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type UIEvent } from "react";
 import LearningChartsView, { LearningChart, ChartProgressData } from "./components/LearningChartsView";
+import ShapeGraphic from "./components/ShapeGraphic";
+import { speak as universalSpeak, stopSpeech } from "./services/voiceService";
+import { VoiceSettingsButton } from "./components/VoiceSettingsModal";
 
 const API = "http://127.0.0.1:8000/api";
 const defaultChildId = "00000000-0000-0000-0000-000000000099";
@@ -46,9 +49,14 @@ const CHART_METADATA: Record<string, { label: string; icon: string }> = {
   "marathi-vyanjan": { label: "व्यंजन (Vyanjan)", icon: "🪷" },
   "english-alphabet": { label: "English A–Z", icon: "🔤" },
   "phonics": { label: "Phonics (CVC शब्द)", icon: "🗣️" },
+  "phonic-stories": { label: "Phonics Stories (Grade 1)", icon: "📖" },
+  "poems": { label: "Poems (कविता/Rhymes)", icon: "🎭" },
 };
 
 const DEFAULT_CHART_SUBMENUS = [
+  { slug: "phonics", label: "Phonics (CVC शब्द)", icon: "🗣️" },
+  { slug: "phonic-stories", label: "Phonics Stories (Grade 1)", icon: "📖" },
+  { slug: "poems", label: "Poems (कविता/Rhymes)", icon: "🎭" },
   { slug: "body-parts", label: "Body Parts (अवयव)", icon: "👦" },
   { slug: "animals", label: "Animals (प्राणी)", icon: "🦁" },
   { slug: "vegetables", label: "Vegetables (भाज्या)", icon: "🥕" },
@@ -58,7 +66,6 @@ const DEFAULT_CHART_SUBMENUS = [
   { slug: "marathi-swar", label: "१४ स्वर (Swar)", icon: "🕉️" },
   { slug: "marathi-vyanjan", label: "व्यंजन (Vyanjan)", icon: "🪷" },
   { slug: "english-alphabet", label: "English A–Z", icon: "🔤" },
-  { slug: "phonics", label: "Phonics (CVC शब्द)", icon: "🗣️" },
 ];
 
 interface FillBlankParsed {
@@ -166,7 +173,7 @@ const renderQuestionContent = (text: string) => {
   return text;
 };
 
-type UserRole = "student" | "teacher";
+type UserRole = "student" | "teacher" | "parent";
 
 interface SavedAuth {
   role: UserRole;
@@ -212,12 +219,162 @@ const TEMPLATE_OPTIONS = [
   { id: "fill_blank", name: "Fill in the blank", title: "Fill in the blank", description: "Emphasizes the missing word or letter in a sentence.", preview: "_", previewClass: "image-preview" },
   { id: "true_false", name: "True or false", title: "True or false", description: "Simple statement-based format for quick concept checks.", preview: "✓", previewClass: "story-preview" },
   { id: "rhyme_card", name: "Rhyme Card", title: "Rhyme card with collapsed answer", description: "Interactive rhyme builder where the answer and phonetic clue are in a collapsed state.", preview: "🎵", previewClass: "story-preview" },
+  { id: "shape_card", name: "Shape Card", title: "Shape spelling with collapsed answer", description: "Interactive shape recognition and fill-in-the-blank spelling with hidden answers.", preview: "⬡", previewClass: "story-preview" },
+  { id: "magic_words_card", name: "Magic Words Card", title: "Magic words with scenario clue", description: "Interactive manners & magic words challenge with situational clues and collapsible golden rules.", preview: "🪄", previewClass: "story-preview" },
 ];
 
 const templateLabel = (templateId?: string) => {
   const match = TEMPLATE_OPTIONS.find((t) => t.id === templateId);
   return match?.name || "Standard";
 };
+
+interface CourseDefinition {
+  id: string;
+  code: string;
+  name: string;
+  subject: string;
+  icon: string;
+  description: string;
+  defaultGrades: string[];
+  defaultBoards: string[];
+  topics: string[];
+  recommendedMastery: number;
+}
+
+const DEFAULT_COURSES: CourseDefinition[] = [
+  {
+    id: "math-foundations",
+    code: "MATH-101",
+    name: "Mathematics Foundations & Operations",
+    subject: "Mathematics",
+    icon: "🔢",
+    description: "Core addition, subtraction, arithmetic fluency, and multiplication tables (2–30).",
+    defaultGrades: ["1", "2", "3", "4", "5"],
+    defaultBoards: ["CBSE", "ICSE", "State Board", "IB", "Cambridge"],
+    topics: ["Addition & Subtraction", "Multiplication Tables (2–10)", "Tables (11–30)", "Word Problems"],
+    recommendedMastery: 80,
+  },
+  {
+    id: "math-missing-numbers",
+    code: "MATH-102",
+    name: "Number Sequence & Missing Numbers",
+    subject: "Mathematics",
+    icon: "🎲",
+    description: "Before, after, and missing numbers across ranges 100–500.",
+    defaultGrades: ["1", "2", "3"],
+    defaultBoards: ["CBSE", "ICSE", "State Board"],
+    topics: ["Before & After Numbers", "Missing Numbers 100–200", "Missing Numbers 200–500"],
+    recommendedMastery: 85,
+  },
+  {
+    id: "geometry-shapes",
+    code: "MATH-103",
+    name: "2D & 3D Shapes & Spatial Geometry",
+    subject: "Mathematics",
+    icon: "📐",
+    description: "Shape recognition, geometric properties, vertices, edges, and spelling challenges.",
+    defaultGrades: ["UKG", "1", "2", "3"],
+    defaultBoards: ["CBSE", "ICSE", "State Board", "IB", "Cambridge"],
+    topics: ["2D Shapes (Circle, Square, Triangle)", "3D Shapes (Cube, Sphere, Cylinder)", "Shape Spelling"],
+    recommendedMastery: 75,
+  },
+  {
+    id: "english-phonics",
+    code: "ENG-101",
+    name: "Phonics & CVC Short Vowels",
+    subject: "English",
+    icon: "🗣️",
+    description: "Short vowel sounds, CVC sound blending (-at, -en, -ig, -ox, -ug), and auditory word recognition.",
+    defaultGrades: ["Nursery", "LKG", "UKG", "1", "2"],
+    defaultBoards: ["CBSE", "ICSE", "State Board", "IB", "Cambridge"],
+    topics: ["Short A CVC", "Short E CVC", "Short I CVC", "Short O & U CVC", "Phonetic Blends"],
+    recommendedMastery: 80,
+  },
+  {
+    id: "english-spelling-500",
+    code: "ENG-102",
+    name: "500 High-Frequency English Words & Spelling",
+    subject: "English",
+    icon: "🔤",
+    description: "Interactive fill-in-the-blank vocabulary spelling exercises with 500 common English words.",
+    defaultGrades: ["1", "2", "3", "4", "5"],
+    defaultBoards: ["CBSE", "ICSE", "State Board", "IB"],
+    topics: ["Missing First Letter", "Missing Middle Vowel", "Missing Final Letter", "Complex Blends"],
+    recommendedMastery: 75,
+  },
+  {
+    id: "english-rhymes",
+    code: "ENG-103",
+    name: "Rhyming Words & Sound Families (320+ Words)",
+    subject: "English",
+    icon: "🎵",
+    description: "Word families, phonetic ending patterns, and auditory rhyme association.",
+    defaultGrades: ["LKG", "UKG", "1", "2"],
+    defaultBoards: ["CBSE", "ICSE", "State Board", "IB", "Cambridge"],
+    topics: ["Short Vowel Rhymes", "Long Vowel Rhymes", "Consonant Blend Rhymes"],
+    recommendedMastery: 80,
+  },
+  {
+    id: "marathi-language",
+    code: "MAR-101",
+    name: "मराठी भाषा: स्वर, व्यंजन आणि बाराखडी",
+    subject: "Marathi",
+    icon: "🕉️",
+    description: "१४ स्वर (Swar), व्यंजन (Vyanjan), उच्चार, आणि मूलभूत मराठी शब्दसंग्रह.",
+    defaultGrades: ["1", "2", "3", "4", "5"],
+    defaultBoards: ["State Board", "CBSE", "ICSE"],
+    topics: ["१४ स्वर (Swar)", "व्यंजन (Vyanjan)", "चित्र व शब्द", "बाराखडी"],
+    recommendedMastery: 70,
+  },
+  {
+    id: "evs-discovery",
+    code: "EVS-101",
+    name: "Environmental Studies & Living World",
+    subject: "Science / EVS",
+    icon: "🦁",
+    description: "Human body parts (अवयव), animals, vegetables, birds, and nature exploration.",
+    defaultGrades: ["Nursery", "LKG", "UKG", "1", "2"],
+    defaultBoards: ["CBSE", "ICSE", "State Board", "IB", "Cambridge"],
+    topics: ["Body Parts & Functions", "Animals & Habitats", "Birds & Flight", "Vegetables & Plants"],
+    recommendedMastery: 85,
+  },
+  {
+    id: "social-magic-words",
+    code: "SEL-101",
+    name: "Manners, Magic Words & Social Etiquette",
+    subject: "Social Skills",
+    icon: "🪄",
+    description: "Top magic words (Please, Thank You, Sorry, Excuse Me) through realistic social scenarios.",
+    defaultGrades: ["Nursery", "LKG", "UKG", "1", "2"],
+    defaultBoards: ["CBSE", "ICSE", "State Board", "IB", "Cambridge"],
+    topics: ["Magic Words in Action", "Classroom Kindness", "Sharing & Respect"],
+    recommendedMastery: 90,
+  },
+  {
+    id: "grade1-phonics-stories",
+    code: "STORY-101",
+    name: "Grade 1 Decodable Phonics Stories",
+    subject: "English Reading",
+    icon: "📖",
+    description: "Decodable phonics reading adventures for Grade 1: Short vowels A-E-I-O-U, sh-ch-th digraphs, consonant blends, and magic 'e' long vowels with comprehension quizzes.",
+    defaultGrades: ["1", "2"],
+    defaultBoards: ["CBSE", "ICSE", "State Board", "IB", "Cambridge"],
+    topics: ["Short Vowels A-E-I-O-U Stories", "Digraphs (sh, ch, th)", "Consonant Blends (st, sp, fl)", "Magic 'e' Long Vowels", "Comprehension & Decoding Checks"],
+    recommendedMastery: 85,
+  },
+  {
+    id: "charts-recitation",
+    code: "CHART-101",
+    name: "Visual Charts & Daily Recitation",
+    subject: "Visual Learning",
+    icon: "📊",
+    description: "Multi-sensory tables, bilingual vocabulary charts, interactive rhymes, and poems.",
+    defaultGrades: ["1", "2", "3", "4", "5"],
+    defaultBoards: ["CBSE", "ICSE", "State Board", "IB", "Cambridge"],
+    topics: ["Tables 2–30 Recitation", "Illustrated Rhymes & Poems", "Bilingual Body & Animal Charts"],
+    recommendedMastery: 80,
+  },
+];
 
 type WorksheetResult = {
   status?: string;
@@ -232,32 +389,98 @@ type WorksheetResult = {
 };
 
 const speak = (message: string) => {
-  if (!("speechSynthesis" in window)) return;
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(message);
-  const voices = window.speechSynthesis.getVoices();
-  const preferred = voices.find((voice) =>
-    /female|samantha|zira|karen|susan|victoria|google uk english female|microsoft.*female/i.test(
-      `${voice.name} ${voice.voiceURI}`,
-    ),
-  );
-  if (preferred) utterance.voice = preferred;
-  utterance.rate = 0.88;
-  utterance.pitch = 1.08;
-  window.speechSynthesis.speak(utterance);
+  universalSpeak(message);
 };
 
 export default function App() {
   const [session, setSession] = useState<SavedAuth | null>(() => savedSession());
   const [loginRole, setLoginRole] = useState<UserRole>("student");
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [teacherEmail, setTeacherEmail] = useState("teacher@smartstudy.ai");
   const [teacherPassword, setTeacherPassword] = useState("password123");
+  const [parentEmail, setParentEmail] = useState("parent@smartstudy.ai");
+  const [parentPassword, setParentPassword] = useState("password123");
+  const [regName, setRegName] = useState("");
+  const [regEmail, setRegEmail] = useState("");
+  const [regPassword, setRegPassword] = useState("");
+  const [regRole, setRegRole] = useState<"parent" | "teacher">("parent");
+  const [showAddStudentModal, setShowAddStudentModal] = useState(false);
+  const [studentModalData, setStudentModalData] = useState({
+    name: "",
+    grade: "1",
+    board: "CBSE",
+    medium: "English",
+    avatar: "👦",
+  });
   const [authError, setAuthError] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
   const [teacherPreview, setTeacherPreview] = useState(false);
 
+  const [assignTargetGrade, setAssignTargetGrade] = useState("1");
+  const [assignTargetBoard, setAssignTargetBoard] = useState("CBSE");
+  const [assignMedium, setAssignMedium] = useState("English");
+  const [courseAssignments, setCourseAssignments] = useState<Record<string, string[]>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("smartstudy-course-assignments") || "{}");
+    } catch {
+      return {};
+    }
+  });
+
+  const getAssignmentKey = (grade: string, board: string) => `${grade}_${board}`;
+
+  const isCourseAssigned = (courseId: string, grade: string, board: string) => {
+    const key = getAssignmentKey(grade, board);
+    const assigned = courseAssignments[key];
+    if (assigned !== undefined) {
+      return assigned.includes(courseId);
+    }
+    const course = DEFAULT_COURSES.find((c) => c.id === courseId);
+    if (!course) return false;
+    return course.defaultGrades.includes(grade) && course.defaultBoards.includes(board);
+  };
+
+  const toggleCourseAssignment = (courseId: string) => {
+    const key = getAssignmentKey(assignTargetGrade, assignTargetBoard);
+    const currentlyAssigned = isCourseAssigned(courseId, assignTargetGrade, assignTargetBoard);
+    const existingList = courseAssignments[key] !== undefined
+      ? courseAssignments[key]
+      : DEFAULT_COURSES.filter((c) => c.defaultGrades.includes(assignTargetGrade) && c.defaultBoards.includes(assignTargetBoard)).map((c) => c.id);
+
+    const nextList = currentlyAssigned
+      ? existingList.filter((id) => id !== courseId)
+      : [...existingList, courseId];
+
+    const nextAssignments = { ...courseAssignments, [key]: nextList };
+    setCourseAssignments(nextAssignments);
+    localStorage.setItem("smartstudy-course-assignments", JSON.stringify(nextAssignments));
+    showToast(currentlyAssigned ? `⭕ Unassigned course for Class ${assignTargetGrade} (${assignTargetBoard})` : `✅ Assigned course to Class ${assignTargetGrade} (${assignTargetBoard})`);
+  };
+
+  const assignAllCoreCourses = () => {
+    const key = getAssignmentKey(assignTargetGrade, assignTargetBoard);
+    const allIds = DEFAULT_COURSES.map((c) => c.id);
+    const nextAssignments = { ...courseAssignments, [key]: allIds };
+    setCourseAssignments(nextAssignments);
+    localStorage.setItem("smartstudy-course-assignments", JSON.stringify(nextAssignments));
+    showToast(`🌟 Assigned all ${allIds.length} courses to Class ${assignTargetGrade} (${assignTargetBoard})!`);
+  };
+
+  const clearCourseAssignments = () => {
+    const key = getAssignmentKey(assignTargetGrade, assignTargetBoard);
+    const nextAssignments = { ...courseAssignments, [key]: [] };
+    setCourseAssignments(nextAssignments);
+    localStorage.setItem("smartstudy-course-assignments", JSON.stringify(nextAssignments));
+    showToast(`Cleared course assignments for Class ${assignTargetGrade} (${assignTargetBoard})`);
+  };
+
   const [child, setChild] = useState<any>();
   const [children, setChildren] = useState<any[]>([]);
+  const enrolledStudents = children.filter(
+    (c) =>
+      String(c.grade).toLowerCase() === String(assignTargetGrade).toLowerCase() &&
+      (!c.board || c.board.toLowerCase() === assignTargetBoard.toLowerCase() || assignTargetBoard === "All")
+  );
   const [childId, setChildId] = useState(() => (session?.role === "student" ? session.user.id : session?.activeChildId || defaultChildId));
   const [childSearch, setChildSearch] = useState("");
   const [selectedLoginChild, setSelectedLoginChild] = useState("");
@@ -274,6 +497,8 @@ export default function App() {
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   const [showVisualPrompt, setShowVisualPrompt] = useState(false);
   const [rhymeAnswerCollapsed, setRhymeAnswerCollapsed] = useState(true);
+  const [shapeAnswerCollapsed, setShapeAnswerCollapsed] = useState(true);
+  const [magicAnswerCollapsed, setMagicAnswerCollapsed] = useState(true);
   const [practiceCount, setPracticeCount] = useState<number | "all">(10);
 
   useEffect(() => {
@@ -281,8 +506,10 @@ export default function App() {
     setSelectedChoice(null);
     setShowVisualPrompt(false);
     setRhymeAnswerCollapsed(true);
+    setShapeAnswerCollapsed(true);
+    setMagicAnswerCollapsed(true);
   }, [index, skill]);
-  const [parent, setParent] = useState(() => session?.role === "teacher");
+  const [parent, setParent] = useState(() => session?.role === "teacher" || session?.role === "parent");
   const [parentView, setParentView] = useState("skills");
   const [studentView, setStudentView] = useState<"adventure" | "charts">("adventure");
   const [activeChartSlug, setActiveChartSlug] = useState<string>("body-parts");
@@ -291,13 +518,29 @@ export default function App() {
   const [alphabetFilter, setAlphabetFilter] = useState<"all" | "vowels" | "consonants">("all");
   const [recitingTable, setRecitingTable] = useState<number | null>(null);
   const [charts, setCharts] = useState<LearningChart[]>([]);
-  const availableChartSubmenus = charts.length > 0
-    ? charts.map((c) => ({
-        slug: c.slug,
-        label: CHART_METADATA[c.slug]?.label || c.title,
-        icon: CHART_METADATA[c.slug]?.icon || "📊",
-      }))
-    : DEFAULT_CHART_SUBMENUS;
+  const availableChartSubmenus = (() => {
+    const seen = new Set<string>();
+    const list: Array<{ slug: string; label: string; icon: string }> = [];
+
+    // Ensure all standard submenus in DEFAULT_CHART_SUBMENUS are always present
+    for (const item of DEFAULT_CHART_SUBMENUS) {
+      seen.add(item.slug);
+      list.push(item);
+    }
+
+    // Append any extra dynamic charts returned from backend API
+    for (const c of charts) {
+      if (!seen.has(c.slug)) {
+        seen.add(c.slug);
+        list.push({
+          slug: c.slug,
+          label: CHART_METADATA[c.slug]?.label || c.title,
+          icon: CHART_METADATA[c.slug]?.icon || "📊",
+        });
+      }
+    }
+    return list;
+  })();
   const [chartProgress, setChartProgress] = useState<ChartProgressData>({ summary: {}, records: {} });
   const [savingChartItem, setSavingChartItem] = useState<string | null>(null);
   const [misconceptionSubject, setMisconceptionSubject] = useState("All");
@@ -377,32 +620,39 @@ export default function App() {
   };
 
   const load = async () => {
-    const [
-      childResponse,
-      skillsResponse,
-      dashboardResponse,
-      worksheetsResponse,
-      chartsResponse,
-      chartProgressResponse,
-    ] = await Promise.all([
-      fetch(`${API}/children/${childId}`),
-      fetch(`${API}/children/${childId}/skills`),
-      fetch(`${API}/children/${childId}/dashboard`),
-      fetch(`${API}/children/${childId}/worksheets`),
-      fetch(`${API}/learning-charts`),
-      fetch(`${API}/children/${childId}/chart-progress`),
-    ]);
-    setChild(await childResponse.json());
-    setSkills(await skillsResponse.json());
-    const dashboard = await dashboardResponse.json();
-    setDash(dashboard);
-    setMisconceptionPage(1);
-    setWorksheets(await worksheetsResponse.json());
-    if (chartsResponse.ok) {
-      setCharts(await chartsResponse.json());
-    }
-    if (chartProgressResponse.ok) {
-      setChartProgress(await chartProgressResponse.json());
+    if (!childId) return;
+    try {
+      const [
+        childResponse,
+        skillsResponse,
+        dashboardResponse,
+        worksheetsResponse,
+        chartsResponse,
+        chartProgressResponse,
+      ] = await Promise.all([
+        fetch(`${API}/children/${childId}`),
+        fetch(`${API}/children/${childId}/skills`),
+        fetch(`${API}/children/${childId}/dashboard`),
+        fetch(`${API}/children/${childId}/worksheets`),
+        fetch(`${API}/learning-charts`),
+        fetch(`${API}/children/${childId}/chart-progress`),
+      ]);
+      if (childResponse.ok) setChild(await childResponse.json());
+      if (skillsResponse.ok) setSkills(await skillsResponse.json());
+      if (dashboardResponse.ok) {
+        const dashboard = await dashboardResponse.json();
+        setDash(dashboard);
+        setMisconceptionPage(1);
+      }
+      if (worksheetsResponse.ok) setWorksheets(await worksheetsResponse.json());
+      if (chartsResponse.ok) {
+        setCharts(await chartsResponse.json());
+      }
+      if (chartProgressResponse.ok) {
+        setChartProgress(await chartProgressResponse.json());
+      }
+    } catch (err) {
+      console.error("Failed to load student data from API", err);
     }
   };
 
@@ -443,24 +693,120 @@ export default function App() {
     setLoadingMoreMisconceptions(false);
   };
 
-  useEffect(() => {
-    fetch(`${API}/children`)
-      .then((response) => response.json())
-      .then(setChildren);
-  }, []);
-  useEffect(() => {
-    if (session) {
-      load();
+  const loadSavedChildren = () => {
+    try {
+      return JSON.parse(localStorage.getItem("smartstudy-custom-children") || "[]");
+    } catch {
+      return [];
     }
-  }, [session, childId]);
+  };
+
+  const loadSavedUsers = () => {
+    try {
+      return JSON.parse(localStorage.getItem("smartstudy-registered-users") || "[]");
+    } catch {
+      return [];
+    }
+  };
+
+  const fetchChildren = async () => {
+    try {
+      const response = await fetch(`${API}/children`);
+      if (response.ok) {
+        const serverData = await response.json();
+        const localData = loadSavedChildren();
+        const map = new Map();
+        serverData.forEach((c: any) => map.set(c.id, c));
+        localData.forEach((c: any) => map.set(c.id, c));
+        const merged = Array.from(map.values());
+        setChildren(merged);
+        return;
+      }
+    } catch {
+      // offline fallback
+    }
+    const local = loadSavedChildren();
+    if (local.length > 0) {
+      setChildren(local);
+    } else {
+      setChildren([
+        { id: defaultChildId, name: "Aarav", username: "aarav_1", grade: "1", board: "CBSE", medium: "English", avatar: "👦" },
+        { id: "00000000-0000-0000-0000-000000000098", name: "Ananya", username: "ananya_2", grade: "2", board: "CBSE", medium: "English", avatar: "👧" },
+      ]);
+    }
+  };
 
   useEffect(() => {
-    if (session) {
-      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-    } else {
-      localStorage.removeItem(SESSION_KEY);
+    fetchChildren();
+  }, []);
+
+  useEffect(() => {
+    if (childId) {
+      load();
     }
-  }, [session]);
+  }, [childId]);
+
+  const createStudentProfile = async (profileData: {
+    name: string;
+    grade: string;
+    board: string;
+    medium: string;
+    avatar?: string;
+  }) => {
+    if (!profileData.name.trim()) return;
+    setAuthLoading(true);
+    const localId = "child-" + Date.now();
+    const baseUsername = profileData.name.toLowerCase().replace(/[^a-z0-9]/g, "_") || "student";
+    const uniqueUsername = `${baseUsername}_${Math.floor(100 + Math.random() * 900)}`;
+    const newChildObj: any = {
+      id: localId,
+      name: profileData.name.trim(),
+      username: uniqueUsername,
+      grade: profileData.grade,
+      board: profileData.board || "CBSE",
+      medium: profileData.medium || "English",
+      avatar: profileData.avatar || "👦",
+      parentId: session?.user?.id,
+    };
+
+    try {
+      const response = await fetch(`${API}/children`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...profileData,
+          parentId: session?.user?.id,
+        }),
+      });
+      if (response.ok) {
+        const saved = await response.json();
+        if (saved?.id) {
+          newChildObj.id = saved.id;
+          newChildObj.username = saved.username || newChildObj.username;
+        }
+      }
+    } catch (err) {
+      console.warn("Saving student profile locally.", err);
+    }
+
+    const currentSaved = loadSavedChildren();
+    const nextSaved = [...currentSaved.filter((c: any) => c.id !== newChildObj.id), newChildObj];
+    localStorage.setItem("smartstudy-custom-children", JSON.stringify(nextSaved));
+
+    setChildren((prev) => [...prev.filter((c: any) => c.id !== newChildObj.id), newChildObj]);
+    setChildId(newChildObj.id);
+    setChild(newChildObj);
+    if (session) {
+      const updatedSession = { ...session, activeChildId: newChildObj.id };
+      setSession(updatedSession);
+      localStorage.setItem(SESSION_KEY, JSON.stringify(updatedSession));
+    }
+    setAuthLoading(false);
+    setShowAddStudentModal(false);
+    setStudentModalData({ name: "", grade: "1", board: "CBSE", medium: "English", avatar: "👦" });
+    showToast(`🌟 Profile created for ${newChildObj.name}! Switched to active student.`);
+    return newChildObj;
+  };
 
   const handleStudentLogin = async (selectedId: string) => {
     setAuthLoading(true);
@@ -489,40 +835,150 @@ export default function App() {
       setTeacherPreview(false);
       showToast(`Welcome back, ${data.user.name}!`);
     } catch {
-      setAuthError("Unable to connect to the server. Please check your network.");
+      // Local fallback for offline/demo environment
+      const foundChild = children.find((c) => c.id === selectedId);
+      if (foundChild) {
+        const newSession: SavedAuth = {
+          role: "student",
+          user: foundChild,
+          activeChildId: foundChild.id,
+        };
+        setSession(newSession);
+        setChild(foundChild);
+        setChildId(foundChild.id);
+        setParent(false);
+        setTeacherPreview(false);
+        showToast(`Welcome back, ${foundChild.name}!`);
+      } else {
+        setAuthError("Unable to connect to the server. Please check your network.");
+      }
     } finally {
       setAuthLoading(false);
     }
   };
 
-  const handleTeacherLogin = async (e: React.FormEvent) => {
+  const handleAdultLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthLoading(true);
     setAuthError(null);
+    const targetRole = loginRole === "teacher" ? "teacher" : "parent";
+    const emailToUse = targetRole === "teacher" ? teacherEmail : parentEmail;
+    const passwordToUse = targetRole === "teacher" ? teacherPassword : parentPassword;
+    const endpoint = targetRole === "teacher" ? `${API}/auth/teacher/login` : `${API}/auth/parent/login`;
+
     try {
-      const response = await fetch(`${API}/auth/teacher/login`, {
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: teacherEmail, password: teacherPassword }),
+        body: JSON.stringify({ email: emailToUse, password: passwordToUse }),
       });
       const data = await response.json();
       if (!response.ok) {
-        setAuthError(data.error || "Invalid email or password.");
-        setAuthLoading(false);
-        return;
+        throw new Error(data.error || "Invalid email or password.");
       }
       const newSession: SavedAuth = {
-        role: "teacher",
+        role: targetRole,
         user: data.user,
         activeChildId: childId || defaultChildId,
       };
       setSession(newSession);
       setParent(true);
-      setParentView("skills");
+      setParentView(targetRole === "teacher" ? "assign_courses" : "children");
       setTeacherPreview(false);
       showToast(`Signed in as ${data.user.name}`);
+    } catch (err: any) {
+      // Local verification fallback
+      const registered = loadSavedUsers();
+      const match = registered.find(
+        (u: any) => u.email.toLowerCase() === emailToUse.toLowerCase() && u.password === passwordToUse && u.role === targetRole
+      );
+      const isDefaultParentDemo = targetRole === "parent" && emailToUse.toLowerCase() === "parent@smartstudy.ai" && passwordToUse === "password123";
+      const isDefaultTeacherDemo = targetRole === "teacher" && emailToUse.toLowerCase() === "teacher@smartstudy.ai" && passwordToUse === "password123";
+
+      if (match || isDefaultParentDemo || isDefaultTeacherDemo) {
+        const userName = match?.name || (targetRole === "parent" ? "Family Parent" : "Classroom Teacher");
+        const userObj = {
+          id: match?.id || (targetRole === "parent" ? "parent-demo-1" : "teacher-demo-1"),
+          name: userName,
+          email: emailToUse,
+          role: targetRole,
+        };
+        const newSession: SavedAuth = {
+          role: targetRole,
+          user: userObj,
+          activeChildId: childId || defaultChildId,
+        };
+        setSession(newSession);
+        setParent(true);
+        setParentView(targetRole === "teacher" ? "assign_courses" : "children");
+        setTeacherPreview(false);
+        showToast(`Signed in as ${userName}`);
+      } else {
+        setAuthError(err?.message || "Invalid email or password. You can also click 'Use Demo' or register a new account.");
+      }
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!regName.trim() || !regEmail.trim() || !regPassword.trim()) {
+      setAuthError("Please fill out all registration fields.");
+      return;
+    }
+    setAuthLoading(true);
+    setAuthError(null);
+    try {
+      const res = await fetch(`${API}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: regName.trim(),
+          email: regEmail.trim(),
+          password: regPassword,
+          role: regRole,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setAuthError(data.error || data.message || "Registration failed.");
+        setAuthLoading(false);
+        return;
+      }
+      const newSession: SavedAuth = {
+        role: regRole,
+        user: data.user,
+        activeChildId: childId || defaultChildId,
+      };
+      setSession(newSession);
+      setParent(true);
+      setParentView("children");
+      setTeacherPreview(false);
+      showToast(`🎉 Account created! Welcome, ${data.user.name}.`);
     } catch {
-      setAuthError("Unable to connect to the server. Please check your network.");
+      // Local fallback for offline/demo environment
+      const localUser = {
+        id: "usr-" + Date.now(),
+        name: regName.trim(),
+        email: regEmail.trim().toLowerCase(),
+        password: regPassword,
+        role: regRole,
+      };
+      const users = loadSavedUsers();
+      users.push(localUser);
+      localStorage.setItem("smartstudy-registered-users", JSON.stringify(users));
+
+      const newSession: SavedAuth = {
+        role: regRole,
+        user: { id: localUser.id, name: localUser.name, email: localUser.email, role: localUser.role },
+        activeChildId: childId || defaultChildId,
+      };
+      setSession(newSession);
+      setParent(true);
+      setParentView("children");
+      setTeacherPreview(false);
+      showToast(`🎉 Account created! Welcome, ${localUser.name}.`);
     } finally {
       setAuthLoading(false);
     }
@@ -545,11 +1001,12 @@ export default function App() {
     const isMultiplication = /multiplication|tables/i.test(selectedSkill.name);
     const isBeforeAfterNumbers = /(before|after|missing)\s*numbers/i.test(selectedSkill.name);
     const isRhymingWords = /rhyme|rhyming/i.test(selectedSkill.name);
+    const isShapes = /shape/i.test(selectedSkill.name);
     const defaultRange = isMultiplication
       ? "2-10"
       : isBeforeAfterNumbers
       ? "100-500"
-      : isRhymingWords
+      : isRhymingWords || isShapes
       ? "all"
       : selectedSkill.table_range || undefined;
     const activeRange = customRange !== undefined ? (customRange || undefined) : defaultRange;
@@ -561,6 +1018,8 @@ export default function App() {
     setSelectedChoice(null);
     setShowVisualPrompt(false);
     setRhymeAnswerCollapsed(true);
+    setShapeAnswerCollapsed(true);
+    setMagicAnswerCollapsed(true);
 
     const activeCount = customCount !== undefined ? customCount : practiceCount;
 
@@ -936,20 +1395,12 @@ export default function App() {
   };
 
   const addChild = async () => {
-    const response = await fetch(`${API}/children`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newChild),
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      setChildMessage(data.message || data.error || "Unable to add child.");
-      return;
+    if (!newChild.name.trim()) return;
+    const profile = await createStudentProfile(newChild);
+    if (profile) {
+      setChildMessage(`${profile.name} added. Username: @${profile.username}`);
+      setNewChild({ ...newChild, name: "" });
     }
-    setChildMessage(`${data.name} added. Username: ${data.username}`);
-    setNewChild({ ...newChild, name: "" });
-    const childrenResponse = await fetch(`${API}/children`);
-    setChildren(await childrenResponse.json());
   };
 
   const feedback = result?.correct
@@ -1611,7 +2062,419 @@ export default function App() {
       );
     }
 
-    // 7. Standard Layout (Default)
+    // 7. Shape Card Layout (Recognition, Visual Image Beside Question, & Collapsible Answer State)
+    if (currentSkillTemplate === "shape_card" || /shape/i.test(skill?.name || "")) {
+      let shapeMeta: any = {};
+      try {
+        if (currentEx.image_question && typeof currentEx.image_question === "string" && currentEx.image_question.trim().startsWith("{")) {
+          shapeMeta = JSON.parse(currentEx.image_question);
+        }
+      } catch {
+        shapeMeta = {};
+      }
+
+      const shapeName = shapeMeta.shape || currentEx.explanation?.match(/The shape is a ([A-Za-z]+)/i)?.[1] || "Shape";
+      const shapeSymbol = shapeMeta.symbol || (
+        /circle/i.test(shapeName) ? "⭕" :
+        /square/i.test(shapeName) ? "⬛" :
+        /triangle/i.test(shapeName) ? "🔺" :
+        /rectangle/i.test(shapeName) ? "▭" :
+        /oval/i.test(shapeName) ? "🥚" :
+        /star/i.test(shapeName) ? "⭐" :
+        /heart/i.test(shapeName) ? "❤️" :
+        /diamond|rhombus/i.test(shapeName) ? "🔶" :
+        /hexagon/i.test(shapeName) ? "⬡" :
+        /octagon/i.test(shapeName) ? "🛑" :
+        /pentagon/i.test(shapeName) ? "⬟" :
+        /cylinder/i.test(shapeName) ? "🥫" :
+        /sphere/i.test(shapeName) ? "⚽" :
+        /cube/i.test(shapeName) ? "🎲" :
+        /cone/i.test(shapeName) ? "🍦" :
+        /pyramid/i.test(shapeName) ? "⛺" :
+        /trapezoid/i.test(shapeName) ? "⏢" :
+        /crescent/i.test(shapeName) ? "🌙" :
+        /semicircle/i.test(shapeName) ? "🔲" : "📐"
+      );
+      const shapeType = shapeMeta.type || (/sphere|cube|cylinder|cone|pyramid/i.test(shapeName) ? "3D Solid" : "2D Shape");
+      const shapeSides = shapeMeta.sides || "Geometric Shape";
+      const shapeRiddle = shapeMeta.riddle || currentEx.question;
+      const shapeWord = (shapeMeta.word || shapeName).toUpperCase();
+      const rawBlank = shapeMeta.blank || currentEx.question.match(/:\s*([A-Z_\s]+)/i)?.[1]?.trim() || shapeWord.replace(/[AEIOU]/g, "_");
+      const correctAnswer = currentEx.correct_answer || currentEx.correctAnswer || shapeMeta.missing || "";
+      const funFact = shapeMeta.fun_fact || currentEx.explanation || "";
+
+      // Parse blank letter tokens
+      const blankTokens = rawBlank.includes(" ")
+        ? rawBlank.split(/\s+/).filter(Boolean)
+        : rawBlank.split("");
+
+      const activeLetters = (selectedChoice || (result ? result.correctAnswer : "")).split(/[\s,]+/).filter(Boolean);
+      let blankCounter = 0;
+
+      return (
+        <div className="formatted-shape-stage">
+          {/* Header Bar */}
+          <div className="shape-stage-header">
+            <div className="shape-badge-group">
+              <span className="shape-badge">📐 SHAPE DETECTIVE</span>
+              <span className="shape-type-pill">{shapeType}</span>
+            </div>
+            <div className="shape-header-actions">
+              <button
+                type="button"
+                className="shape-speaker-btn"
+                onClick={() => speak(`What shape is this? ${shapeSides}. ${shapeRiddle}`)}
+                title="Hear shape clues aloud"
+                aria-label="Hear shape clues aloud"
+              >
+                🔊 Listen
+              </button>
+              <span className="shape-counter">Question {index + 1} of {exercises.length}</span>
+            </div>
+          </div>
+
+          {/* Hero Row: Shape Image BESIDE Question & Spelling */}
+          <div className="shape-hero-side-by-side">
+            {/* Left Column: Shape Illustration */}
+            <div className="shape-visual-column">
+              <div className="shape-illustration-card">
+                <div className="shape-art-stage">
+                  <ShapeGraphic shape={shapeName} size={190} showVertices={true} />
+                </div>
+                <div className="shape-visual-footer">
+                  <span className="visual-cue-icon">🔍</span>
+                  <span className="visual-cue-text">Count sides &amp; corners!</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Properties, Riddle & Fill-in-the-Blank Spelling */}
+            <div className="shape-content-column">
+              {/* Properties Chip */}
+              <div className="shape-property-chip">
+                <span className="chip-icon">📏</span>
+                <span className="chip-text"><strong>Sides &amp; Corners:</strong> {shapeSides}</span>
+              </div>
+
+              {/* Real-World Riddle */}
+              <div className="shape-riddle-box">
+                <span className="riddle-quote">“</span>
+                <p className="riddle-text">{shapeRiddle}</p>
+              </div>
+
+              {/* Fill-in-the-Blank Monospaced Box */}
+              <div className="shape-spelling-interactive-box">
+                <span className="spelling-label">🔤 Fill in the missing letters:</span>
+                <div className="shape-letter-slots-row">
+                  {blankTokens.map((token: string, tIdx: number) => {
+                    const isBlank = token === "_" || token === "—";
+                    if (isBlank) {
+                      const filledChar = activeLetters[blankCounter];
+                      blankCounter++;
+                      return (
+                        <span
+                          key={tIdx}
+                          className={`shape-slot ${filledChar ? "slot-filled" : "slot-waiting"}`}
+                        >
+                          {filledChar || "_"}
+                        </span>
+                      );
+                    }
+                    return (
+                      <span key={tIdx} className="shape-letter-fixed">
+                        {token}
+                      </span>
+                    );
+                  })}
+                </div>
+                <span className="spelling-subhint">
+                  {selectedChoice
+                    ? `Selected: ${selectedChoice}`
+                    : "Look at the shape image on the left and pick the missing letters below!"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Collapsible Answer State Drawer (strictly hidden by default) */}
+          <div className="shape-collapse-wrapper">
+            <div className="shape-collapse-bar">
+              <button
+                type="button"
+                className={`shape-collapse-toggle-btn ${shapeAnswerCollapsed && !result ? "collapsed" : "expanded"}`}
+                onClick={() => setShapeAnswerCollapsed(!shapeAnswerCollapsed)}
+                aria-expanded={!shapeAnswerCollapsed || !!result}
+                title={shapeAnswerCollapsed && !result ? "Peek shape solution & properties" : "Collapse solution drawer"}
+              >
+                <span className="toggle-icon">{shapeAnswerCollapsed && !result ? "👁️" : "🙈"}</span>
+                <span className="toggle-label">
+                  {shapeAnswerCollapsed && !result
+                    ? "Peek Shape Solution & Fun Fact ▾"
+                    : "Hide Solution Drawer ▴"}
+                </span>
+                <span className="toggle-state-pill">
+                  {shapeAnswerCollapsed && !result ? "Hidden (Collapsed)" : "Revealed"}
+                </span>
+              </button>
+            </div>
+
+            {(!shapeAnswerCollapsed || !!result) && (
+              <div className="shape-revealed-card animate-fade-in">
+                <div className="shape-revealed-header">
+                  <span className="revealed-badge-icon">{shapeSymbol}</span>
+                  <div>
+                    <h4 className="revealed-title">{shapeWord} ({shapeType})</h4>
+                    <p className="revealed-subtitle">{shapeSides}</p>
+                  </div>
+                </div>
+
+                <div className="shape-solution-spotlight">
+                  <div className="shape-full-word-banner">
+                    <span className="banner-label">Full Shape Name:</span>
+                    <span className="banner-word">{shapeWord}</span>
+                  </div>
+                  <div className="shape-missing-revealed">
+                    <span className="missing-tag">Missing Letters:</span>
+                    <strong className="missing-value">{correctAnswer}</strong>
+                  </div>
+                </div>
+
+                {funFact && (
+                  <div className="shape-fun-fact-box">
+                    <span className="fact-icon">🌟</span>
+                    <p className="fact-text">{funFact}</p>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  className="shape-hear-solution-btn"
+                  onClick={() => speak(`The shape is a ${shapeName}! It is spelled ${shapeWord.split('').join(' ')}. ${shapeSides}.`)}
+                >
+                  🔊 Hear Shape Name &amp; Spelling Aloud
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Options Grid */}
+          <div className="shape-options-section">
+            <p className="shape-options-heading">
+              👇 Choose the missing letters to spell <strong>{result ? shapeName : "this shape"}</strong>:
+            </p>
+            <div className="shape-options-grid">
+              {currentEx.options.map((option: string, optIdx: number) => {
+                const isSelected = selectedChoice === option;
+                const isCorrect = (result?.correctAnswer || currentEx.correct_answer) === option;
+                let optClass = "";
+                if (result) {
+                  if (isCorrect) optClass = "shape-opt-good";
+                  else if (isSelected) optClass = "shape-opt-bad";
+                  else optClass = "shape-opt-muted";
+                } else if (isSelected) {
+                  optClass = "shape-opt-active";
+                }
+
+                return (
+                  <button
+                    key={option}
+                    disabled={!!result}
+                    className={`shape-option-btn ${optClass}`}
+                    onClick={() => {
+                      setSelectedChoice(option);
+                      setShapeAnswerCollapsed(false);
+                      answer(option);
+                    }}
+                    type="button"
+                  >
+                    <span className="shape-opt-bullet">{String.fromCharCode(65 + optIdx)}</span>
+                    <span className="shape-opt-text">{option}</span>
+                    {result && isCorrect && <span className="shape-opt-check">✓ Correct!</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // 8. Magic Words Card Layout (Situational Manners, Audio Voice, & Collapsible Golden Rule)
+    if (currentSkillTemplate === "magic_words_card" || /magic word/i.test(skill?.name || "")) {
+      let magicMeta: any = {};
+      try {
+        if (currentEx.image_question && typeof currentEx.image_question === "string" && currentEx.image_question.trim().startsWith("{")) {
+          magicMeta = JSON.parse(currentEx.image_question);
+        }
+      } catch {
+        magicMeta = {};
+      }
+
+      const scenarioTitle = magicMeta.title || "Daily Manners Challenge";
+      const category = magicMeta.category || "Social Skills & Etiquette";
+      const categoryIcon = magicMeta.category_icon || "🏫";
+      const sceneEmoji = magicMeta.emoji || "🪄";
+      const situationText = magicMeta.situation || currentEx.question;
+      const targetMagicWord = magicMeta.magic_word || currentEx.correct_answer || currentEx.correctAnswer || "Magic Word";
+      const marathiTranslation = magicMeta.marathi || "";
+      const goldenRule = magicMeta.golden_rule || currentEx.explanation || "Magic words show kindness and make hearts happy!";
+      const exampleDialogue = magicMeta.dialogue || "";
+      const correctAnswer = currentEx.correct_answer || currentEx.correctAnswer || "";
+
+      return (
+        <div className="formatted-magic-stage">
+          {/* Header Bar */}
+          <div className="magic-stage-header">
+            <div className="magic-badge-group">
+              <span className="magic-badge">🪄 MAGIC WORDS DETECTIVE</span>
+              <span className="magic-category-pill">{categoryIcon} {category}</span>
+            </div>
+            <div className="magic-header-actions">
+              <button
+                type="button"
+                className="magic-speaker-btn"
+                onClick={() => speak(`${situationText}. What magic word should you say?`)}
+                title="Hear scenario aloud"
+                aria-label="Hear scenario aloud"
+              >
+                🔊 Listen
+              </button>
+              <span className="magic-counter">Question {index + 1} of {exercises.length}</span>
+            </div>
+          </div>
+
+          {/* Hero Row: Scene Badge & Situation Story */}
+          <div className="magic-hero-card">
+            <div className="magic-hero-top">
+              <span className="magic-scene-avatar" aria-hidden="true">{sceneEmoji}</span>
+              <div className="magic-hero-titles">
+                <span className="magic-scene-tag">{category}</span>
+                <h3 className="magic-scenario-title">{scenarioTitle}</h3>
+              </div>
+            </div>
+
+            {/* Situation Story Bubble */}
+            <div className="magic-story-bubble">
+              <span className="magic-quote-mark">“</span>
+              <p className="magic-situation-text">{situationText}</p>
+            </div>
+
+            {/* Interactive Question Prompt */}
+            <div className="magic-prompt-banner">
+              <span className="magic-wand-sparkle">✨</span>
+              <span className="magic-prompt-text">What magic word should you say?</span>
+              <span className="magic-wand-sparkle">✨</span>
+            </div>
+          </div>
+
+          {/* Collapsible Answer State & Golden Rule Drawer */}
+          <div className="magic-collapse-wrapper">
+            <div className="magic-collapse-bar">
+              <button
+                type="button"
+                className={`magic-collapse-toggle-btn ${magicAnswerCollapsed && !result ? "collapsed" : "expanded"}`}
+                onClick={() => setMagicAnswerCollapsed(!magicAnswerCollapsed)}
+                aria-expanded={!magicAnswerCollapsed || !!result}
+                title={magicAnswerCollapsed && !result ? "Peek magic word solution & golden rule" : "Collapse solution drawer"}
+              >
+                <span className="toggle-icon">{magicAnswerCollapsed && !result ? "👁️" : "🙈"}</span>
+                <span className="toggle-label">
+                  {magicAnswerCollapsed && !result
+                    ? "Peek Magic Word & Golden Rule ▾"
+                    : "Hide Solution Drawer ▴"}
+                </span>
+                <span className="toggle-state-pill">
+                  {magicAnswerCollapsed && !result ? "Hidden (Collapsed)" : "Revealed"}
+                </span>
+              </button>
+            </div>
+
+            {(!magicAnswerCollapsed || !!result) && (
+              <div className="magic-revealed-card animate-fade-in">
+                <div className="magic-revealed-header">
+                  <span className="revealed-badge-icon">🌟</span>
+                  <div>
+                    <h4 className="revealed-title">Magic Word: {targetMagicWord} {marathiTranslation && `(${marathiTranslation})`}</h4>
+                    <p className="revealed-subtitle">{scenarioTitle} • {category}</p>
+                  </div>
+                </div>
+
+                <div className="magic-solution-spotlight">
+                  <div className="magic-rule-box">
+                    <span className="rule-badge">⭐ Golden Rule:</span>
+                    <p className="rule-text">{goldenRule}</p>
+                  </div>
+                  {exampleDialogue && (
+                    <div className="magic-dialogue-box">
+                      <span className="dialogue-badge">💬 Say it politely:</span>
+                      <p className="dialogue-text">“{exampleDialogue}”</p>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  className="magic-hear-solution-btn"
+                  onClick={() => speak(`The magic word is ${targetMagicWord}! ${goldenRule} For example: ${exampleDialogue}`)}
+                >
+                  🔊 Hear Golden Rule &amp; Dialogue Aloud
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Answer Options Grid */}
+          <div className="magic-options-section">
+            <p className="magic-options-heading">
+              👇 Choose the right magic word to spread kindness:
+            </p>
+            <div className="magic-options-grid">
+              {currentEx.options.map((option: string, optIdx: number) => {
+                const isSelected = selectedChoice === option;
+                const isCorrect = (result?.correctAnswer || correctAnswer) === option;
+                let optClass = "";
+                if (result) {
+                  if (isCorrect) optClass = "magic-opt-good";
+                  else if (isSelected) optClass = "magic-opt-bad";
+                  else optClass = "magic-opt-muted";
+                } else if (isSelected) {
+                  optClass = "magic-opt-active";
+                }
+
+                // Extract English and Marathi parts if formatted like "Please (कृपया)"
+                const marathiMatch = option.match(/^(.*?)\s*\((.*?)\)$/);
+                const engText = marathiMatch ? marathiMatch[1] : option;
+                const marathiText = marathiMatch ? marathiMatch[2] : null;
+
+                return (
+                  <button
+                    key={option}
+                    disabled={!!result}
+                    className={`magic-option-btn ${optClass}`}
+                    onClick={() => {
+                      setSelectedChoice(option);
+                      setMagicAnswerCollapsed(false);
+                      speak(option);
+                      answer(option);
+                    }}
+                    type="button"
+                  >
+                    <span className="magic-opt-bullet">{String.fromCharCode(65 + optIdx)}</span>
+                    <div className="magic-opt-content">
+                      <span className="magic-opt-eng">{engText}</span>
+                      {marathiText && <span className="magic-opt-marathi">{marathiText}</span>}
+                    </div>
+                    {result && isCorrect && <span className="magic-opt-check">✓ Magic Word!</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // 9. Standard Layout (Default)
     return (
       <div className="standard-quiz-box">
         <div className="standard-quiz-header">
@@ -1673,15 +2536,23 @@ export default function App() {
               role="tab"
               aria-selected={loginRole === "student"}
             >
-              <span>🎒</span> Student Login
+              <span>🎒</span> Student
+            </button>
+            <button
+              className={`login-role-tab ${loginRole === "parent" ? "active" : ""}`}
+              onClick={() => { setLoginRole("parent"); setRegRole("parent"); setAuthError(null); }}
+              role="tab"
+              aria-selected={loginRole === "parent"}
+            >
+              <span>👨‍👩‍👧</span> Parent Portal
             </button>
             <button
               className={`login-role-tab ${loginRole === "teacher" ? "active" : ""}`}
-              onClick={() => { setLoginRole("teacher"); setAuthError(null); }}
+              onClick={() => { setLoginRole("teacher"); setRegRole("teacher"); setAuthError(null); }}
               role="tab"
               aria-selected={loginRole === "teacher"}
             >
-              <span>👩‍🏫</span> Teacher Portal
+              <span>👩‍🏫</span> Teacher
             </button>
           </div>
 
@@ -1715,7 +2586,7 @@ export default function App() {
                         }}
                         role="option"
                       >
-                        <span className="avatar">{item.name.charAt(0)}</span>
+                        <span className="avatar">{item.avatar || item.name.charAt(0)}</span>
                         <span>
                           <b>{item.name}</b>
                           <small>@{item.username} · Class {item.grade}</small>
@@ -1739,10 +2610,10 @@ export default function App() {
                       setChildSearch(`${item.name} (@${item.username})`);
                     }}
                   >
-                    <span className="avatar">{item.name.charAt(0)}</span>
+                    <span className="avatar">{item.avatar || item.name.charAt(0)}</span>
                     <div style={{ flex: 1 }}>
                       <b>{item.name}</b>
-                      <small>@{item.username} · Class {item.grade}</small>
+                      <small>@{item.username} · Class {item.grade} · {item.board || "CBSE"}</small>
                     </div>
                     <span className="arrow">›</span>
                   </button>
@@ -1760,59 +2631,177 @@ export default function App() {
               {!children.length && <p className="muted">Loading learners...</p>}
             </div>
           ) : (
-            <form className="teacher-login-form" onSubmit={handleTeacherLogin}>
-              <h1>Teacher &amp; Parent Portal</h1>
-              <p>Sign in to manage curriculum, review reports, and analyze worksheets.</p>
-
-              <div className="demo-hint-box">
-                <div>
-                  <strong>Demo credentials:</strong><br />
-                  teacher@smartstudy.ai / password123
-                </div>
+            <div className="adult-auth-panel">
+              <div className="auth-mode-toggle">
                 <button
                   type="button"
-                  className="demo-fill-btn"
-                  onClick={() => {
-                    setTeacherEmail("teacher@smartstudy.ai");
-                    setTeacherPassword("password123");
-                  }}
+                  className={`auth-mode-btn ${authMode === "login" ? "active" : ""}`}
+                  onClick={() => { setAuthMode("login"); setAuthError(null); }}
                 >
-                  Use Demo
+                  🔑 Sign In
+                </button>
+                <button
+                  type="button"
+                  className={`auth-mode-btn ${authMode === "register" ? "active" : ""}`}
+                  onClick={() => { setAuthMode("register"); setAuthError(null); }}
+                >
+                  ✨ Register / Sign Up
                 </button>
               </div>
 
-              <label>
-                Email Address
-                <input
-                  type="email"
-                  className="login-control"
-                  value={teacherEmail}
-                  onChange={(e) => setTeacherEmail(e.target.value)}
-                  placeholder="teacher@smartstudy.ai"
-                  required
-                />
-              </label>
+              {authMode === "login" ? (
+                <form className="teacher-login-form" onSubmit={handleAdultLogin}>
+                  <h1>{loginRole === "parent" ? "Parent & Family Portal" : "Teacher Portal"}</h1>
+                  <p>
+                    {loginRole === "parent"
+                      ? "Sign in to manage your kids' learning profiles, review reports, and track milestones."
+                      : "Sign in to manage curriculum, review reports, and customize practice questions."}
+                  </p>
 
-              <label>
-                Password
-                <input
-                  type="password"
-                  className="login-control"
-                  value={teacherPassword}
-                  onChange={(e) => setTeacherPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  required
-                />
-              </label>
+                  <div className="demo-hint-box">
+                    <div>
+                      <strong>Demo credentials:</strong><br />
+                      {loginRole === "parent" ? "parent@smartstudy.ai" : "teacher@smartstudy.ai"} / password123
+                    </div>
+                    <button
+                      type="button"
+                      className="demo-fill-btn"
+                      onClick={() => {
+                        if (loginRole === "parent") {
+                          setParentEmail("parent@smartstudy.ai");
+                          setParentPassword("password123");
+                        } else {
+                          setTeacherEmail("teacher@smartstudy.ai");
+                          setTeacherPassword("password123");
+                        }
+                      }}
+                    >
+                      Use Demo
+                    </button>
+                  </div>
 
-              <button
-                type="submit"
-                className="login-continue"
-                disabled={authLoading}
-              >
-                {authLoading ? "Signing in..." : "Sign in to Dashboard"}
-              </button>
-            </form>
+                  <label>
+                    Email Address
+                    <input
+                      type="email"
+                      className="login-control"
+                      value={loginRole === "parent" ? parentEmail : teacherEmail}
+                      onChange={(e) =>
+                        loginRole === "parent" ? setParentEmail(e.target.value) : setTeacherEmail(e.target.value)
+                      }
+                      placeholder={loginRole === "parent" ? "parent@smartstudy.ai" : "teacher@smartstudy.ai"}
+                      required
+                    />
+                  </label>
+
+                  <label>
+                    Password
+                    <input
+                      type="password"
+                      className="login-control"
+                      value={loginRole === "parent" ? parentPassword : teacherPassword}
+                      onChange={(e) =>
+                        loginRole === "parent" ? setParentPassword(e.target.value) : setTeacherPassword(e.target.value)
+                      }
+                      placeholder="Enter your password"
+                      required
+                    />
+                  </label>
+
+                  <button
+                    type="submit"
+                    className="login-continue"
+                    disabled={authLoading}
+                  >
+                    {authLoading ? "Signing in..." : `Sign in as ${loginRole === "parent" ? "Parent" : "Teacher"}`}
+                  </button>
+
+                  <div style={{ textAlign: "center", marginTop: "12px", fontSize: "12px", color: "var(--muted)" }}>
+                    Don't have an account?{" "}
+                    <button
+                      type="button"
+                      style={{ background: "none", border: "none", color: "var(--teal)", fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}
+                      onClick={() => { setAuthMode("register"); setRegRole(loginRole as "parent" | "teacher"); }}
+                    >
+                      Create account here
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <form className="teacher-login-form" onSubmit={handleRegister}>
+                  <h1>Create {loginRole === "parent" ? "Parent" : "Teacher"} Account</h1>
+                  <p>Register once to create and manage multiple student profiles.</p>
+
+                  <label>
+                    Full Name
+                    <input
+                      type="text"
+                      className="login-control"
+                      value={regName}
+                      onChange={(e) => setRegName(e.target.value)}
+                      placeholder="e.g. Priya Sharma"
+                      required
+                    />
+                  </label>
+
+                  <label>
+                    Email Address
+                    <input
+                      type="email"
+                      className="login-control"
+                      value={regEmail}
+                      onChange={(e) => setRegEmail(e.target.value)}
+                      placeholder="e.g. parent@example.com"
+                      required
+                    />
+                  </label>
+
+                  <label>
+                    Password
+                    <input
+                      type="password"
+                      className="login-control"
+                      value={regPassword}
+                      onChange={(e) => setRegPassword(e.target.value)}
+                      placeholder="Create a strong password"
+                      required
+                      minLength={6}
+                    />
+                  </label>
+
+                  <label>
+                    Account Type
+                    <select
+                      className="login-control"
+                      value={regRole}
+                      onChange={(e) => setRegRole(e.target.value as "parent" | "teacher")}
+                    >
+                      <option value="parent">Parent (Family &amp; Kids Management)</option>
+                      <option value="teacher">Teacher (Classroom &amp; Educator)</option>
+                    </select>
+                  </label>
+
+                  <button
+                    type="submit"
+                    className="login-continue"
+                    disabled={authLoading}
+                  >
+                    {authLoading ? "Creating account..." : `Create ${regRole === "parent" ? "Parent" : "Teacher"} Account 🎉`}
+                  </button>
+
+                  <div style={{ textAlign: "center", marginTop: "12px", fontSize: "12px", color: "var(--muted)" }}>
+                    Already have an account?{" "}
+                    <button
+                      type="button"
+                      style={{ background: "none", border: "none", color: "var(--teal)", fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}
+                      onClick={() => setAuthMode("login")}
+                    >
+                      Sign in here
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -1895,6 +2884,15 @@ export default function App() {
             </>
           ) : (
             <>
+              {session?.role === "teacher" && (
+                <button
+                  className={parentView === "assign_courses" && !teacherPreview ? "nav-item active" : "nav-item"}
+                  onClick={() => { setTeacherPreview(false); setParent(true); setParentView("assign_courses"); }}
+                  title="Assign Courses (Class & Board)"
+                >
+                  <span>📋</span> Assign Courses
+                </button>
+              )}
               <button
                 className={parentView === "skills" && !teacherPreview ? "nav-item active" : "nav-item"}
                 onClick={() => { setTeacherPreview(false); setParent(true); setParentView("skills"); }}
@@ -1905,9 +2903,9 @@ export default function App() {
               <button
                 className={parentView === "children" && !teacherPreview ? "nav-item active" : "nav-item"}
                 onClick={() => { setTeacherPreview(false); setParent(true); setParentView("children"); }}
-                title="Students & Roster"
+                title={session?.role === "parent" ? "My Kids Profiles" : "Students & Roster"}
               >
-                <span>👥</span> Students &amp; Roster
+                <span>{session?.role === "parent" ? "👨‍👩‍👧" : "👥"}</span> {session?.role === "parent" ? "My Kids Profiles" : "Students & Roster"}
               </button>
               <div className="nav-group">
                 <button
@@ -1985,7 +2983,12 @@ export default function App() {
               </button>
               <button
                 className={teacherPreview ? "nav-item active" : "nav-item"}
-                onClick={() => { setTeacherPreview(true); }}
+                onClick={() => {
+                  setTeacherPreview(true);
+                  setStudentView("adventure");
+                  setSkill(undefined);
+                  setSubject("All");
+                }}
                 title="Preview Practice"
               >
                 <span>✨</span> Preview Practice
@@ -2004,6 +3007,8 @@ export default function App() {
             <p>
               {session?.role === "student"
                 ? `${child?.name || "Learner"} · Class ${child?.grade || "1"} · ${child?.board || "CBSE"}`
+                : session?.role === "parent"
+                ? `Parent & Family Workspace · Active: ${child?.name || "Learner"}`
                 : "Teacher & Educator Workspace · Class 1"}
             </p>
           </div>
@@ -2012,15 +3017,17 @@ export default function App() {
               <>
                 <span className="role-badge student">🎒 Student</span>
                 <div className="session-profile">
-                  <span className="avatar">{child?.name?.charAt(0) || "S"}</span>
+                  <span className="avatar">{child?.avatar || child?.name?.charAt(0) || "S"}</span>
                   <span><b>{child?.name || "Learner"}</b><small>@{child?.username || "learner"}</small></span>
                 </div>
               </>
             ) : (
               <>
-                <span className="role-badge teacher">👩‍🏫 Teacher</span>
+                <span className={`role-badge ${session?.role === "parent" ? "parent" : "teacher"}`}>
+                  {session?.role === "parent" ? "👨‍👩‍👧 Parent" : "👩‍🏫 Teacher"}
+                </span>
                 <div className="teacher-student-selector">
-                  <small className="muted">Student:</small>
+                  <small className="muted">{session?.role === "parent" ? "Child:" : "Student:"}</small>
                   <select
                     value={childId}
                     onChange={(e) => setChildId(e.target.value)}
@@ -2028,19 +3035,28 @@ export default function App() {
                   >
                     {children.map((c) => (
                       <option key={c.id} value={c.id}>
-                        {c.name} (@{c.username})
+                        {c.avatar ? `${c.avatar} ` : ""}{c.name} (@{c.username})
                       </option>
                     ))}
                   </select>
+                  <button
+                    type="button"
+                    className="add-student-header-btn"
+                    onClick={() => setShowAddStudentModal(true)}
+                    title="Add a new student profile"
+                  >
+                    ➕ Add Student
+                  </button>
                 </div>
                 <div className="session-profile">
-                  <span className="avatar" style={{ background: "#147d78", color: "#fff" }}>
-                    {session?.user?.name?.charAt(0) || "T"}
+                  <span className="avatar" style={{ background: session?.role === "parent" ? "#4f46e5" : "#147d78", color: "#fff" }}>
+                    {session?.user?.name?.charAt(0) || (session?.role === "parent" ? "P" : "T")}
                   </span>
-                  <span><b>{session?.user?.name || "Teacher"}</b><small>{session?.user?.email}</small></span>
+                  <span><b>{session?.user?.name || (session?.role === "parent" ? "Parent" : "Teacher")}</b><small>{session?.user?.email}</small></span>
                 </div>
               </>
             )}
+            <VoiceSettingsButton />
             <button className="session-exit" onClick={() => setShowSignOutConfirm(true)}>
               Sign out
             </button>
@@ -2050,8 +3066,8 @@ export default function App() {
           <>
             {teacherPreview && (
               <div className="preview-banner">
-                <span>👁️ <b>Teacher Preview Mode:</b> Experiencing student practice screen for <b>{child?.name}</b></span>
-                <button className="preview-exit-btn" onClick={() => setTeacherPreview(false)}>
+                <span>👁️ <b>Teacher Preview Mode:</b> Experiencing student practice screen for <b>{child?.name || "Learner"}</b></span>
+                <button className="preview-exit-btn" onClick={() => { setTeacherPreview(false); setSkill(undefined); }}>
                   Exit Preview
                 </button>
               </div>
@@ -2094,33 +3110,44 @@ export default function App() {
                   ))}
                 </div>
                 <div className="grid">
-                  {visibleSkills.map((item) => (
-                    <button
-                      className="skill"
-                      onClick={() => start(item)}
-                      key={item.id}
-                    >
-                      <div className="skill-badge-row">
-                        <b>{item.name}</b>
-                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                          {item.table_range && /multiplication|tables/i.test(item.name) && (
-                            <span className="range-badge">Tables {item.table_range}</span>
-                          )}
-                          {item.table_range && /(before|after|missing)\s*numbers/i.test(item.name) && (
-                            <span className="range-badge">Range {item.table_range}</span>
-                          )}
-                          {/missing\s*letters/i.test(item.name) && (
-                            <span className="range-badge">500 Illustrated Words</span>
-                          )}
-                          <span className="template-badge">{templateLabel(item.template)}</span>
+                  {visibleSkills.length === 0 ? (
+                    <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "40px 20px", color: "var(--muted, #64748b)" }}>
+                      <p style={{ fontSize: "1.1rem", marginBottom: 8 }}>No skills available for <b>{subject}</b>.</p>
+                      {subject !== "All" && (
+                        <button className="primary-btn" onClick={() => setSubject("All")} style={{ marginTop: 8 }}>
+                          View All Skills
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    visibleSkills.map((item) => (
+                      <button
+                        className="skill"
+                        onClick={() => start(item)}
+                        key={item.id}
+                      >
+                        <div className="skill-badge-row">
+                          <b>{item.name}</b>
+                          <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                            {item.table_range && /multiplication|tables/i.test(item.name) && (
+                              <span className="range-badge">Tables {item.table_range}</span>
+                            )}
+                            {item.table_range && /(before|after|missing)\s*numbers/i.test(item.name) && (
+                              <span className="range-badge">Range {item.table_range}</span>
+                            )}
+                            {/missing\s*letters/i.test(item.name) && (
+                              <span className="range-badge">500 Illustrated Words</span>
+                            )}
+                            <span className="template-badge">{templateLabel(item.template)}</span>
+                          </div>
                         </div>
-                      </div>
-                      <small>
-                        {item.topic} - {Math.round(item.mastery_score)}%
-                        mastered
-                      </small>
-                    </button>
-                  ))}
+                        <small>
+                          {item.topic} - {Math.round(item.mastery_score)}%
+                          mastered
+                        </small>
+                      </button>
+                    ))
+                  )}
                 </div>
               </section>
             ) : (
@@ -2502,18 +3529,195 @@ export default function App() {
                 </div>
               </>
             )}
+            {parentView === "assign_courses" && (
+              <div className="assign-container">
+                <div className="assign-header-bar">
+                  <div>
+                    <span className="eyebrow">TEACHER PORTAL · CURRICULUM MANAGEMENT</span>
+                    <h3 style={{ margin: "4px 0 0", fontSize: "20px", color: "var(--ink)" }}>
+                      📋 Assign Courses by Class &amp; School Board
+                    </h3>
+                    <p style={{ margin: "4px 0 0", fontSize: "13px", color: "var(--muted)" }}>
+                      Configure curriculum courses, assign learning modules, and align skill tracks based on learner grade and education board standards.
+                    </p>
+                  </div>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <button
+                      type="button"
+                      className="assign-pill active"
+                      style={{ background: "var(--teal)", color: "#fff", display: "flex", alignItems: "center", gap: "6px" }}
+                      onClick={assignAllCoreCourses}
+                    >
+                      <span>✨</span> Assign All Courses
+                    </button>
+                    <button
+                      type="button"
+                      className="assign-pill"
+                      style={{ color: "var(--danger, #e11d48)", borderColor: "#fecdd3" }}
+                      onClick={clearCourseAssignments}
+                    >
+                      <span>⭕</span> Clear All
+                    </button>
+                  </div>
+                </div>
+
+                {/* Filter / Selector Card */}
+                <div className="assign-filters-card">
+                  <div className="assign-filter-row">
+                    <span className="assign-filter-label">Target Class:</span>
+                    <div className="assign-pills-group" role="radiogroup" aria-label="Select Target Class">
+                      {["Nursery", "LKG", "UKG", "1", "2", "3", "4", "5"].map((grade) => (
+                        <button
+                          key={grade}
+                          type="button"
+                          className={`assign-pill ${assignTargetGrade === grade ? "active" : ""}`}
+                          onClick={() => setAssignTargetGrade(grade)}
+                        >
+                          {grade.startsWith("Class") || grade === "Nursery" || grade === "LKG" || grade === "UKG" ? grade : `Class ${grade}`}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="assign-filter-row">
+                    <span className="assign-filter-label">School Board:</span>
+                    <div className="assign-pills-group" role="radiogroup" aria-label="Select School Board">
+                      {["CBSE", "ICSE", "State Board", "IB", "Cambridge"].map((board) => (
+                        <button
+                          key={board}
+                          type="button"
+                          className={`assign-pill ${assignTargetBoard === board ? "active" : ""}`}
+                          onClick={() => setAssignTargetBoard(board)}
+                        >
+                          {board}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="assign-filter-row">
+                    <span className="assign-filter-label">Medium:</span>
+                    <div className="assign-pills-group" role="radiogroup" aria-label="Select Learning Medium">
+                      {["English", "Marathi", "Hindi"].map((med) => (
+                        <button
+                          key={med}
+                          type="button"
+                          className={`assign-pill ${assignMedium === med ? "active" : ""}`}
+                          onClick={() => setAssignMedium(med)}
+                        >
+                          {med} Medium
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Enrolled Students Card */}
+                <div className="enrolled-students-card">
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <span style={{ fontSize: "24px" }}>🎒</span>
+                    <div>
+                      <strong style={{ fontSize: "13px", color: "var(--teal-dark)" }}>
+                        Enrolled Students in {assignTargetGrade.length > 2 ? assignTargetGrade : `Class ${assignTargetGrade}`} ({assignTargetBoard}):
+                      </strong>
+                      <span style={{ marginLeft: "8px", fontSize: "12px", color: "var(--ink)", fontWeight: 600 }}>
+                        {enrolledStudents.length} {enrolledStudents.length === 1 ? "student" : "students"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="enrolled-badges">
+                    {enrolledStudents.length > 0 ? (
+                      enrolledStudents.map((st) => (
+                        <span key={st.id} className="enrolled-student-chip">
+                          <span>{st.avatar || "👦"}</span>
+                          <b>{st.name}</b>
+                          <small style={{ color: "var(--muted)", fontSize: "11px" }}>@{st.username}</small>
+                        </span>
+                      ))
+                    ) : (
+                      <span style={{ fontSize: "12px", color: "var(--muted)", fontStyle: "italic" }}>
+                        No students enrolled in this grade & board yet. Newly registered kids will receive assigned courses automatically!
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Grid of Courses */}
+                <div className="courses-grid-view">
+                  {DEFAULT_COURSES.map((course) => {
+                    const assigned = isCourseAssigned(course.id, assignTargetGrade, assignTargetBoard);
+                    return (
+                      <div key={course.id} className={`course-card ${assigned ? "assigned" : ""}`}>
+                        <div className="course-card-top">
+                          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                            <span className="course-icon-badge">{course.icon}</span>
+                            <div>
+                              <span className="course-code-pill">{course.code}</span>
+                              <h4 style={{ margin: "4px 0 0", fontSize: "14px", color: "var(--ink)" }}>{course.name}</h4>
+                            </div>
+                          </div>
+                          <span className={`course-status-badge ${assigned ? "assigned" : "unassigned"}`}>
+                            {assigned ? "✅ Assigned" : "⭕ Available"}
+                          </span>
+                        </div>
+
+                        <div className="course-card-body" style={{ margin: "8px 0" }}>
+                          <p style={{ fontSize: "12px", color: "var(--ink-secondary, #4b5563)", margin: "0 0 8px", lineHeight: "1.4" }}>
+                            {course.description}
+                          </p>
+                          <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted)", marginBottom: "4px" }}>
+                            TOPICS COVERED:
+                          </div>
+                          <div className="course-topics-tags">
+                            {course.topics.map((t) => (
+                              <span key={t} className="course-topic-tag" style={{ background: "#f1f5f9", padding: "2px 7px", borderRadius: "10px", fontSize: "11px", color: "#334155" }}>
+                                {t}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="course-card-footer" style={{ borderTop: "1px solid var(--line)", paddingTop: "10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                          <span style={{ fontSize: "11px", color: "var(--muted)" }}>
+                            Subject: <b>{course.subject}</b>
+                          </span>
+                          <button
+                            type="button"
+                            className="course-action-btn"
+                            style={{
+                              padding: "6px 14px",
+                              borderRadius: "6px",
+                              fontSize: "12px",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              border: assigned ? "1px solid #fca5a5" : "1px solid var(--teal)",
+                              background: assigned ? "#fff1f2" : "var(--teal)",
+                              color: assigned ? "#e11d48" : "#fff",
+                              transition: "all 0.15s ease",
+                            }}
+                            onClick={() => toggleCourseAssignment(course.id)}
+                          >
+                            {assigned ? "Remove Course" : "Assign to Class +"}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             {parentView === "children" && (
               <>
                 <div className="section-toolbar">
                   <div>
-                    <h3>Manage children</h3>
-                    <p>Learning profiles and their unique usernames.</p>
+                    <h3>{session?.role === "parent" ? "My Kids Profiles" : "Manage Students"}</h3>
+                    <p>Learning profiles, grade levels, and personalized study records.</p>
                   </div>
                   <button
                     className="next"
-                    onClick={() => setShowAddChild(!showAddChild)}
+                    onClick={() => setShowAddStudentModal(true)}
                   >
-                    {showAddChild ? "Close" : "Add child"}
+                    ➕ Add Student Profile
                   </button>
                 </div>
                 <div className="skills-table-wrap">
@@ -2530,26 +3734,54 @@ export default function App() {
                     </thead>
                     <tbody>
                       {children.map((item) => (
-                        <tr key={item.id}>
-                          <td><b>{item.name}</b></td>
+                        <tr key={item.id} style={childId === item.id ? { background: "#f0fdf4" } : undefined}>
+                          <td>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                              <span style={{ fontSize: "20px" }}>{item.avatar || "👦"}</span>
+                              <div>
+                                <b>{item.name}</b>
+                                {childId === item.id && (
+                                  <span style={{ marginLeft: "6px", fontSize: "10px", background: "#10b981", color: "#fff", padding: "2px 6px", borderRadius: "10px", fontWeight: 700 }}>
+                                    ACTIVE
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </td>
                           <td>@{item.username}</td>
-                          <td>{item.grade}</td>
-                          <td>{item.board || "-"}</td>
+                          <td>Class {item.grade}</td>
+                          <td>{item.board || "CBSE"}</td>
                           <td>{item.medium || "English"}</td>
                           <td>
-                            <button
-                              className="table-action"
-                              onClick={() => {
-                                setChildId(item.id);
-                                setTeacherPreview(true);
-                              }}
-                            >
-                              Practice Preview
-                            </button>
+                            <div style={{ display: "flex", gap: "6px" }}>
+                              {childId !== item.id && (
+                                <button
+                                  className="table-action"
+                                  style={{ background: "var(--mint)", color: "var(--teal-dark)", borderColor: "var(--teal)" }}
+                                  onClick={() => {
+                                    setChildId(item.id);
+                                    setChild(item);
+                                    showToast(`Switched active profile to ${item.name}`);
+                                  }}
+                                >
+                                  Select Active
+                                </button>
+                              )}
+                              <button
+                                className="table-action"
+                                onClick={() => {
+                                  setChildId(item.id);
+                                  setChild(item);
+                                  setTeacherPreview(true);
+                                }}
+                              >
+                                Practice Preview
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
-                      {!children.length && <tr><td colSpan={5} className="muted">No child profiles yet.</td></tr>}
+                      {!children.length && <tr><td colSpan={6} className="muted">No child profiles yet. Click 'Add Student Profile' above to create one!</td></tr>}
                     </tbody>
                   </table>
                 </div>
@@ -2845,6 +4077,8 @@ export default function App() {
                           <option value="fill_blank">Template: Fill in the blank</option>
                           <option value="true_false">Template: True or false</option>
                           <option value="rhyme_card">Template: Rhyme card (Collapsed answer)</option>
+                          <option value="shape_card">Template: Shape card (Recognition & spelling)</option>
+                          <option value="magic_words_card">Template: Magic words card (Manners & Scenarios)</option>
                         </select>
                         <div className="skill-template-callout" style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#e8f3f1", borderRadius: 8, fontSize: 11, color: "var(--teal)" }}>
                           <span className="template-badge">{templateLabel(newSkill.template)}</span>
@@ -3441,6 +4675,138 @@ export default function App() {
               <button className="confirm-delete" onClick={handleSignOut}>Sign out</button>
             </div>
           </section>
+        </div>
+      )}
+      {showAddStudentModal && (
+        <div
+          className="student-modal-backdrop"
+          role="presentation"
+          onMouseDown={() => setShowAddStudentModal(false)}
+        >
+          <div
+            className="student-modal-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="student-modal-title"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <div className="student-modal-header">
+              <h3 id="student-modal-title">👶 Create Student Profile</h3>
+              <button
+                type="button"
+                className="close-btn"
+                style={{ background: "transparent", border: "none", fontSize: "18px", cursor: "pointer", color: "var(--muted)" }}
+                onClick={() => setShowAddStudentModal(false)}
+                aria-label="Close modal"
+              >
+                ✕
+              </button>
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                createStudentProfile(studentModalData);
+              }}
+            >
+              <div className="student-modal-body">
+                <label>
+                  Learner Name *
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Aarav, Ananya, Kabir"
+                    value={studentModalData.name}
+                    onChange={(e) => setStudentModalData({ ...studentModalData, name: e.target.value })}
+                    className="login-control"
+                    autoFocus
+                  />
+                </label>
+
+                <label>
+                  Pick an Avatar
+                  <div className="avatar-picker" role="radiogroup" aria-label="Select avatar">
+                    {["👦", "👧", "🦁", "🐼", "🚀", "🦄", "🌟", "🎨", "🐶", "🐱"].map((emoji) => (
+                      <button
+                        type="button"
+                        key={emoji}
+                        className={`avatar-choice-btn ${studentModalData.avatar === emoji ? "selected" : ""}`}
+                        onClick={() => setStudentModalData({ ...studentModalData, avatar: emoji })}
+                        aria-label={`Avatar ${emoji}`}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </label>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  <label>
+                    Class / Grade
+                    <select
+                      value={studentModalData.grade}
+                      onChange={(e) => setStudentModalData({ ...studentModalData, grade: e.target.value })}
+                      className="login-control"
+                    >
+                      <option value="Nursery">Nursery</option>
+                      <option value="LKG">LKG</option>
+                      <option value="UKG">UKG</option>
+                      <option value="1">Class 1</option>
+                      <option value="2">Class 2</option>
+                      <option value="3">Class 3</option>
+                      <option value="4">Class 4</option>
+                      <option value="5">Class 5</option>
+                    </select>
+                  </label>
+
+                  <label>
+                    School Board
+                    <select
+                      value={studentModalData.board}
+                      onChange={(e) => setStudentModalData({ ...studentModalData, board: e.target.value })}
+                      className="login-control"
+                    >
+                      <option value="CBSE">CBSE</option>
+                      <option value="ICSE">ICSE</option>
+                      <option value="State Board">State Board</option>
+                      <option value="IB">IB</option>
+                      <option value="Cambridge">Cambridge</option>
+                    </select>
+                  </label>
+                </div>
+
+                <label>
+                  Learning Medium
+                  <select
+                    value={studentModalData.medium}
+                    onChange={(e) => setStudentModalData({ ...studentModalData, medium: e.target.value })}
+                    className="login-control"
+                  >
+                    <option value="English">English Medium</option>
+                    <option value="Marathi">Marathi Medium (मराठी)</option>
+                    <option value="Hindi">Hindi Medium (हिंदी)</option>
+                  </select>
+                </label>
+              </div>
+
+              <div className="student-modal-footer">
+                <button
+                  type="button"
+                  className="confirm-cancel"
+                  onClick={() => setShowAddStudentModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="login-continue"
+                  style={{ width: "auto", margin: 0, padding: "8px 20px" }}
+                  disabled={!studentModalData.name.trim() || authLoading}
+                >
+                  {authLoading ? "Saving..." : "Create Profile ✨"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
       {toast && (

@@ -2,6 +2,10 @@ import { useState, useRef, useEffect } from "react";
 import VisualLearningChartGrid, { VisualChartItem } from "./VisualLearningChartGrid";
 import { DEFAULT_ANIMALS, DEFAULT_VEGETABLES, DEFAULT_BIRDS, DEFAULT_EMOTIONS } from "./chartsData";
 import PhonicsLearningChartView from "./PhonicsLearningChartView";
+import PoemsLearningChartView from "./PoemsLearningChartView";
+import PhonicsStoriesLearningChartView from "./PhonicsStoriesLearningChartView";
+import { speak as voiceSpeak, stopSpeech as voiceStopSpeech } from "../services/voiceService";
+import { VoiceSettingsButton } from "./VoiceSettingsModal";
 
 export interface ChartItem {
   key: string;
@@ -30,6 +34,9 @@ export interface ChartProgressData {
     birdsPracticed?: number;
     emotionsPracticed?: number;
     phonicsPracticed?: number;
+    phonicsTotal?: number;
+    poemsPracticed?: number;
+    poemsTotal?: number;
     totalPracticeSessions?: number;
   };
   records?: Record<string, { practiceCount: number; lastPracticedAt: string; itemName?: string }>;
@@ -750,13 +757,59 @@ export default function LearningChartsView({
   const [bodyChartMode, setBodyChartMode] = useState<"poster" | "vector">("poster");
   const [hoveredPartKey, setHoveredPartKey] = useState<string | null>("part_head");
   const [selectedPartKey, setSelectedPartKey] = useState<string>("part_head");
-  const [autoSpeakOnHover, setAutoSpeakOnHover] = useState<boolean>(true);
+  const [autoSpeakOnHover, setAutoSpeakOnHover] = useState<boolean>(false);
   const [bodyCategoryFilter, setBodyCategoryFilter] = useState<"all" | "sense" | "head" | "upper" | "lower">("all");
   const [recitingBodyParts, setRecitingBodyParts] = useState<boolean>(false);
   const [quizActive, setQuizActive] = useState<boolean>(false);
   const [quizTargetKey, setQuizTargetKey] = useState<string | null>(null);
   const [quizScore, setQuizScore] = useState<number>(0);
   const [quizFeedback, setQuizFeedback] = useState<string | null>(null);
+
+  // Fullscreen state across all reference charts
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+
+  const enterFullscreen = () => {
+    setIsFullscreen(true);
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    }
+  };
+
+  const exitFullscreen = () => {
+    setIsFullscreen(false);
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    }
+  };
+
+  const toggleFullscreen = () => {
+    if (isFullscreen) {
+      exitFullscreen();
+    } else {
+      enterFullscreen();
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isFullscreen) {
+        exitFullscreen();
+      }
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isFullscreen]);
 
   const sharedAudioRef = useRef<HTMLAudioElement | null>(null);
   const activeAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -825,127 +878,21 @@ export default function LearningChartsView({
     if ("speechSynthesis" in window) {
       window.speechSynthesis.cancel();
     }
+    voiceStopSpeech();
   };
 
   const playAudioPhrase = (text: string, lang = "mr-IN"): Promise<void> => {
-    return new Promise((resolve) => {
-      // For standalone clicks (when not reciting), stop existing audio first
-      if (
-        !recitingKhadiRef.current &&
-        !recitingVyanjanRef.current &&
-        !recitingSwarRef.current &&
-        !recitingTableRef.current
-      ) {
-        if (sharedAudioRef.current) {
-          try {
-            sharedAudioRef.current.pause();
-            sharedAudioRef.current.currentTime = 0;
-          } catch (e) {}
-        }
-        if ("speechSynthesis" in window) {
-          window.speechSynthesis.cancel();
-        }
-      }
-
-      const shortLang = lang.startsWith("mr") ? "mr" : lang.startsWith("hi") ? "hi" : "en";
-      const apiBase = apiUrl || "http://127.0.0.1:8000/api";
-      const ttsUrl = `${apiBase}/tts?lang=${shortLang}&text=${encodeURIComponent(text)}`;
-
-      if (!sharedAudioRef.current) {
-        sharedAudioRef.current = new Audio();
-      }
-      const audio = sharedAudioRef.current;
-      activeAudioRef.current = audio;
-
-      let finished = false;
-      let timer: any = null;
-
-      const finish = () => {
-        if (!finished) {
-          finished = true;
-          if (timer) clearTimeout(timer);
-          audio.onended = null;
-          audio.onerror = null;
-          pendingAudioResolverRef.current = null;
-          resolve();
-        }
-      };
-
-      pendingAudioResolverRef.current = finish;
-      // 6 second timeout safety net
-      timer = setTimeout(finish, 6000);
-
-      audio.onended = finish;
-      audio.onerror = () => {
-        if ("speechSynthesis" in window) {
-          try {
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = lang;
-            const voices = window.speechSynthesis.getVoices();
-            const preferred = voices.find((v) => v.lang.startsWith(shortLang)) ||
-              voices.find((v) => /female|samantha|zira|karen/i.test(`${v.name}`));
-            if (preferred) utterance.voice = preferred;
-            utterance.onend = finish;
-            utterance.onerror = finish;
-            window.speechSynthesis.speak(utterance);
-          } catch (e) {
-            finish();
-          }
-        } else {
-          finish();
-        }
-      };
-
-      try {
-        audio.pause();
-        audio.src = ttsUrl;
-        audio.load();
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-          playPromise.catch((err) => {
-            console.warn("Audio play() error, falling back to speech synthesis:", err);
-            if ("speechSynthesis" in window) {
-              try {
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = lang;
-                utterance.onend = finish;
-                utterance.onerror = finish;
-                window.speechSynthesis.speak(utterance);
-              } catch (e) {
-                finish();
-              }
-            } else {
-              finish();
-            }
-          });
-        }
-      } catch (err) {
-        console.warn("Audio load error:", err);
-        finish();
-      }
+    return voiceSpeak(text, {
+      lang,
+      apiUrl,
     });
   };
 
   const speakPhrase = (text: string, lang = "en-US") => {
-    // English tables with "oneza / twoza" can use browser speech synthesis directly
-    if (lang === "en-US" && /oneza|twoza|threeza|fourza|fiveza|sixza|sevenza|eightza|nineza|tenza/i.test(text)) {
-      stopAllAudio();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.88;
-      const voices = window.speechSynthesis.getVoices();
-      const preferred = voices.find((v) => v.lang === "en-IN" || v.lang.startsWith("en-IN")) ||
-        voices.find((voice) =>
-          /female|samantha|zira|karen|susan|victoria|google uk english female|microsoft.*female/i.test(
-            `${voice.name} ${voice.voiceURI}`
-          )
-        );
-      if (preferred) utterance.voice = preferred;
-      window.speechSynthesis.speak(utterance);
-      return;
-    }
-
-    // Native audio playback for Marathi Swar, Chaudakhadi, Vyanjan, and Alphabet phonetics
-    playAudioPhrase(text, lang);
+    voiceSpeak(text, {
+      lang,
+      apiUrl,
+    });
   };
 
   const reciteFullTable = async (tableNum: number, items: any[]) => {
@@ -1297,163 +1244,240 @@ export default function LearningChartsView({
   };
 
   return (
-    <div className="learning-charts-container" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+    <div
+      className={`learning-charts-container ${isFullscreen ? "charts-fullscreen-mode" : ""}`}
+      style={{ display: "flex", flexDirection: "column", gap: "16px" }}
+    >
       {toastMessage && (
         <div className="toast" style={{ position: "fixed", bottom: "24px", right: "24px", zIndex: 9999 }}>
           {toastMessage}
         </div>
       )}
 
-      {/* Header & Submenu Navigation */}
-      <div className="chart-subnav" role="tablist" aria-label="Reference Charts Navigation">
-        <button
-          className={activeChartSlug === "body-parts" ? "chart-subnav-tab active" : "chart-subnav-tab"}
-          onClick={() => setActiveChartSlug("body-parts")}
-          role="tab"
-          aria-selected={activeChartSlug === "body-parts"}
-        >
-          <span style={{ fontSize: "18px" }}>👦</span>
-          <span>Body Parts (अवयव)</span>
-          {summary.bodyPartsPracticed ? (
-            <span style={{ fontSize: "11px", background: "#fef3c7", color: "#b45309", padding: "2px 6px", borderRadius: "10px", fontWeight: 800 }}>
-              {summary.bodyPartsPracticed}/21
-            </span>
-          ) : null}
-        </button>
+      {/* Fullscreen Sticky Control Bar */}
+      {isFullscreen && (
+        <div className="charts-fullscreen-bar">
+          <div className="fullscreen-bar-left">
+            <span className="fullscreen-badge">⛶ FULL SCREEN</span>
+            <h2 className="fullscreen-active-title">
+              {activeChartSlug === "body-parts" && "👦 Body Parts (मानवी अवयव)"}
+              {activeChartSlug === "animals" && "🦁 Animals & Sounds (प्राणी आणि आवाज)"}
+              {activeChartSlug === "vegetables" && "🥕 Healthy Vegetables (पौष्टिक भाज्या)"}
+              {activeChartSlug === "birds" && "🦜 Beautiful Birds (सुंदर पक्षी)"}
+              {activeChartSlug === "emotions" && "😊 Feelings & Emotions (भावना)"}
+              {isTablesActive && "🔢 Multiplication Tables 2–30 (पाढे)"}
+              {activeChartSlug === "marathi-swar" && "🕉️ मराठी चौदाखडी स्वर"}
+              {activeChartSlug === "marathi-vyanjan" && "🪷 मराठी मुळाक्षरे व्यंजन"}
+              {activeChartSlug === "english-alphabet" && "🔤 English Alphabet (A–Z)"}
+              {activeChartSlug === "phonics" && "🗣️ Phonics Chart (CVC Short Vowels)"}
+              {activeChartSlug === "poems" && "🎭 Poems & Rhymes (कविता आणि बालगीते)"}
+              {(activeChartSlug === "phonic-stories" || activeChartSlug === "phonics-stories") && "📚 Grade 1 Decodable Phonics Stories"}
+            </h2>
+          </div>
+          <div className="fullscreen-bar-actions">
+            <button
+              type="button"
+              className="fullscreen-exit-btn"
+              onClick={exitFullscreen}
+              title="Exit Full Screen (Esc)"
+            >
+              <span>✕</span>
+              <span>Exit Full Screen (Esc)</span>
+            </button>
+          </div>
+        </div>
+      )}
 
-        <button
-          className={activeChartSlug === "animals" ? "chart-subnav-tab active" : "chart-subnav-tab"}
-          onClick={() => setActiveChartSlug("animals")}
-          role="tab"
-          aria-selected={activeChartSlug === "animals"}
-        >
-          <span style={{ fontSize: "18px" }}>🦁</span>
-          <span>Animals (प्राणी)</span>
-          {summary.animalsPracticed ? (
-            <span style={{ fontSize: "11px", background: "#fef3c7", color: "#b45309", padding: "2px 6px", borderRadius: "10px", fontWeight: 800 }}>
-              {summary.animalsPracticed}/24
-            </span>
-          ) : null}
-        </button>
+      {/* Header & Submenu Navigation with Fullscreen Launcher */}
+      {!isFullscreen && (
+        <>
+          <div className="chart-subnav-row">
+          <div className="chart-subnav" role="tablist" aria-label="Reference Charts Navigation">
+          <button
+            className={activeChartSlug === "body-parts" ? "chart-subnav-tab active" : "chart-subnav-tab"}
+            onClick={() => setActiveChartSlug("body-parts")}
+            role="tab"
+            aria-selected={activeChartSlug === "body-parts"}
+          >
+            <span style={{ fontSize: "18px" }}>👦</span>
+            <span>Body Parts (अवयव)</span>
+            {summary.bodyPartsPracticed ? (
+              <span style={{ fontSize: "11px", background: "#fef3c7", color: "#b45309", padding: "2px 6px", borderRadius: "10px", fontWeight: 800 }}>
+                {summary.bodyPartsPracticed}/21
+              </span>
+            ) : null}
+          </button>
 
-        <button
-          className={activeChartSlug === "vegetables" ? "chart-subnav-tab active" : "chart-subnav-tab"}
-          onClick={() => setActiveChartSlug("vegetables")}
-          role="tab"
-          aria-selected={activeChartSlug === "vegetables"}
-        >
-          <span style={{ fontSize: "18px" }}>🥕</span>
-          <span>Vegetables (भाज्या)</span>
-          {summary.vegetablesPracticed ? (
-            <span style={{ fontSize: "11px", background: "#ecfdf5", color: "#047857", padding: "2px 6px", borderRadius: "10px", fontWeight: 800 }}>
-              {summary.vegetablesPracticed}/20
-            </span>
-          ) : null}
-        </button>
+          <button
+            className={activeChartSlug === "animals" ? "chart-subnav-tab active" : "chart-subnav-tab"}
+            onClick={() => setActiveChartSlug("animals")}
+            role="tab"
+            aria-selected={activeChartSlug === "animals"}
+          >
+            <span style={{ fontSize: "18px" }}>🦁</span>
+            <span>Animals (प्राणी)</span>
+            {summary.animalsPracticed ? (
+              <span style={{ fontSize: "11px", background: "#fef3c7", color: "#b45309", padding: "2px 6px", borderRadius: "10px", fontWeight: 800 }}>
+                {summary.animalsPracticed}/24
+              </span>
+            ) : null}
+          </button>
 
-        <button
-          className={activeChartSlug === "birds" ? "chart-subnav-tab active" : "chart-subnav-tab"}
-          onClick={() => setActiveChartSlug("birds")}
-          role="tab"
-          aria-selected={activeChartSlug === "birds"}
-        >
-          <span style={{ fontSize: "18px" }}>🦜</span>
-          <span>Birds (पक्षी)</span>
-          {summary.birdsPracticed ? (
-            <span style={{ fontSize: "11px", background: "#e0f2fe", color: "#0369a1", padding: "2px 6px", borderRadius: "10px", fontWeight: 800 }}>
-              {summary.birdsPracticed}/16
-            </span>
-          ) : null}
-        </button>
+          <button
+            className={activeChartSlug === "vegetables" ? "chart-subnav-tab active" : "chart-subnav-tab"}
+            onClick={() => setActiveChartSlug("vegetables")}
+            role="tab"
+            aria-selected={activeChartSlug === "vegetables"}
+          >
+            <span style={{ fontSize: "18px" }}>🥕</span>
+            <span>Vegetables (भाज्या)</span>
+            {summary.vegetablesPracticed ? (
+              <span style={{ fontSize: "11px", background: "#ecfdf5", color: "#047857", padding: "2px 6px", borderRadius: "10px", fontWeight: 800 }}>
+                {summary.vegetablesPracticed}/20
+              </span>
+            ) : null}
+          </button>
 
-        <button
-          className={activeChartSlug === "emotions" ? "chart-subnav-tab active" : "chart-subnav-tab"}
-          onClick={() => setActiveChartSlug("emotions")}
-          role="tab"
-          aria-selected={activeChartSlug === "emotions"}
-        >
-          <span style={{ fontSize: "18px" }}>😊</span>
-          <span>Emotions (भावना)</span>
-          {summary.emotionsPracticed ? (
-            <span style={{ fontSize: "11px", background: "#fdf4ff", color: "#a21caf", padding: "2px 6px", borderRadius: "10px", fontWeight: 800 }}>
-              {summary.emotionsPracticed}/16
-            </span>
-          ) : null}
-        </button>
+          <button
+            className={activeChartSlug === "birds" ? "chart-subnav-tab active" : "chart-subnav-tab"}
+            onClick={() => setActiveChartSlug("birds")}
+            role="tab"
+            aria-selected={activeChartSlug === "birds"}
+          >
+            <span style={{ fontSize: "18px" }}>🦜</span>
+            <span>Birds (पक्षी)</span>
+            {summary.birdsPracticed ? (
+              <span style={{ fontSize: "11px", background: "#e0f2fe", color: "#0369a1", padding: "2px 6px", borderRadius: "10px", fontWeight: 800 }}>
+                {summary.birdsPracticed}/16
+              </span>
+            ) : null}
+          </button>
 
-        <button
-          className={isTablesActive ? "chart-subnav-tab active" : "chart-subnav-tab"}
-          onClick={() => setActiveChartSlug(tablesChartSlug)}
-          role="tab"
-          aria-selected={isTablesActive}
-        >
-          <span style={{ fontSize: "18px" }}>🔢</span>
-          <span>Tables 2–30</span>
-          {summary.tablesPracticed ? (
-            <span style={{ fontSize: "11px", background: "#e8f5e9", color: "#2e7d32", padding: "2px 6px", borderRadius: "10px", fontWeight: 800 }}>
-              {summary.tablesPracticed}/29
-            </span>
-          ) : null}
-        </button>
+          <button
+            className={activeChartSlug === "emotions" ? "chart-subnav-tab active" : "chart-subnav-tab"}
+            onClick={() => setActiveChartSlug("emotions")}
+            role="tab"
+            aria-selected={activeChartSlug === "emotions"}
+          >
+            <span style={{ fontSize: "18px" }}>😊</span>
+            <span>Emotions (भावना)</span>
+            {summary.emotionsPracticed ? (
+              <span style={{ fontSize: "11px", background: "#fdf4ff", color: "#a21caf", padding: "2px 6px", borderRadius: "10px", fontWeight: 800 }}>
+                {summary.emotionsPracticed}/16
+              </span>
+            ) : null}
+          </button>
 
-        <button
-          className={activeChartSlug === "marathi-swar" ? "chart-subnav-tab active" : "chart-subnav-tab"}
-          onClick={() => setActiveChartSlug("marathi-swar")}
-          role="tab"
-          aria-selected={activeChartSlug === "marathi-swar"}
-        >
-          <span style={{ fontSize: "18px" }}>🕉️</span>
-          <span>मराठी चौदाखडी स्वर</span>
-          {summary.swarPracticed ? (
-            <span style={{ fontSize: "11px", background: "#fff3e0", color: "#e65100", padding: "2px 6px", borderRadius: "10px", fontWeight: 800 }}>
-              {summary.swarPracticed}/14
-            </span>
-          ) : null}
-        </button>
+          <button
+            className={isTablesActive ? "chart-subnav-tab active" : "chart-subnav-tab"}
+            onClick={() => setActiveChartSlug(tablesChartSlug)}
+            role="tab"
+            aria-selected={isTablesActive}
+          >
+            <span style={{ fontSize: "18px" }}>🔢</span>
+            <span>Tables 2–30</span>
+            {summary.tablesPracticed ? (
+              <span style={{ fontSize: "11px", background: "#e8f5e9", color: "#2e7d32", padding: "2px 6px", borderRadius: "10px", fontWeight: 800 }}>
+                {summary.tablesPracticed}/29
+              </span>
+            ) : null}
+          </button>
 
-        <button
-          className={activeChartSlug === "marathi-vyanjan" ? "chart-subnav-tab active" : "chart-subnav-tab"}
-          onClick={() => setActiveChartSlug("marathi-vyanjan")}
-          role="tab"
-          aria-selected={activeChartSlug === "marathi-vyanjan"}
-        >
-          <span style={{ fontSize: "18px" }}>🪷</span>
-          <span>मराठी व्यंजने (क-ख-ग-घ)</span>
-          {summary.vyanjanPracticed ? (
-            <span style={{ fontSize: "11px", background: "#e0f2fe", color: "#0284c7", padding: "2px 6px", borderRadius: "10px", fontWeight: 800 }}>
-              {summary.vyanjanPracticed}/36
-            </span>
-          ) : null}
-        </button>
+          <button
+            className={activeChartSlug === "marathi-swar" ? "chart-subnav-tab active" : "chart-subnav-tab"}
+            onClick={() => setActiveChartSlug("marathi-swar")}
+            role="tab"
+            aria-selected={activeChartSlug === "marathi-swar"}
+          >
+            <span style={{ fontSize: "18px" }}>🕉️</span>
+            <span>मराठी चौदाखडी स्वर</span>
+            {summary.swarPracticed ? (
+              <span style={{ fontSize: "11px", background: "#fff3e0", color: "#e65100", padding: "2px 6px", borderRadius: "10px", fontWeight: 800 }}>
+                {summary.swarPracticed}/14
+              </span>
+            ) : null}
+          </button>
 
-        <button
-          className={activeChartSlug === "english-alphabet" ? "chart-subnav-tab active" : "chart-subnav-tab"}
-          onClick={() => setActiveChartSlug("english-alphabet")}
-          role="tab"
-          aria-selected={activeChartSlug === "english-alphabet"}
-        >
-          <span style={{ fontSize: "18px" }}>🔤</span>
-          <span>A–Z Big &amp; Small</span>
-          {summary.lettersPracticed ? (
-            <span style={{ fontSize: "11px", background: "#f3e8ff", color: "#7e22ce", padding: "2px 6px", borderRadius: "10px", fontWeight: 800 }}>
-              {summary.lettersPracticed}/26
-            </span>
-          ) : null}
-        </button>
+          <button
+            className={activeChartSlug === "marathi-vyanjan" ? "chart-subnav-tab active" : "chart-subnav-tab"}
+            onClick={() => setActiveChartSlug("marathi-vyanjan")}
+            role="tab"
+            aria-selected={activeChartSlug === "marathi-vyanjan"}
+          >
+            <span style={{ fontSize: "18px" }}>🪷</span>
+            <span>मराठी व्यंजने (क-ख-ग-घ)</span>
+            {summary.vyanjanPracticed ? (
+              <span style={{ fontSize: "11px", background: "#e0f2fe", color: "#0284c7", padding: "2px 6px", borderRadius: "10px", fontWeight: 800 }}>
+                {summary.vyanjanPracticed}/36
+              </span>
+            ) : null}
+          </button>
 
+          <button
+            className={activeChartSlug === "english-alphabet" ? "chart-subnav-tab active" : "chart-subnav-tab"}
+            onClick={() => setActiveChartSlug("english-alphabet")}
+            role="tab"
+            aria-selected={activeChartSlug === "english-alphabet"}
+          >
+            <span style={{ fontSize: "18px" }}>🔤</span>
+            <span>A–Z Big &amp; Small</span>
+            {summary.lettersPracticed ? (
+              <span style={{ fontSize: "11px", background: "#f3e8ff", color: "#7e22ce", padding: "2px 6px", borderRadius: "10px", fontWeight: 800 }}>
+                {summary.lettersPracticed}/26
+              </span>
+            ) : null}
+          </button>
+
+          <button
+            className={activeChartSlug === "phonics" ? "chart-subnav-tab active" : "chart-subnav-tab"}
+            onClick={() => setActiveChartSlug("phonics")}
+            role="tab"
+            aria-selected={activeChartSlug === "phonics"}
+          >
+            <span style={{ fontSize: "18px" }}>🗣️</span>
+            <span>Phonics (CVC शब्द)</span>
+            {summary.phonicsPracticed ? (
+              <span style={{ fontSize: "11px", background: "#fee2e2", color: "#b91c1c", padding: "2px 6px", borderRadius: "10px", fontWeight: 800 }}>
+                {summary.phonicsPracticed}/{summary.phonicsTotal || 249}
+              </span>
+            ) : null}
+          </button>
+
+          <button
+            className={activeChartSlug === "poems" ? "chart-subnav-tab active" : "chart-subnav-tab"}
+            onClick={() => setActiveChartSlug("poems")}
+            role="tab"
+            aria-selected={activeChartSlug === "poems"}
+          >
+            <span style={{ fontSize: "18px" }}>🎭</span>
+            <span>Poems (कविता)</span>
+            {summary.poemsPracticed ? (
+              <span style={{ fontSize: "11px", background: "#ffe4e6", color: "#e11d48", padding: "2px 6px", borderRadius: "10px", fontWeight: 800 }}>
+                {summary.poemsPracticed}/{summary.poemsTotal || 11}
+              </span>
+            ) : null}
+          </button>
+
+          <button
+            className={(activeChartSlug === "phonic-stories" || activeChartSlug === "phonics-stories") ? "chart-subnav-tab active" : "chart-subnav-tab"}
+            onClick={() => setActiveChartSlug("phonic-stories")}
+            role="tab"
+            aria-selected={activeChartSlug === "phonic-stories" || activeChartSlug === "phonics-stories"}
+          >
+            <span style={{ fontSize: "18px" }}>📖</span>
+            <span>Phonics Stories (गोष्टी)</span>
+          </button>
+        </div>
+
+        <VoiceSettingsButton />
         <button
-          className={activeChartSlug === "phonics" ? "chart-subnav-tab active" : "chart-subnav-tab"}
-          onClick={() => setActiveChartSlug("phonics")}
-          role="tab"
-          aria-selected={activeChartSlug === "phonics"}
+          type="button"
+          className={`chart-subnav-fullscreen-btn ${isFullscreen ? "active" : ""}`}
+          onClick={toggleFullscreen}
+          title={isFullscreen ? "Exit Full Screen Mode (Esc)" : "Enter Full Screen Mode"}
         >
-          <span style={{ fontSize: "18px" }}>🗣️</span>
-          <span>Phonics (CVC शब्द)</span>
-          {summary.phonicsPracticed ? (
-            <span style={{ fontSize: "11px", background: "#fee2e2", color: "#b91c1c", padding: "2px 6px", borderRadius: "10px", fontWeight: 800 }}>
-              {summary.phonicsPracticed}/{summary.phonicsTotal || 249}
-            </span>
-          ) : null}
+          <span style={{ fontSize: "16px" }}>{isFullscreen ? "🗗" : "⛶"}</span>
+          <span>{isFullscreen ? "Exit Full Screen" : "Full Screen Mode"}</span>
         </button>
       </div>
 
@@ -1500,6 +1524,8 @@ export default function LearningChartsView({
           </div>
         </div>
       </div>
+        </>
+      )}
 
       {/* SUBMENU 1: Tables 2 to 30 */}
       {isTablesActive && (
@@ -1512,6 +1538,15 @@ export default function LearningChartsView({
               </p>
             </div>
             <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                className={`chart-toolbar-fullscreen-btn ${isFullscreen ? "active" : ""}`}
+                onClick={toggleFullscreen}
+                title={isFullscreen ? "Exit Full Screen" : "Enter Full Screen"}
+              >
+                <span>{isFullscreen ? "🗗" : "⛶"}</span>
+                <span>{isFullscreen ? "Exit Full Screen" : "Full Screen"}</span>
+              </button>
               {selectedTable === "all" && (
                 <div className="table-layout-toggle-group">
                   <button
@@ -1739,6 +1774,15 @@ export default function LearningChartsView({
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                className={`chart-toolbar-fullscreen-btn ${isFullscreen ? "active" : ""}`}
+                onClick={toggleFullscreen}
+                title={isFullscreen ? "Exit Full Screen" : "Enter Full Screen"}
+              >
+                <span>{isFullscreen ? "🗗" : "⛶"}</span>
+                <span>{isFullscreen ? "Exit Full Screen" : "Full Screen"}</span>
+              </button>
               {chaudakhadiMode === "swar" && (
                 <button
                   className="recite-audio-btn"
@@ -1969,14 +2013,25 @@ export default function LearningChartsView({
               </p>
             </div>
 
-            <button
-              className="recite-audio-btn"
-              style={{ background: "#2a9d8f", color: "#fff" }}
-              onClick={() => reciteAllVyanjan(activeChart?.chart_data || [])}
-            >
-              <span>{recitingVyanjan ? "⏹️" : "🔊"}</span>
-              <span>{recitingVyanjan ? "थांबवा (Stop)" : "संपूर्ण व्यंजने ऐका (Recite All)"}</span>
-            </button>
+            <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                className={`chart-toolbar-fullscreen-btn ${isFullscreen ? "active" : ""}`}
+                onClick={toggleFullscreen}
+                title={isFullscreen ? "Exit Full Screen" : "Enter Full Screen"}
+              >
+                <span>{isFullscreen ? "🗗" : "⛶"}</span>
+                <span>{isFullscreen ? "Exit Full Screen" : "Full Screen"}</span>
+              </button>
+              <button
+                className="recite-audio-btn"
+                style={{ background: "#2a9d8f", color: "#fff" }}
+                onClick={() => reciteAllVyanjan(activeChart?.chart_data || [])}
+              >
+                <span>{recitingVyanjan ? "⏹️" : "🔊"}</span>
+                <span>{recitingVyanjan ? "थांबवा (Stop)" : "संपूर्ण व्यंजने ऐका (Recite All)"}</span>
+              </button>
+            </div>
           </div>
 
           {/* Vyanjan Group Filter Toolbar */}
@@ -2083,11 +2138,22 @@ export default function LearningChartsView({
       {/* SUBMENU 4: English Alphabet */}
       {activeChartSlug === "english-alphabet" && (
         <section className="panel" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          <div>
-            <h2 style={{ margin: "0 0 6px 0", fontSize: "20px" }}>English Alphabet: A–Z Big &amp; Small Letters</h2>
-            <p style={{ margin: 0, color: "var(--muted)", fontSize: "13px" }}>
-              Capital and small letter pairings, phonics cues, and beginner vocabulary. Filter by vowels or consonants.
-            </p>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "10px" }}>
+            <div>
+              <h2 style={{ margin: "0 0 6px 0", fontSize: "20px" }}>English Alphabet: A–Z Big &amp; Small Letters</h2>
+              <p style={{ margin: 0, color: "var(--muted)", fontSize: "13px" }}>
+                Capital and small letter pairings, phonics cues, and beginner vocabulary. Filter by vowels or consonants.
+              </p>
+            </div>
+            <button
+              type="button"
+              className={`chart-toolbar-fullscreen-btn ${isFullscreen ? "active" : ""}`}
+              onClick={toggleFullscreen}
+              title={isFullscreen ? "Exit Full Screen" : "Enter Full Screen"}
+            >
+              <span>{isFullscreen ? "🗗" : "⛶"}</span>
+              <span>{isFullscreen ? "Exit Full Screen" : "Full Screen"}</span>
+            </button>
           </div>
 
           {/* Filter Toolbar */}
@@ -2257,6 +2323,16 @@ export default function LearningChartsView({
                   title="Interactive quiz: Can you find the body part?"
                 >
                   <span>{quizActive ? "⏹️ Exit Quiz" : "🎯 Quiz Game"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`body-fullscreen-btn ${isFullscreen ? "active" : ""}`}
+                  onClick={toggleFullscreen}
+                  title={isFullscreen ? "Exit Full Screen" : "Enter Full Screen"}
+                >
+                  <span>{isFullscreen ? "🗗" : "⛶"}</span>
+                  <span>{isFullscreen ? "Exit Full Screen" : "Full Screen"}</span>
                 </button>
               </div>
             </div>
@@ -3000,6 +3076,8 @@ export default function LearningChartsView({
           savingChartItem={savingChartItem}
           childName={childName}
           chartType="animals"
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={toggleFullscreen}
         />
       )}
 
@@ -3024,6 +3102,8 @@ export default function LearningChartsView({
           savingChartItem={savingChartItem}
           childName={childName}
           chartType="vegetables"
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={toggleFullscreen}
         />
       )}
 
@@ -3048,6 +3128,8 @@ export default function LearningChartsView({
           savingChartItem={savingChartItem}
           childName={childName}
           chartType="birds"
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={toggleFullscreen}
         />
       )}
 
@@ -3071,6 +3153,8 @@ export default function LearningChartsView({
           savingChartItem={savingChartItem}
           childName={childName}
           chartType="emotions"
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={toggleFullscreen}
         />
       )}
 
@@ -3083,6 +3167,34 @@ export default function LearningChartsView({
           savingChartItem={savingChartItem}
           childName={childName}
           apiUrl={apiUrl}
+        />
+      )}
+
+      {/* SUBMENU 11: Poems & Rhymes Chart (Priority: See me skip) */}
+      {activeChartSlug === "poems" && (
+        <PoemsLearningChartView
+          chartSlug="poems"
+          chartProgressRecords={chartProgress.records}
+          onRecordPractice={onRecordPractice}
+          savingChartItem={savingChartItem}
+          childName={childName}
+          apiUrl={apiUrl}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={toggleFullscreen}
+        />
+      )}
+
+      {/* SUBMENU 12: Phonics Decodable Stories for Grade 1 */}
+      {(activeChartSlug === "phonic-stories" || activeChartSlug === "phonics-stories") && (
+        <PhonicsStoriesLearningChartView
+          chartSlug="phonic-stories"
+          chartProgressRecords={chartProgress.records}
+          onRecordPractice={onRecordPractice}
+          savingChartItem={savingChartItem}
+          childName={childName}
+          apiUrl={apiUrl}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={toggleFullscreen}
         />
       )}
     </div>

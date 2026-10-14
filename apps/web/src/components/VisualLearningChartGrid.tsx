@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { speak as voiceSpeak } from "../services/voiceService";
 
 export interface VisualChartItem {
   key: string;
@@ -31,6 +32,8 @@ interface VisualLearningChartGridProps {
   savingChartItem: string | null;
   childName: string;
   chartType: "animals" | "vegetables" | "birds" | "emotions";
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 }
 
 export default function VisualLearningChartGrid({
@@ -46,6 +49,8 @@ export default function VisualLearningChartGrid({
   savingChartItem,
   childName,
   chartType,
+  isFullscreen = false,
+  onToggleFullscreen,
 }: VisualLearningChartGridProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -64,6 +69,9 @@ export default function VisualLearningChartGrid({
   const [dailyMoodKey, setDailyMoodKey] = useState<string | null>(() => {
     return localStorage.getItem(`smartstudy-daily-mood-${childName}`) || null;
   });
+
+  // Dedicated state for viewing health benefits / fun facts
+  const [activeBenefitKey, setActiveBenefitKey] = useState<string | null>(null);
 
   const hoverTimerRef = useRef<any>(null);
   const reciteTimerRef = useRef<any>(null);
@@ -95,26 +103,10 @@ export default function VisualLearningChartGrid({
 
   // Speech Helper
   const speak = (phrase: string, isClick = false) => {
-    if (!("speechSynthesis" in window)) return;
-    try {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(phrase);
-      utterance.rate = 0.94;
-      utterance.pitch = 1.05;
-
-      const voices = window.speechSynthesis.getVoices();
-      const preferred =
-        voices.find((v) => v.lang === "en-IN" || v.lang.startsWith("en-IN")) ||
-        voices.find((v) => /female|samantha|zira|karen|victoria|google us english|microsoft.*female/i.test(`${v.name}`));
-      if (preferred) utterance.voice = preferred;
-
-      window.speechSynthesis.speak(utterance);
-    } catch (err) {
-      console.warn("Speech synthesis error:", err);
-    }
+    voiceSpeak(phrase);
   };
 
-  // Hover Handler: highlights card visually without audio call-out
+  // Hover Handler: strictly visual highlight, NEVER calls out names or speech on hover
   const handleItemHover = (item: VisualChartItem) => {
     setHoveredKey(item.key);
   };
@@ -123,7 +115,7 @@ export default function VisualLearningChartGrid({
     setHoveredKey(null);
   };
 
-  // Click handler (speaks details and records practice)
+  // Click handler: pronounces ONLY the item name and sound (no health benefit recited here)
   const handleItemClick = (item: VisualChartItem) => {
     setSelectedItemKey(item.key);
 
@@ -144,15 +136,33 @@ export default function VisualLearningChartGrid({
       return;
     }
 
-    // Normal practice click
-    let detailSpeech = `${item.name}. ${item.marathi}.`;
-    if (item.sound) detailSpeech += ` Says: ${item.sound}.`;
-    if (item.benefit) detailSpeech += ` Health benefit: ${item.benefit}`;
-    if (item.tool) detailSpeech += ` Feel better tip: ${item.tool}`;
-    if (item.fact) detailSpeech += ` Fun fact: ${item.fact}`;
+    // Normal practice click: ONLY pronounce name and sound
+    let nameSpeech = `${item.name}. ${item.marathi}.`;
+    if (item.sound) nameSpeech += ` Says: ${item.sound}.`;
 
-    speak(detailSpeech, true);
+    speak(nameSpeech, true);
     onRecordPractice(chartSlug, item.key, item.name);
+  };
+
+  // Dedicated handler to hear and view health benefits, coping tips, or fun facts
+  const handleBenefitClick = (item: VisualChartItem, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setSelectedItemKey(item.key);
+    setActiveBenefitKey((prev) => (prev === item.key ? null : item.key));
+
+    let benefitSpeech = "";
+    if (item.benefit) {
+      benefitSpeech = `Health benefit of ${item.name}: ${item.benefit}`;
+    } else if (item.tool) {
+      benefitSpeech = `Feel better tip for ${item.name}: ${item.tool}`;
+    } else if (item.fact) {
+      benefitSpeech = `Fun fact about ${item.name}: ${item.fact}`;
+    }
+
+    if (benefitSpeech) {
+      speak(benefitSpeech, true);
+    }
+    onRecordPractice(chartSlug, item.key, `${item.name} (${chartType === "vegetables" ? "Benefit" : "Fact"})`);
   };
 
   // Quiz game generator
@@ -260,6 +270,18 @@ export default function VisualLearningChartGrid({
             <span>🎯</span>
             <span>{quizActive ? "Exit Quiz" : "Quiz Game"}</span>
           </button>
+
+          {onToggleFullscreen && (
+            <button
+              type="button"
+              className={`chart-action-btn fullscreen-btn ${isFullscreen ? "active" : ""}`}
+              onClick={onToggleFullscreen}
+              title={isFullscreen ? "Exit Full Screen Mode (Esc)" : "Open in Full Screen Mode"}
+            >
+              <span>{isFullscreen ? "🗗" : "⛶"}</span>
+              <span>{isFullscreen ? "Exit Full Screen" : "Full Screen"}</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -429,11 +451,101 @@ export default function VisualLearningChartGrid({
                 {item.hindi && <div className="card-hindi-name">{item.hindi}</div>}
               </div>
 
-              {/* 3. Audio Speaker Icon Call-Out Cue */}
-              <div className="card-hover-audio-cue">
-                <span>{isSaving ? "⏳" : "🔊"}</span>
-                <small>{isSelected ? "Speaking..." : "Click to Hear"}</small>
+              {/* 3. Dedicated Action Buttons: Say Name & Health Benefit */}
+              <div className="card-actions-row">
+                <button
+                  type="button"
+                  className="card-action-pill name-audio-pill"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleItemClick(item);
+                  }}
+                  title={`Pronounce ${item.name}`}
+                >
+                  <span>{isSaving ? "⏳" : "🔊"}</span>
+                  <span>Say Name</span>
+                </button>
+
+                {(item.benefit || item.fact || item.tool) && (
+                  <button
+                    type="button"
+                    className={`card-action-pill benefit-pill ${
+                      chartType === "vegetables"
+                        ? "veg-benefit-pill"
+                        : chartType === "emotions"
+                        ? "emotion-tool-pill"
+                        : "fact-pill"
+                    } ${activeBenefitKey === item.key ? "active" : ""}`}
+                    onClick={(e) => handleBenefitClick(item, e)}
+                    title={
+                      chartType === "vegetables"
+                        ? `Health benefits of ${item.name}`
+                        : chartType === "emotions"
+                        ? `Calming tool for ${item.name}`
+                        : `Fun fact about ${item.name}`
+                    }
+                  >
+                    <span>{chartType === "vegetables" ? "🥗" : chartType === "emotions" ? "🧘" : "💡"}</span>
+                    <span>
+                      {chartType === "vegetables"
+                        ? "Health Benefit"
+                        : chartType === "emotions"
+                        ? "Calming Tip"
+                        : "Fun Fact"}
+                    </span>
+                  </button>
+                )}
               </div>
+
+              {/* Health Benefit / Fun Fact Overlay Bubble */}
+              {activeBenefitKey === item.key && (item.benefit || item.fact || item.tool) && (
+                <div
+                  className={`card-benefit-bubble ${
+                    chartType === "vegetables"
+                      ? "veg-bubble"
+                      : chartType === "emotions"
+                      ? "emotion-bubble"
+                      : "fact-bubble"
+                  }`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="benefit-bubble-header">
+                    <span className="benefit-bubble-title">
+                      {chartType === "vegetables"
+                        ? "🥗 Health Benefit"
+                        : chartType === "emotions"
+                        ? "🧘 Calming Tip"
+                        : "💡 Fun Fact"}
+                    </span>
+                    <button
+                      type="button"
+                      className="benefit-bubble-close"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveBenefitKey(null);
+                      }}
+                      title="Close"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <p className="benefit-bubble-text">{item.benefit || item.fact || item.tool}</p>
+                  <button
+                    type="button"
+                    className="benefit-bubble-replay"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const text = item.benefit || item.fact || item.tool || "";
+                      speak(
+                        chartType === "vegetables" ? `Health benefit of ${item.name}: ${text}` : text,
+                        true
+                      );
+                    }}
+                  >
+                    <span>🔊 Listen Again</span>
+                  </button>
+                </div>
+              )}
             </div>
           );
         })}
@@ -485,18 +597,59 @@ export default function VisualLearningChartGrid({
 
           <div className="spotlight-actions">
             <button
+              type="button"
               className="spotlight-speak-btn"
               onClick={() => {
-                const phrase = `${activeItem.name}! ${activeItem.marathi}. ${
-                  activeItem.sound || activeItem.fact || activeItem.benefit || activeItem.tool || ""
+                const phrase = `${activeItem.name}! ${activeItem.marathi}.${
+                  activeItem.sound ? ` Says: ${activeItem.sound}.` : ""
                 }`;
                 speak(phrase, true);
                 onRecordPractice(chartSlug, activeItem.key, activeItem.name);
               }}
+              title={`Pronounce ${activeItem.name}`}
             >
               <span>🔊</span>
-              <span>Say Again</span>
+              <span>Say Name</span>
             </button>
+
+            {(activeItem.benefit || activeItem.fact || activeItem.tool) && (
+              <button
+                type="button"
+                className={`spotlight-benefit-btn ${
+                  chartType === "vegetables"
+                    ? "veg-spotlight"
+                    : chartType === "emotions"
+                    ? "emotion-spotlight"
+                    : "fact-spotlight"
+                }`}
+                onClick={() => {
+                  let phrase = "";
+                  if (activeItem.benefit) {
+                    phrase = `Health benefit of ${activeItem.name}: ${activeItem.benefit}`;
+                  } else if (activeItem.fact) {
+                    phrase = `Fun fact: ${activeItem.fact}`;
+                  } else if (activeItem.tool) {
+                    phrase = `Calming tool: ${activeItem.tool}`;
+                  }
+                  speak(phrase, true);
+                  onRecordPractice(
+                    chartSlug,
+                    activeItem.key,
+                    `${activeItem.name} (${chartType === "vegetables" ? "Benefit" : "Fact"})`
+                  );
+                }}
+                title={chartType === "vegetables" ? "Hear health benefits" : "Hear fun fact / tip"}
+              >
+                <span>{chartType === "vegetables" ? "🥗" : chartType === "emotions" ? "🧘" : "💡"}</span>
+                <span>
+                  {chartType === "vegetables"
+                    ? "Health Benefit"
+                    : chartType === "emotions"
+                    ? "Calming Tip"
+                    : "Fun Fact"}
+                </span>
+              </button>
+            )}
           </div>
         </div>
       )}

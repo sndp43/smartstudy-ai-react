@@ -1,0 +1,3469 @@
+// SmartStudy Phonics Stories Dataset — Grade 1 Decodable Readers
+// Structured for both Web and Android TV reading adventures with line audio,
+// decodable word tagging, comprehension quizzes, and bilingual phonics support.
+
+export interface PhonicsStoryPage {
+  pageNumber: number;
+  text: string;
+  marathiText: string;
+  focusWords: string[];
+  illustrationIcon: string;
+  image?: string;
+  imageKey?: string;
+}
+
+export interface PhonicsStoryQuestion {
+  id: string;
+  question: string;
+  options: string[];
+  correctAnswer: string;
+  explanation: string;
+  phonicsClue: string;
+}
+
+export interface PhonicsStoryItem {
+  id: string;
+  slug: string;
+  title: string;
+  marathiTitle: string;
+  grade: string;
+  categoryId: string;
+  phonicsFocus: string;
+  targetVowel: string;
+  icon: string;
+  coverImage: string;
+  color: string;
+  headerBg: string;
+  bgGradient: string;
+  badge: string;
+  summary: string;
+  funFact: string;
+  decodableWords: string[];
+  sightWords: string[];
+  pages: PhonicsStoryPage[];
+  quiz: PhonicsStoryQuestion[];
+}
+
+export const PHONICS_STORY_CATEGORIES = [
+  {
+    "id": "all",
+    "label": "All Stories (सर्व गोष्टी)",
+    "icon": "📚"
+  },
+  {
+    "id": "short-vowels",
+    "label": "Short Vowels A-E-I-O-U (स्वर गोष्टी)",
+    "icon": "🔤"
+  },
+  {
+    "id": "digraphs",
+    "label": "Digraphs sh-ch-th-ck-wh (जोडध्वनी)",
+    "icon": "🗣️"
+  },
+  {
+    "id": "blends",
+    "label": "Consonant Blends (मिश्रण ध्वनी)",
+    "icon": "🐸"
+  },
+  {
+    "id": "vowel-teams",
+    "label": "Vowel Teams ee-oa-ai-oo (स्वर जोड्या)",
+    "icon": "🤝"
+  },
+  {
+    "id": "glued-sounds",
+    "label": "Glued Sounds -ing (नाद ध्वनी)",
+    "icon": "🔔"
+  },
+  {
+    "id": "bossy-r",
+    "label": "Bossy R - ar-or-er (बॉसी R)",
+    "icon": "⭐"
+  },
+  {
+    "id": "magic-e",
+    "label": "Magic 'e' Long Vowels (जादुई 'e')",
+    "icon": "🪄"
+  },
+  {
+    "id": "diphthongs",
+    "label": "Diphthongs oi-oy-ou-ow (द्विस्वर ध्वनी)",
+    "icon": "🪙"
+  }
+];
+
+export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
+  {
+    "id": "pat-the-cat",
+    "slug": "pat-the-cat",
+    "title": "Pat the Cat and the Fat Rat",
+    "marathiTitle": "पॅट मांजर आणि जाड उंदीर (Short A)",
+    "grade": "Grade 1",
+    "categoryId": "short-vowels",
+    "phonicsFocus": "Short A (-at, -an, -am, -ap)",
+    "targetVowel": "Short A",
+    "icon": "🐱",
+    "coverImage": "/assets/phonics/pat-the-cat.jpg",
+    "color": "#E11D48",
+    "headerBg": "linear-gradient(135deg, #E11D48 0%, #BE123C 100%)",
+    "bgGradient": "linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%)",
+    "badge": "⭐ Grade 1 • Short A",
+    "summary": "Pat is a happy cat in a bright red hat. When Sam the rat brings a pan of sweet jam, they share a yummy feast on a soft mat!",
+    "funFact": "The '-at' word family is often the first word family children learn to decode in Grade 1!",
+    "decodableWords": [
+      "cat",
+      "fat",
+      "rat",
+      "mat",
+      "hat",
+      "sat",
+      "bat",
+      "pan",
+      "jam",
+      "ran",
+      "Sam",
+      "tap"
+    ],
+    "sightWords": [
+      "the",
+      "is",
+      "a",
+      "on",
+      "in",
+      "can",
+      "see",
+      "has",
+      "and",
+      "with",
+      "ate"
+    ],
+    "pages": [
+      {
+        "pageNumber": 1,
+        "text": "Pat is a fat black cat. Pat has a bright red hat.",
+        "marathiText": "पॅट एक जाड काळी मांजर आहे. पॅटकडे एक चमकदार लाल टोपी आहे.",
+        "focusWords": [
+          "Pat",
+          "fat",
+          "cat",
+          "hat"
+        ],
+        "illustrationIcon": "🐱🎩",
+        "image": "/assets/phonics/pat-p1.jpg",
+        "imageKey": "pat-p1"
+      },
+      {
+        "pageNumber": 2,
+        "text": "Pat sat on a soft mat. Pat can see a little rat.",
+        "marathiText": "पॅट एका मऊ चटईवर बसली. पॅटला एक लहान उंदीर दिसतो.",
+        "focusWords": [
+          "Pat",
+          "sat",
+          "mat",
+          "rat"
+        ],
+        "illustrationIcon": "🧶🐭",
+        "image": "/assets/phonics/pat-p2.jpg",
+        "imageKey": "pat-p2"
+      },
+      {
+        "pageNumber": 3,
+        "text": "The little rat is Sam. Sam the rat has a pan with sweet jam.",
+        "marathiText": "तो लहान उंदीर सॅम आहे. सॅम उंदराकडे गोड जॅम भरलेली कढई आहे.",
+        "focusWords": [
+          "rat",
+          "Sam",
+          "pan",
+          "jam"
+        ],
+        "illustrationIcon": "🍳🍓",
+        "image": "/assets/phonics/pat-p3.jpg",
+        "imageKey": "pat-p3"
+      },
+      {
+        "pageNumber": 4,
+        "text": "Pat the cat ran to the pan. Tap, tap, tap on the pan!",
+        "marathiText": "पॅट मांजर कढईकडे धावली. टॅप, टॅप, टॅप कढईवर आवाज केला!",
+        "focusWords": [
+          "Pat",
+          "cat",
+          "ran",
+          "pan",
+          "tap"
+        ],
+        "illustrationIcon": "🐾💨",
+        "image": "/assets/phonics/pat-p4.jpg",
+        "imageKey": "pat-p4"
+      },
+      {
+        "pageNumber": 5,
+        "text": "Sam and Pat sat on the mat. The cat and the rat ate all the jam!",
+        "marathiText": "सॅम आणि पॅट चटईवर बसले. मांजर आणि उंदराने मिळून सर्व जॅम खाल्ले!",
+        "focusWords": [
+          "Sam",
+          "Pat",
+          "sat",
+          "mat",
+          "cat",
+          "rat",
+          "jam"
+        ],
+        "illustrationIcon": "🎉😋",
+        "image": "/assets/phonics/pat-p5.jpg",
+        "imageKey": "pat-p5"
+      }
+    ],
+    "quiz": [
+      {
+        "id": "pat_q1",
+        "question": "Where did Pat the cat sit?",
+        "options": [
+          "On a soft mat",
+          "On a tall tree",
+          "In a yellow car"
+        ],
+        "correctAnswer": "On a soft mat",
+        "explanation": "In the story: 'Pat sat on a soft mat.'",
+        "phonicsClue": "Look for the '-at' word family: sat, mat!"
+      },
+      {
+        "id": "pat_q2",
+        "question": "Which word rhymes with 'cat'?",
+        "options": [
+          "rat",
+          "pan",
+          "dog"
+        ],
+        "correctAnswer": "rat",
+        "explanation": "Cat and rat both end with the '-at' sound!",
+        "phonicsClue": "c-at rhymes with r-at and m-at."
+      },
+      {
+        "id": "pat_q3",
+        "question": "What was inside Sam the rat's pan?",
+        "options": [
+          "Sweet jam",
+          "Cold milk",
+          "Hot soup"
+        ],
+        "correctAnswer": "Sweet jam",
+        "explanation": "Sam had a pan with sweet jam!",
+        "phonicsClue": "Jam is in the '-am' short 'a' word family."
+      }
+    ]
+  },
+  {
+    "id": "ben-red-hen",
+    "slug": "ben-red-hen",
+    "title": "Ben and the Red Hen",
+    "marathiTitle": "बेन आणि लाल कोंबडी (Short E)",
+    "grade": "Grade 1",
+    "categoryId": "short-vowels",
+    "phonicsFocus": "Short E (-en, -et, -ed, -eg)",
+    "targetVowel": "Short E",
+    "icon": "🐔",
+    "coverImage": "/assets/phonics/ben-and-hen.jpg",
+    "color": "#D97706",
+    "headerBg": "linear-gradient(135deg, #D97706 0%, #B45309 100%)",
+    "bgGradient": "linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)",
+    "badge": "⭐ Grade 1 • Short E",
+    "summary": "Ben's friendly red hen hops out of her pen and steps into a wet net! Ben rushes to help his pet and feeds her ten crunchy seeds.",
+    "funFact": "Short 'e' sounds like the sound at the start of 'elephant' or 'egg'!",
+    "decodableWords": [
+      "Ben",
+      "red",
+      "hen",
+      "pen",
+      "leg",
+      "net",
+      "wet",
+      "pet",
+      "bed",
+      "fed",
+      "ten",
+      "set"
+    ],
+    "sightWords": [
+      "his",
+      "has",
+      "he",
+      "to",
+      "into",
+      "was",
+      "with",
+      "her",
+      "out",
+      "from",
+      "glad"
+    ],
+    "pages": [
+      {
+        "pageNumber": 1,
+        "text": "Ben has a pet. It is a little red hen in a cozy pen.",
+        "marathiText": "बेनकडे एक पाळीव प्राणी आहे. ती एका लहान खुराड्यात राहणारी लाल कोंबडी आहे.",
+        "focusWords": [
+          "Ben",
+          "pet",
+          "red",
+          "hen",
+          "pen"
+        ],
+        "illustrationIcon": "👦🐔",
+        "image": "/assets/phonics/ben-p1.jpg",
+        "imageKey": "ben-p1"
+      },
+      {
+        "pageNumber": 2,
+        "text": "The red hen got out of the pen. Ben ran to get his pet.",
+        "marathiText": "लाल कोंबडी खुराड्यातून बाहेर पडली. बेन आपल्या पाळीव प्राण्याला आणायला धावला.",
+        "focusWords": [
+          "red",
+          "hen",
+          "pen",
+          "Ben",
+          "pet"
+        ],
+        "illustrationIcon": "🏃‍♂️💨",
+        "image": "/assets/phonics/ben-p2.jpg",
+        "imageKey": "ben-p2"
+      },
+      {
+        "pageNumber": 3,
+        "text": "The hen fell into a wet net! Her left leg got wet.",
+        "marathiText": "कोंबडी एका ओल्या जाळ्यात अडकली! तिचा डावा पाय ओला झाला.",
+        "focusWords": [
+          "hen",
+          "wet",
+          "net",
+          "leg"
+        ],
+        "illustrationIcon": "🕸️💧",
+        "image": "/assets/phonics/ben-p3.jpg",
+        "imageKey": "ben-p3"
+      },
+      {
+        "pageNumber": 4,
+        "text": "Ben set the hen free from the net. Ben fed her ten tasty seeds.",
+        "marathiText": "बेनने कोंबडीला जाळ्यातून सोडवले. बेनने तिला दहा चवदार दाणे खाऊ घातले.",
+        "focusWords": [
+          "Ben",
+          "set",
+          "hen",
+          "net",
+          "fed",
+          "ten"
+        ],
+        "illustrationIcon": "🌾🤲",
+        "image": "/assets/phonics/ben-p4.jpg",
+        "imageKey": "ben-p4"
+      },
+      {
+        "pageNumber": 5,
+        "text": "The red hen went to bed in her pen. Ben is glad his pet is safe!",
+        "marathiText": "लाल कोंबडी तिच्या खुराड्यात झोपायला गेली. आपल्या लाडक्या कोंबडीला सुरक्षित पाहून बेन खूप खुश झाला!",
+        "focusWords": [
+          "red",
+          "hen",
+          "bed",
+          "pen",
+          "Ben",
+          "pet"
+        ],
+        "illustrationIcon": "🌙💤",
+        "image": "/assets/phonics/ben-p5.jpg",
+        "imageKey": "ben-p5"
+      }
+    ],
+    "quiz": [
+      {
+        "id": "ben_q1",
+        "question": "What pet does Ben have?",
+        "options": [
+          "A little red hen",
+          "A small green frog",
+          "A big brown bear"
+        ],
+        "correctAnswer": "A little red hen",
+        "explanation": "Ben has a little red hen as his pet!",
+        "phonicsClue": "Hen rhymes with Ben and pen."
+      },
+      {
+        "id": "ben_q2",
+        "question": "Where did the red hen fall?",
+        "options": [
+          "Into a wet net",
+          "Into a deep well",
+          "Under a big stone"
+        ],
+        "correctAnswer": "Into a wet net",
+        "explanation": "The story says: 'The hen fell into a wet net!'",
+        "phonicsClue": "Notice the '-et' rhyming words: wet, net, pet."
+      },
+      {
+        "id": "ben_q3",
+        "question": "How many seeds did Ben feed his hen?",
+        "options": [
+          "Ten seeds",
+          "Two seeds",
+          "Five seeds"
+        ],
+        "correctAnswer": "Ten seeds",
+        "explanation": "Ben fed her ten tasty seeds!",
+        "phonicsClue": "T-e-n is a short 'e' word that rhymes with hen and pen."
+      }
+    ]
+  },
+  {
+    "id": "tim-big-pig",
+    "slug": "tim-big-pig",
+    "title": "Tim and His Big Pig",
+    "marathiTitle": "टिम आणि त्याचे मोठे डुक्कर (Short I)",
+    "grade": "Grade 1",
+    "categoryId": "short-vowels",
+    "phonicsFocus": "Short I (-ig, -in, -ip, -it)",
+    "targetVowel": "Short I",
+    "icon": "🐷",
+    "coverImage": "/assets/phonics/tim-and-pig.jpg",
+    "color": "#2563EB",
+    "headerBg": "linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)",
+    "bgGradient": "linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)",
+    "badge": "⭐ Grade 1 • Short I",
+    "summary": "Tim has a joyful pig named Pip. Pip loves to dig deep pits and put on a pink wig to do a happy jig!",
+    "funFact": "Short 'i' sounds like the sound in 'igloo' or 'itch'!",
+    "decodableWords": [
+      "Tim",
+      "big",
+      "pig",
+      "Pip",
+      "dig",
+      "pit",
+      "wig",
+      "jig",
+      "dip",
+      "lip",
+      "sit",
+      "grin",
+      "hill"
+    ],
+    "sightWords": [
+      "with",
+      "his",
+      "can",
+      "put",
+      "on",
+      "did",
+      "in",
+      "off",
+      "gave",
+      "sweet"
+    ],
+    "pages": [
+      {
+        "pageNumber": 1,
+        "text": "Tim is a boy with a big pet pig. The pig is Pip.",
+        "marathiText": "टिम हा एका मोठ्या पाळीव डुकराचा मित्र आहे. डुकराचे नाव पिप आहे.",
+        "focusWords": [
+          "Tim",
+          "big",
+          "pig",
+          "Pip"
+        ],
+        "illustrationIcon": "👦🐷",
+        "image": "/assets/phonics/tim-p1.jpg",
+        "imageKey": "tim-p1"
+      },
+      {
+        "pageNumber": 2,
+        "text": "Pip the big pig loves to dig. Pip can dig a big pit in the dirt.",
+        "marathiText": "पिप या मोठ्या डुकराला खणायला खूप आवडते. पिप मातीत मोठा खड्डा खणू शकतो.",
+        "focusWords": [
+          "Pip",
+          "big",
+          "pig",
+          "dig",
+          "pit"
+        ],
+        "illustrationIcon": "⛏️🪴",
+        "image": "/assets/phonics/tim-p2.jpg",
+        "imageKey": "tim-p2"
+      },
+      {
+        "pageNumber": 3,
+        "text": "Tim put a funny pink wig on Pip. Pip did a happy little jig!",
+        "marathiText": "टिमने पिपवर एक गमतीशीर गुलाबी विग घातला. पिपने आनंदाने छान नाच केला!",
+        "focusWords": [
+          "Tim",
+          "wig",
+          "Pip",
+          "jig"
+        ],
+        "illustrationIcon": "🎀💃",
+        "image": "/assets/phonics/tim-p3.jpg",
+        "imageKey": "tim-p3"
+      },
+      {
+        "pageNumber": 4,
+        "text": "Pip took a quick dip in the pit. The pink wig fell off his lip!",
+        "marathiText": "पिपने खड्यात एक डुबकी मारली. त्याचा गुलाबी विग खाली पडला!",
+        "focusWords": [
+          "Pip",
+          "dip",
+          "pit",
+          "wig",
+          "lip"
+        ],
+        "illustrationIcon": "💦🛁",
+        "image": "/assets/phonics/tim-p4.jpg",
+        "imageKey": "tim-p4"
+      },
+      {
+        "pageNumber": 5,
+        "text": "Tim and Pip sit on the hill. The big pig gave Tim a sweet grin!",
+        "marathiText": "टिम आणि पिप टेकडीवर बसतात. तो मोठा डुक्कर टिमला पाहून गोड हसला!",
+        "focusWords": [
+          "Tim",
+          "Pip",
+          "sit",
+          "hill",
+          "big",
+          "pig",
+          "grin"
+        ],
+        "illustrationIcon": "⛰️😊",
+        "image": "/assets/phonics/tim-p5.jpg",
+        "imageKey": "tim-p5"
+      }
+    ],
+    "quiz": [
+      {
+        "id": "tim_q1",
+        "question": "What is the name of Tim's big pig?",
+        "options": [
+          "Pip",
+          "Sam",
+          "Gus"
+        ],
+        "correctAnswer": "Pip",
+        "explanation": "The story states: 'The pig is Pip.'",
+        "phonicsClue": "Pip has the short 'i' sound: P-i-p."
+      },
+      {
+        "id": "tim_q2",
+        "question": "What funny thing did Tim put on Pip?",
+        "options": [
+          "A pink wig",
+          "A blue hat",
+          "Yellow boots"
+        ],
+        "correctAnswer": "A pink wig",
+        "explanation": "Tim put a funny pink wig on Pip!",
+        "phonicsClue": "Wig rhymes with pig, big, and dig."
+      },
+      {
+        "id": "tim_q3",
+        "question": "Which word rhymes with 'pig'?",
+        "options": [
+          "dig",
+          "pit",
+          "pen"
+        ],
+        "correctAnswer": "dig",
+        "explanation": "Pig and dig both belong to the '-ig' word family!",
+        "phonicsClue": "b-ig, p-ig, d-ig, w-ig all end in -ig."
+      }
+    ]
+  },
+  {
+    "id": "fox-in-box",
+    "slug": "fox-in-box",
+    "title": "The Fox on the Big Box",
+    "marathiTitle": "मोठ्या खोक्यावरील कोल्हा (Short O)",
+    "grade": "Grade 1",
+    "categoryId": "short-vowels",
+    "phonicsFocus": "Short O (-ox, -op, -ot, -og)",
+    "targetVowel": "Short O",
+    "icon": "🦊",
+    "coverImage": "/assets/phonics/fox-on-box.jpg",
+    "color": "#EA580C",
+    "headerBg": "linear-gradient(135deg, #EA580C 0%, #C2410C 100%)",
+    "bgGradient": "linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%)",
+    "badge": "⭐ Grade 1 • Short O",
+    "summary": "Fox loves to hop to the top of a red box in the fog. When Bob the dog boils a hot pot on a cot, they share a fun snack on a log!",
+    "funFact": "Short 'o' sounds like the sound in 'octopus' or 'orange'!",
+    "decodableWords": [
+      "fox",
+      "box",
+      "hop",
+      "top",
+      "stop",
+      "fog",
+      "Bob",
+      "dog",
+      "hot",
+      "pot",
+      "cot",
+      "log",
+      "pop"
+    ],
+    "sightWords": [
+      "saw",
+      "the",
+      "in",
+      "to",
+      "of",
+      "had",
+      "was",
+      "on",
+      "steam",
+      "together"
+    ],
+    "pages": [
+      {
+        "pageNumber": 1,
+        "text": "Fox is a swift fox. Fox saw a big red box in the thick fog.",
+        "marathiText": "फॉक्स हा एक चपळ कोल्हा आहे. फॉक्सला दाट धुक्यात एक मोठा लाल बॉक्स दिसला.",
+        "focusWords": [
+          "Fox",
+          "box",
+          "fog"
+        ],
+        "illustrationIcon": "🦊📦",
+        "image": "/assets/phonics/fox-p1.jpg",
+        "imageKey": "fox-p1"
+      },
+      {
+        "pageNumber": 2,
+        "text": "Fox can hop to the top of the box. Hop, hop, hop, then stop!",
+        "marathiText": "फॉक्स खोक्याच्या वर उडी मारू शकतो. उडी, उडी, उडी, आणि मग थांब!",
+        "focusWords": [
+          "Fox",
+          "hop",
+          "top",
+          "box",
+          "stop"
+        ],
+        "illustrationIcon": "🦘🔝",
+        "image": "/assets/phonics/fox-p2.jpg",
+        "imageKey": "fox-p2"
+      },
+      {
+        "pageNumber": 3,
+        "text": "Bob the dog had a hot cooking pot. The pot was set on a cot.",
+        "marathiText": "बॉब कुत्र्याकडे गरम स्वयंपाकाचे भांडे होते. ते भांडे एका खाटेवर ठेवले होते.",
+        "focusWords": [
+          "Bob",
+          "dog",
+          "hot",
+          "pot",
+          "cot"
+        ],
+        "illustrationIcon": "🐶🍲",
+        "image": "/assets/phonics/fox-p3.jpg",
+        "imageKey": "fox-p3"
+      },
+      {
+        "pageNumber": 4,
+        "text": "Pop! The hot pot let out warm steam. Fox did a big hop off the box.",
+        "marathiText": "पॉप! गरम भांड्यातून वाफ बाहेर पडली. फॉक्सने खोक्यावरून मोठी उडी मारली.",
+        "focusWords": [
+          "Pop",
+          "hot",
+          "pot",
+          "Fox",
+          "hop",
+          "box"
+        ],
+        "illustrationIcon": "💨✨",
+        "image": "/assets/phonics/fox-p4.jpg",
+        "imageKey": "fox-p4"
+      },
+      {
+        "pageNumber": 5,
+        "text": "Bob the dog and Fox sat on a dry log in the fog. They are happy pals!",
+        "marathiText": "बॉब कुत्रा आणि फॉक्स धुक्यात एका कोरड्या लाकडावर बसले. ते दोघे खूप चांगले मित्र बनले!",
+        "focusWords": [
+          "Bob",
+          "dog",
+          "Fox",
+          "log",
+          "fog"
+        ],
+        "illustrationIcon": "🪵🤝",
+        "image": "/assets/phonics/fox-p5.jpg",
+        "imageKey": "fox-p5"
+      }
+    ],
+    "quiz": [
+      {
+        "id": "fox_q1",
+        "question": "Where did Fox hop?",
+        "options": [
+          "To the top of the box",
+          "Into the cold pond",
+          "Under a little car"
+        ],
+        "correctAnswer": "To the top of the box",
+        "explanation": "The story says: 'Fox can hop to the top of the box.'",
+        "phonicsClue": "Notice the '-op' words: hop, top, stop."
+      },
+      {
+        "id": "fox_q2",
+        "question": "Who had the hot cooking pot?",
+        "options": [
+          "Bob the dog",
+          "Sam the rat",
+          "Ben the hen"
+        ],
+        "correctAnswer": "Bob the dog",
+        "explanation": "Bob the dog had a hot cooking pot!",
+        "phonicsClue": "Bob, dog, and hot are all short 'o' words."
+      },
+      {
+        "id": "fox_q3",
+        "question": "Which word rhymes with 'pot'?",
+        "options": [
+          "hot",
+          "hop",
+          "fox"
+        ],
+        "correctAnswer": "hot",
+        "explanation": "Pot, hot, and cot belong to the '-ot' word family!",
+        "phonicsClue": "p-ot and h-ot share the same '-ot' ending."
+      }
+    ]
+  },
+  {
+    "id": "pug-and-bug",
+    "slug": "pug-and-bug",
+    "title": "Gus the Pug and the Little Bug",
+    "marathiTitle": "गस पग आणि लहान कीटक (Short U)",
+    "grade": "Grade 1",
+    "categoryId": "short-vowels",
+    "phonicsFocus": "Short U (-ug, -un, -ut, -ub)",
+    "targetVowel": "Short U",
+    "icon": "🐶",
+    "coverImage": "/assets/phonics/gus-the-pug.jpg",
+    "color": "#7C3AED",
+    "headerBg": "linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%)",
+    "bgGradient": "linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%)",
+    "badge": "⭐ Grade 1 • Short U",
+    "summary": "Gus is a snug little pug on a rug. When a playful yellow bug lands on his jug, Gus runs in the sun and falls into a mud tub with a funny thud!",
+    "funFact": "Short 'u' sounds like the sound in 'umbrella' or 'up'!",
+    "decodableWords": [
+      "Gus",
+      "pug",
+      "bug",
+      "rug",
+      "snug",
+      "jug",
+      "run",
+      "sun",
+      "cup",
+      "mud",
+      "tub",
+      "thud",
+      "hug",
+      "rub"
+    ],
+    "sightWords": [
+      "is",
+      "a",
+      "on",
+      "into",
+      "the",
+      "flew",
+      "with",
+      "now",
+      "warm",
+      "gave"
+    ],
+    "pages": [
+      {
+        "pageNumber": 1,
+        "text": "Gus is a cute little pug. Gus is snug on a cozy rug.",
+        "marathiText": "गस एक गोंडस लहान पग कुत्रा आहे. गस एका मऊ चटईवर आरामात बसला आहे.",
+        "focusWords": [
+          "Gus",
+          "pug",
+          "snug",
+          "rug"
+        ],
+        "illustrationIcon": "🐶🛋️",
+        "image": "/assets/phonics/gus-p1.jpg",
+        "imageKey": "gus-p1"
+      },
+      {
+        "pageNumber": 2,
+        "text": "A yellow bug flew by. The bug sat on a milk jug near Gus.",
+        "marathiText": "एक पिवळा कीटक उडून आला. तो कीटक गसजवळ दुधाच्या भांड्यावर बसला.",
+        "focusWords": [
+          "bug",
+          "jug",
+          "Gus"
+        ],
+        "illustrationIcon": "🐝🥛",
+        "image": "/assets/phonics/gus-p2.jpg",
+        "imageKey": "gus-p2"
+      },
+      {
+        "pageNumber": 3,
+        "text": "Gus the pug ran in the warm sun. The bug flew to a cup in the mud.",
+        "marathiText": "गस पग उबदार उन्हात धावला. तो कीटक चिखलातील एका कपावर जाऊन बसला.",
+        "focusWords": [
+          "Gus",
+          "pug",
+          "ran",
+          "sun",
+          "bug",
+          "cup",
+          "mud"
+        ],
+        "illustrationIcon": "☀️🏃‍♂️",
+        "image": "/assets/phonics/gus-p3.jpg",
+        "imageKey": "gus-p3"
+      },
+      {
+        "pageNumber": 4,
+        "text": "Thud! Gus the pug fell into the mud tub! Now Gus is a muddy pup.",
+        "marathiText": "धपकन! गस पग चिखलाच्या टबमध्ये पडला! आता गस चिखलाने माखला आहे.",
+        "focusWords": [
+          "Thud",
+          "Gus",
+          "pug",
+          "mud",
+          "tub"
+        ],
+        "illustrationIcon": "🛁💩",
+        "image": "/assets/phonics/gus-p4.jpg",
+        "imageKey": "gus-p4"
+      },
+      {
+        "pageNumber": 5,
+        "text": "Gus got a warm rub in the tub. The bug and Gus shared a happy hug!",
+        "marathiText": "गसला टबमध्ये छान आंघोळ घातली गेली. शेवटी कीटकाने आणि गसने प्रेमाने मिठी मारली!",
+        "focusWords": [
+          "Gus",
+          "rub",
+          "tub",
+          "bug",
+          "hug"
+        ],
+        "illustrationIcon": "🧼🤗",
+        "image": "/assets/phonics/gus-p5.jpg",
+        "imageKey": "gus-p5"
+      }
+    ],
+    "quiz": [
+      {
+        "id": "pug_q1",
+        "question": "Where was Gus the pug resting at first?",
+        "options": [
+          "Snug on a cozy rug",
+          "Inside a cardboard box",
+          "On top of a high roof"
+        ],
+        "correctAnswer": "Snug on a cozy rug",
+        "explanation": "Gus was snug on a cozy rug!",
+        "phonicsClue": "Snug and rug belong to the '-ug' word family."
+      },
+      {
+        "id": "pug_q2",
+        "question": "Where did Gus fall with a thud?",
+        "options": [
+          "Into the mud tub",
+          "Into the deep river",
+          "Under the dining table"
+        ],
+        "correctAnswer": "Into the mud tub",
+        "explanation": "Gus fell into the mud tub!",
+        "phonicsClue": "Mud and tub are short 'u' words."
+      },
+      {
+        "id": "pug_q3",
+        "question": "Which word rhymes with 'bug'?",
+        "options": [
+          "hug",
+          "sun",
+          "cup"
+        ],
+        "correctAnswer": "hug",
+        "explanation": "Bug, hug, pug, and rug all rhyme with '-ug'!",
+        "phonicsClue": "b-ug, h-ug, p-ug, r-ug share the same rhyming sound."
+      }
+    ]
+  },
+  {
+    "id": "fish-on-ship",
+    "slug": "fish-on-ship",
+    "title": "The Fish by the Big Ship",
+    "marathiTitle": "मोठ्या जहाजाजवळचा मासा (Digraphs sh, ch, th)",
+    "grade": "Grade 1",
+    "categoryId": "digraphs",
+    "phonicsFocus": "Digraphs (sh, ch, th)",
+    "targetVowel": "Consonant Digraphs",
+    "icon": "🐟",
+    "coverImage": "/assets/phonics/fish-and-ship.jpg",
+    "color": "#0D9488",
+    "headerBg": "linear-gradient(135deg, #0D9488 0%, #0F766E 100%)",
+    "bgGradient": "linear-gradient(135deg, #F0FDFA 0%, #CCFBF1 100%)",
+    "badge": "⭐ Grade 1 • Digraphs sh-ch-th",
+    "summary": "Chad visits a shiny ship on the blue sea. With a chip on a dish, Chad makes a wish to see a fish flip in the thick waves!",
+    "funFact": "Two letters that make one single sound together are called digraphs, like 'sh', 'ch', and 'th'!",
+    "decodableWords": [
+      "Chad",
+      "ship",
+      "fish",
+      "dish",
+      "chip",
+      "chin",
+      "wish",
+      "thin",
+      "thick",
+      "that",
+      "chop",
+      "them"
+    ],
+    "sightWords": [
+      "went",
+      "on",
+      "a",
+      "saw",
+      "with",
+      "said",
+      "held",
+      "into",
+      "thank",
+      "blue"
+    ],
+    "pages": [
+      {
+        "pageNumber": 1,
+        "text": "Chad went for a trip on a big ship sailing on the sea.",
+        "marathiText": "चाड समुद्रात प्रवास करणाऱ्या एका मोठ्या जहाजावर गेला.",
+        "focusWords": [
+          "Chad",
+          "ship"
+        ],
+        "illustrationIcon": "👦🚢",
+        "image": "/assets/phonics/ship-p1.jpg",
+        "imageKey": "ship-p1"
+      },
+      {
+        "pageNumber": 2,
+        "text": "Chad saw a shiny little fish swimming fast by the ship.",
+        "marathiText": "चाडला जहाजाजवळ वेगाने पोहणारा एक चमकदार लहान मासा दिसला.",
+        "focusWords": [
+          "Chad",
+          "fish",
+          "ship"
+        ],
+        "illustrationIcon": "🐟🌊",
+        "image": "/assets/phonics/ship-p2.jpg",
+        "imageKey": "ship-p2"
+      },
+      {
+        "pageNumber": 3,
+        "text": "Chad had a blue dish with a thin chip. 'I wish to feed that fish!' said Chad.",
+        "marathiText": "चाडकडे एक निळी डिश होती ज्यामध्ये चिप्स होते. 'मला त्या माशाला खायला द्यायचे आहे!' चाड म्हणाला.",
+        "focusWords": [
+          "Chad",
+          "dish",
+          "thin",
+          "chip",
+          "wish",
+          "that",
+          "fish"
+        ],
+        "illustrationIcon": "🍽️🍟",
+        "image": "/assets/phonics/ship-p3.jpg",
+        "imageKey": "ship-p3"
+      },
+      {
+        "pageNumber": 4,
+        "text": "Splash! The fish did a chop and flip with its shiny fin.",
+        "marathiText": "छपकन! माशाने पाण्याच्या लाटांवर छान उडी मारली.",
+        "focusWords": [
+          "fish",
+          "chop"
+        ],
+        "illustrationIcon": "💦✨",
+        "image": "/assets/phonics/ship-p4.jpg",
+        "imageKey": "ship-p4"
+      },
+      {
+        "pageNumber": 5,
+        "text": "'Thank you!' thought Chad as the fish swam into the thick blue sea.",
+        "marathiText": "'धन्यवाद!' चाडने विचार केला जेव्हा मासा पुन्हा खोल समुद्रात पोहून गेला.",
+        "focusWords": [
+          "Chad",
+          "thick"
+        ],
+        "illustrationIcon": "🌊👋",
+        "image": "/assets/phonics/ship-p5.jpg",
+        "imageKey": "ship-p5"
+      }
+    ],
+    "quiz": [
+      {
+        "id": "ship_q1",
+        "question": "Where did Chad take a trip?",
+        "options": [
+          "On a big ship",
+          "In a little red train",
+          "On a green tractor"
+        ],
+        "correctAnswer": "On a big ship",
+        "explanation": "Chad took a trip on a big ship!",
+        "phonicsClue": "'Ship' starts with the 'sh' digraph sound."
+      },
+      {
+        "id": "ship_q2",
+        "question": "Which word starts with the 'ch' digraph sound?",
+        "options": [
+          "chip",
+          "ship",
+          "thin"
+        ],
+        "correctAnswer": "chip",
+        "explanation": "'Chip' starts with the 'ch' sound like 'cheese' and 'chair'!",
+        "phonicsClue": "ch-ip starts with c and h together."
+      },
+      {
+        "id": "ship_q3",
+        "question": "Which word ends with the 'sh' digraph sound?",
+        "options": [
+          "fish",
+          "chin",
+          "that"
+        ],
+        "correctAnswer": "fish",
+        "explanation": "'Fish' ends with the 'sh' sound!",
+        "phonicsClue": "fi-sh ends with s and h together."
+      }
+    ]
+  },
+  {
+    "id": "stan-the-frog",
+    "slug": "stan-the-frog",
+    "title": "Stan the Frog and the Big Spin",
+    "marathiTitle": "स्टॅन बेडूक आणि गिरकी (Blends st, sp, fl)",
+    "grade": "Grade 1",
+    "categoryId": "blends",
+    "phonicsFocus": "Consonant Blends (st-, sp-, fl-, cl-, gr-)",
+    "targetVowel": "Blends",
+    "icon": "🐸",
+    "coverImage": "/assets/phonics/stan-the-frog.jpg",
+    "color": "#059669",
+    "headerBg": "linear-gradient(135deg, #059669 0%, #047857 100%)",
+    "bgGradient": "linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)",
+    "badge": "⭐ Grade 1 • Blends",
+    "summary": "Stan is a green frog who loves to stop on a flat stone. When Stan tries a grand spin on one foot, he splashes into the pond with a big grin!",
+    "funFact": "In blends, you can hear both consonant sounds together, like 's' and 't' in 'stop'!",
+    "decodableWords": [
+      "Stan",
+      "frog",
+      "stop",
+      "spot",
+      "flat",
+      "spin",
+      "flap",
+      "clap",
+      "grin",
+      "fast",
+      "pond",
+      "step"
+    ],
+    "sightWords": [
+      "lives",
+      "near",
+      "has",
+      "his",
+      "can",
+      "saw",
+      "one",
+      "into",
+      "all",
+      "friends"
+    ],
+    "pages": [
+      {
+        "pageNumber": 1,
+        "text": "Stan is a green frog who lives near a calm, still pond.",
+        "marathiText": "स्टॅन हा एका शांत तळ्याकाठी राहणारा हिरवा बेडूक आहे.",
+        "focusWords": [
+          "Stan",
+          "frog",
+          "pond"
+        ],
+        "illustrationIcon": "🐸🌿",
+        "image": "/assets/phonics/stan-p1.jpg",
+        "imageKey": "stan-p1"
+      },
+      {
+        "pageNumber": 2,
+        "text": "Stan has spots on his skin. Stan loves to run fast and stop on a flat rock.",
+        "marathiText": "स्टॅनच्या पाठीवर ठिपके आहेत. स्टॅनला वेगाने पळायला आणि सपाट दगडावर थांबायला आवडते.",
+        "focusWords": [
+          "Stan",
+          "spots",
+          "fast",
+          "stop",
+          "flat"
+        ],
+        "illustrationIcon": "🪨⚡",
+        "image": "/assets/phonics/stan-p2.jpg",
+        "imageKey": "stan-p2"
+      },
+      {
+        "pageNumber": 3,
+        "text": "Stan saw a bug flap its wings. Stan tried to spin on one frog foot!",
+        "marathiText": "स्टॅनने एका कीटकाला पंख फडफडवताना पाहिले. स्टॅनने एका पायावर गिरकी घेण्याचा प्रयत्न केला!",
+        "focusWords": [
+          "Stan",
+          "flap",
+          "spin",
+          "frog"
+        ],
+        "illustrationIcon": "🌀🦶",
+        "image": "/assets/phonics/stan-p3.jpg",
+        "imageKey": "stan-p3"
+      },
+      {
+        "pageNumber": 4,
+        "text": "Spin, spin, splash! Stan landed in the pond with a big, bright grin.",
+        "marathiText": "गिरकी, गिरकी, छपाक! स्टॅन गालात गोड हसत तळ्यात पडला.",
+        "focusWords": [
+          "Spin",
+          "Stan",
+          "pond",
+          "grin"
+        ],
+        "illustrationIcon": "💦😄",
+        "image": "/assets/phonics/stan-p4.jpg",
+        "imageKey": "stan-p4"
+      },
+      {
+        "pageNumber": 5,
+        "text": "All the pond friends began to clap for Stan and his funny frog step!",
+        "marathiText": "तळ्यातील सर्व मित्रांनी स्टॅनच्या छान उडीसाठी टाळ्या वाजवल्या!",
+        "focusWords": [
+          "pond",
+          "clap",
+          "Stan",
+          "frog",
+          "step"
+        ],
+        "illustrationIcon": "👏🎉",
+        "image": "/assets/phonics/stan-p5.jpg",
+        "imageKey": "stan-p5"
+      }
+    ],
+    "quiz": [
+      {
+        "id": "stan_q1",
+        "question": "What kind of animal is Stan?",
+        "options": [
+          "A green frog",
+          "A small cat",
+          "A tall horse"
+        ],
+        "correctAnswer": "A green frog",
+        "explanation": "Stan is a friendly green frog!",
+        "phonicsClue": "'Frog' begins with the 'fr' consonant blend."
+      },
+      {
+        "id": "stan_q2",
+        "question": "Which word begins with the 'st' blend sound?",
+        "options": [
+          "Stan",
+          "frog",
+          "clap"
+        ],
+        "correctAnswer": "Stan",
+        "explanation": "Stan and stop start with the 'st' consonant blend!",
+        "phonicsClue": "s-t makes the blend sound in St-an."
+      },
+      {
+        "id": "stan_q3",
+        "question": "What did Stan's pond friends do?",
+        "options": [
+          "They began to clap",
+          "They went to sleep",
+          "They flew away"
+        ],
+        "correctAnswer": "They began to clap",
+        "explanation": "The pond friends began to clap for Stan!",
+        "phonicsClue": "'Clap' starts with the 'cl' consonant blend."
+      }
+    ]
+  },
+  {
+    "id": "jake-brave-snake",
+    "slug": "jake-brave-snake",
+    "title": "Jake and the Brave Snake",
+    "marathiTitle": "जेक आणि धाडसी साप (Magic 'e' Long Vowels)",
+    "grade": "Grade 1",
+    "categoryId": "magic-e",
+    "phonicsFocus": "Magic 'e' Long Vowels (a_e, i_e, o_e)",
+    "targetVowel": "Magic 'e'",
+    "icon": "🐍",
+    "coverImage": "/assets/phonics/jake-the-snake.jpg",
+    "color": "#6366F1",
+    "headerBg": "linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)",
+    "bgGradient": "linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%)",
+    "badge": "⭐ Grade 1 • Magic 'e'",
+    "summary": "Jake lives by a calm blue lake. He loves to bake a cake and ride his bike. By the lake, he meets Drake, a gentle snake with a polite smile!",
+    "funFact": "Magic 'e' is silent at the end of a word, but gives all its power to make the vowel say its own name!",
+    "decodableWords": [
+      "Jake",
+      "bake",
+      "cake",
+      "lake",
+      "snake",
+      "Drake",
+      "brave",
+      "smile",
+      "ride",
+      "bike",
+      "home",
+      "stone",
+      "bone"
+    ],
+    "sightWords": [
+      "lives",
+      "by",
+      "a",
+      "blue",
+      "and",
+      "loved",
+      "to",
+      "saw",
+      "his",
+      "polite",
+      "shared"
+    ],
+    "pages": [
+      {
+        "pageNumber": 1,
+        "text": "Jake lives in a stone home near a calm, blue lake.",
+        "marathiText": "जेक एका शांत निळ्या तलावाजवळ दगडाच्या घरात राहतो.",
+        "focusWords": [
+          "Jake",
+          "stone",
+          "home",
+          "lake"
+        ],
+        "illustrationIcon": "🏡🌊",
+        "image": "/assets/phonics/jake-p1.jpg",
+        "imageKey": "jake-p1"
+      },
+      {
+        "pageNumber": 2,
+        "text": "Jake loves to bake a sweet cake and ride his shiny red bike.",
+        "marathiText": "जेकला गोड केक बेक करायला आणि त्याची लाल सायकल चालवायला आवडते.",
+        "focusWords": [
+          "Jake",
+          "bake",
+          "cake",
+          "ride",
+          "bike"
+        ],
+        "illustrationIcon": "🎂🚲",
+        "image": "/assets/phonics/jake-p2.jpg",
+        "imageKey": "jake-p2"
+      },
+      {
+        "pageNumber": 3,
+        "text": "By the lake, Jake saw Drake, a gentle and brave green snake.",
+        "marathiText": "तलावाकाठी, जेकला ड्रेक नावाचा एक प्रेमळ आणि धाडसी हिरवा साप दिसला.",
+        "focusWords": [
+          "lake",
+          "Jake",
+          "Drake",
+          "brave",
+          "snake"
+        ],
+        "illustrationIcon": "🐍✨",
+        "image": "/assets/phonics/jake-p3.jpg",
+        "imageKey": "jake-p3"
+      },
+      {
+        "pageNumber": 4,
+        "text": "Drake the snake had a wide, polite smile. He does not bite anyone.",
+        "marathiText": "ड्रेक सापाच्या चेहऱ्यावर एक गोड हसू होते. तो कोणालाही चावत नाही.",
+        "focusWords": [
+          "Drake",
+          "snake",
+          "wide",
+          "smile",
+          "bite"
+        ],
+        "illustrationIcon": "😊🌿",
+        "image": "/assets/phonics/jake-p4.jpg",
+        "imageKey": "jake-p4"
+      },
+      {
+        "pageNumber": 5,
+        "text": "Jake shared a slice of warm cake by the lake with his snake pal Drake!",
+        "marathiText": "जेकने तलावाकाठी ड्रेक सापासोबत केकचा एक तुकडा वाटून खाल्ला!",
+        "focusWords": [
+          "Jake",
+          "cake",
+          "lake",
+          "snake",
+          "Drake"
+        ],
+        "illustrationIcon": "🍰🤝",
+        "image": "/assets/phonics/jake-p5.jpg",
+        "imageKey": "jake-p5"
+      }
+    ],
+    "quiz": [
+      {
+        "id": "jake_q1",
+        "question": "Where does Jake live?",
+        "options": [
+          "Near a calm blue lake",
+          "In a dark cold cave",
+          "On a high snowy peak"
+        ],
+        "correctAnswer": "Near a calm blue lake",
+        "explanation": "Jake lives near a calm blue lake!",
+        "phonicsClue": "Lake has magic 'e': l-a-k-e."
+      },
+      {
+        "id": "jake_q2",
+        "question": "What did Jake love to bake?",
+        "options": [
+          "A sweet cake",
+          "Hot spicy curry",
+          "Cold ice cream"
+        ],
+        "correctAnswer": "A sweet cake",
+        "explanation": "Jake loves to bake a sweet cake!",
+        "phonicsClue": "Bake and cake have the long /a/ magic 'e' sound."
+      },
+      {
+        "id": "jake_q3",
+        "question": "Which word rhymes with 'snake'?",
+        "options": [
+          "lake",
+          "smile",
+          "bike"
+        ],
+        "correctAnswer": "lake",
+        "explanation": "Snake, lake, cake, and bake all rhyme with the '-ake' pattern!",
+        "phonicsClue": "sn-ake and l-ake share the same magic 'e' rhyming family."
+      }
+    ]
+  },
+  {
+    "id": "zack-black-duck",
+    "slug": "zack-black-duck",
+    "title": "Zack and Chuck the Black Duck",
+    "marathiTitle": "झॅक आणि चक काळी बदक (Digraph -ck)",
+    "grade": "Grade 1",
+    "categoryId": "digraphs",
+    "phonicsFocus": "Digraph -ck (-ack, -ick, -ock, -uck)",
+    "targetVowel": "Digraph -ck",
+    "icon": "🦆",
+    "coverImage": "/assets/phonics/zack-black-duck.jpg",
+    "color": "#0D9488",
+    "headerBg": "linear-gradient(135deg, #0D9488 0%, #115E59 100%)",
+    "bgGradient": "linear-gradient(135deg, #F0FDFA 0%, #CCFBF1 100%)",
+    "badge": "⭐ Grade 1 • Digraph -ck",
+    "summary": "Zack packs his red sack and walks to the blue pond. He meets Chuck, a quick black duck who loves to quack on a flat rock!",
+    "funFact": "The '-ck' spelling is used right after a short vowel sound, like in duck, sock, rock, and pack!",
+    "decodableWords": [
+      "Zack",
+      "Chuck",
+      "black",
+      "duck",
+      "pack",
+      "sack",
+      "quack",
+      "rock",
+      "quick",
+      "pick",
+      "back",
+      "lock",
+      "snack"
+    ],
+    "sightWords": [
+      "the",
+      "a",
+      "his",
+      "to",
+      "and",
+      "he",
+      "has",
+      "on",
+      "with",
+      "see",
+      "went"
+    ],
+    "pages": [
+      {
+        "pageNumber": 1,
+        "text": "Zack has a red pack on his back. Zack walks to the big pond.",
+        "marathiText": "झॅकच्या पाठीवर एक लाल बॅग आहे. झॅक मोठ्या तलावाकडे चालत जातो.",
+        "focusWords": [
+          "Zack",
+          "pack",
+          "back"
+        ],
+        "illustrationIcon": "🎒🚶‍♂️",
+        "image": "/assets/phonics/zack-p1.jpg",
+        "imageKey": "zack-p1"
+      },
+      {
+        "pageNumber": 2,
+        "text": "At the pond, Zack can see a black duck. The duck is very quick!",
+        "marathiText": "तलावावर झॅकला एक काळी बदक दिसते. ती बदक खूप चपळ आहे!",
+        "focusWords": [
+          "Zack",
+          "black",
+          "duck",
+          "quick"
+        ],
+        "illustrationIcon": "🦆🌊",
+        "image": "/assets/phonics/zack-p2.jpg",
+        "imageKey": "zack-p2"
+      },
+      {
+        "pageNumber": 3,
+        "text": "The black duck is Chuck. Chuck hops on a flat rock. Quack, quack!",
+        "marathiText": "ती काळी बदक चक आहे. चक एका सपाट खडकावर उडी मारते. क्वॅक, क्वॅक!",
+        "focusWords": [
+          "black",
+          "duck",
+          "Chuck",
+          "rock",
+          "quack"
+        ],
+        "illustrationIcon": "🪨🦆",
+        "image": "/assets/phonics/zack-p3.jpg",
+        "imageKey": "zack-p3"
+      },
+      {
+        "pageNumber": 4,
+        "text": "Zack picks a snack from his pack. He tosses a bite to Chuck.",
+        "marathiText": "झॅक त्याच्या बॅगमधून खाऊ काढतो. तो चकसाठी एक तुकडा टाकतो.",
+        "focusWords": [
+          "Zack",
+          "picks",
+          "snack",
+          "pack",
+          "Chuck"
+        ],
+        "illustrationIcon": "🌾🤲",
+        "image": "/assets/phonics/zack-p4.jpg",
+        "imageKey": "zack-p4"
+      },
+      {
+        "pageNumber": 5,
+        "text": "Chuck the duck ate the snack on the rock. Zack and Chuck had fun!",
+        "marathiText": "चक बदकाने खडकावर बसून खाऊ खाल्ला. झॅक आणि चकने खूप मज्जा केली!",
+        "focusWords": [
+          "Chuck",
+          "duck",
+          "snack",
+          "rock",
+          "Zack"
+        ],
+        "illustrationIcon": "🎉✨",
+        "image": "/assets/phonics/zack-p5.jpg",
+        "imageKey": "zack-p5"
+      }
+    ],
+    "quiz": [
+      {
+        "id": "zack_q1",
+        "question": "What is the name of the quick black duck?",
+        "options": [
+          "Chuck the duck",
+          "Max the fox",
+          "Pip the pig"
+        ],
+        "correctAnswer": "Chuck the duck",
+        "explanation": "In the story: 'The black duck is Chuck.'",
+        "phonicsClue": "Chuck and duck both end in '-uck'."
+      },
+      {
+        "id": "zack_q2",
+        "question": "Where did Chuck the duck hop?",
+        "options": [
+          "On a flat rock",
+          "In a tall green tree",
+          "Inside a wooden box"
+        ],
+        "correctAnswer": "On a flat rock",
+        "explanation": "Chuck hops on a flat rock!",
+        "phonicsClue": "Rock has the short 'o' and '-ck' ending: r-o-ck."
+      },
+      {
+        "id": "zack_q3",
+        "question": "Which word rhymes with 'pack' and 'black'?",
+        "options": [
+          "quack",
+          "duck",
+          "rock"
+        ],
+        "correctAnswer": "quack",
+        "explanation": "Quack, pack, and black all end in the '-ack' family sound!",
+        "phonicsClue": "p-ack, bl-ack, and qu-ack rhyme together."
+      }
+    ]
+  },
+  {
+    "id": "queen-green-bee",
+    "slug": "queen-green-bee",
+    "title": "The Queen and the Green Bee",
+    "marathiTitle": "राणी आणि हिरवी मधमाशी (Vowel Teams ee, ea)",
+    "grade": "Grade 1",
+    "categoryId": "vowel-teams",
+    "phonicsFocus": "Long E Vowel Teams (ee, ea)",
+    "targetVowel": "Vowel Teams (ee, ea)",
+    "icon": "👑",
+    "coverImage": "/assets/phonics/queen-green-bee.jpg",
+    "color": "#059669",
+    "headerBg": "linear-gradient(135deg, #059669 0%, #047857 100%)",
+    "bgGradient": "linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)",
+    "badge": "⭐ Grade 1 • Vowel Team Long E",
+    "summary": "Queen Jean sits beneath a big green tree. She sips sweet tea from a cup until a cheerful green bee buzzes in to meet her!",
+    "funFact": "When two vowels go walking, the first one does the talking! In 'ee' and 'ea', the 'e' says its long name!",
+    "decodableWords": [
+      "queen",
+      "Jean",
+      "green",
+      "bee",
+      "tree",
+      "see",
+      "sweet",
+      "meet",
+      "tea",
+      "feet",
+      "deep",
+      "seed",
+      "clean",
+      "read"
+    ],
+    "sightWords": [
+      "the",
+      "a",
+      "she",
+      "by",
+      "her",
+      "to",
+      "and",
+      "said",
+      "with",
+      "from",
+      "under"
+    ],
+    "pages": [
+      {
+        "pageNumber": 1,
+        "text": "Queen Jean has a shiny gold crown. She sits under a big green tree.",
+        "marathiText": "राणी जीनकडे एक चमकदार सोन्याचा मुकुट आहे. ती एका मोठ्या हिरव्या झाडाखाली बसते.",
+        "focusWords": [
+          "queen",
+          "Jean",
+          "green",
+          "tree"
+        ],
+        "illustrationIcon": "👑🌳",
+        "image": "/assets/phonics/queen-p1.jpg",
+        "imageKey": "queen-p1"
+      },
+      {
+        "pageNumber": 2,
+        "text": "Queen Jean drinks sweet tea. She reads a story book with clean sheets.",
+        "marathiText": "राणी जीन गोड चहा पिते. ती स्वच्छ पानांचे एक गोष्टीचे पुस्तक वाचते.",
+        "focusWords": [
+          "queen",
+          "Jean",
+          "sweet",
+          "tea",
+          "reads",
+          "sheets"
+        ],
+        "illustrationIcon": "☕📖",
+        "image": "/assets/phonics/queen-p2.jpg",
+        "imageKey": "queen-p2"
+      },
+      {
+        "pageNumber": 3,
+        "text": "Buzz! A little green bee flies from a weed. Jean can see the bee.",
+        "marathiText": "भूं-भूं! हिरव्या गवतातून एक लहान हिरवी मधमाशी उडून येते. जीनला ती मधमाशी दिसते.",
+        "focusWords": [
+          "green",
+          "bee",
+          "weed",
+          "see"
+        ],
+        "illustrationIcon": "🐝🌿",
+        "image": "/assets/phonics/queen-p3.jpg",
+        "imageKey": "queen-p3"
+      },
+      {
+        "pageNumber": 4,
+        "text": "The bee lands near Jean's feet. 'Do not sting, green bee!' said Queen Jean.",
+        "marathiText": "ती मधमाशी जीनच्या पायाजवळ बसते. 'डंख मारू नकोस, हिरव्या मधमाशी!' राणी जीन म्हणाली.",
+        "focusWords": [
+          "bee",
+          "feet",
+          "green",
+          "queen",
+          "Jean"
+        ],
+        "illustrationIcon": "🦶🐝",
+        "image": "/assets/phonics/queen-p4.jpg",
+        "imageKey": "queen-p4"
+      },
+      {
+        "pageNumber": 5,
+        "text": "The green bee tastes a drop of sweet tea. The Queen and the bee are sweet pals!",
+        "marathiText": "हिरव्या मधमाशीने गोड चहाचा एक थेंब चाखला. राणी आणि मधमाशी आता छान मित्र बनले!",
+        "focusWords": [
+          "green",
+          "bee",
+          "sweet",
+          "tea",
+          "queen"
+        ],
+        "illustrationIcon": "🍯💛",
+        "image": "/assets/phonics/queen-p5.jpg",
+        "imageKey": "queen-p5"
+      }
+    ],
+    "quiz": [
+      {
+        "id": "queen_q1",
+        "question": "What does Queen Jean drink under the tree?",
+        "options": [
+          "Sweet tea",
+          "Cold ice water",
+          "Warm spicy soup"
+        ],
+        "correctAnswer": "Sweet tea",
+        "explanation": "Queen Jean drinks sweet tea!",
+        "phonicsClue": "Sweet (ee) and tea (ea) both have the long 'e' sound."
+      },
+      {
+        "id": "queen_q2",
+        "question": "What little creature flies in to meet Queen Jean?",
+        "options": [
+          "A green bee",
+          "A red ant",
+          "A brown bat"
+        ],
+        "correctAnswer": "A green bee",
+        "explanation": "A little green bee flies in to meet Queen Jean!",
+        "phonicsClue": "Green and bee both have the 'ee' vowel team."
+      },
+      {
+        "id": "queen_q3",
+        "question": "Which word rhymes with 'tree' and 'bee'?",
+        "options": [
+          "see",
+          "tea",
+          "queen"
+        ],
+        "correctAnswer": "see",
+        "explanation": "Tree, bee, and see all rhyme with the 'ee' ending!",
+        "phonicsClue": "tr-ee, b-ee, and s-ee share the same rhyming sound."
+      }
+    ]
+  },
+  {
+    "id": "goat-yellow-boat",
+    "slug": "goat-yellow-boat",
+    "title": "The Goat in a Yellow Boat",
+    "marathiTitle": "पिवळ्या बोटीतील शेळी (Vowel Teams oa, ow)",
+    "grade": "Grade 1",
+    "categoryId": "vowel-teams",
+    "phonicsFocus": "Long O Vowel Teams (oa, ow)",
+    "targetVowel": "Vowel Teams (oa, ow)",
+    "icon": "🐐",
+    "coverImage": "/assets/phonics/goat-yellow-boat.jpg",
+    "color": "#EA580C",
+    "headerBg": "linear-gradient(135deg, #EA580C 0%, #C2410C 100%)",
+    "bgGradient": "linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%)",
+    "badge": "⭐ Grade 1 • Vowel Team Long O",
+    "summary": "Flo the goat wears a bright red coat. She steps into a yellow boat and floats gently down the slow blue stream with a friendly toad!",
+    "funFact": "The vowel team 'oa' almost always makes the long 'o' sound in the middle of words, like boat, coat, and float!",
+    "decodableWords": [
+      "goat",
+      "boat",
+      "coat",
+      "float",
+      "road",
+      "soap",
+      "toad",
+      "row",
+      "slow",
+      "blow",
+      "glow",
+      "snow",
+      "Flo"
+    ],
+    "sightWords": [
+      "the",
+      "a",
+      "she",
+      "in",
+      "down",
+      "her",
+      "of",
+      "on",
+      "was",
+      "with",
+      "into"
+    ],
+    "pages": [
+      {
+        "pageNumber": 1,
+        "text": "Flo is a silly white goat. Flo wears a warm red coat.",
+        "marathiText": "फ्लो ही एक खोडकर पांढरी शेळी आहे. फ्लोने एक उबदार लाल कोट घातला आहे.",
+        "focusWords": [
+          "goat",
+          "coat",
+          "Flo"
+        ],
+        "illustrationIcon": "🐐🧥",
+        "image": "/assets/phonics/goat-p1.jpg",
+        "imageKey": "goat-p1"
+      },
+      {
+        "pageNumber": 2,
+        "text": "Flo the goat walks down a dirt road. She sees a bright yellow boat.",
+        "marathiText": "फ्लो शेळी मातीच्या रस्त्यावरून चालते. तिला एक चमकदार पिवळी बोट दिसते.",
+        "focusWords": [
+          "goat",
+          "road",
+          "boat"
+        ],
+        "illustrationIcon": "🛤️⛵",
+        "image": "/assets/phonics/goat-p2.jpg",
+        "imageKey": "goat-p2"
+      },
+      {
+        "pageNumber": 3,
+        "text": "Flo steps into the boat. The boat can float on the slow blue river.",
+        "marathiText": "फ्लो बोटीमध्ये पाऊल ठेवते. ती बोट संथ वाहणाऱ्या निळ्या नदीवर तरंगते.",
+        "focusWords": [
+          "boat",
+          "float",
+          "slow"
+        ],
+        "illustrationIcon": "⛵🌊",
+        "image": "/assets/phonics/goat-p3.jpg",
+        "imageKey": "goat-p3"
+      },
+      {
+        "pageNumber": 4,
+        "text": "A soft cool wind starts to blow. A little brown toad hops onto the boat.",
+        "marathiText": "मंद थंड वारा वाहू लागतो. एक लहान तपकिरी बेडूक बोटीवर उडी मारून येतो.",
+        "focusWords": [
+          "blow",
+          "toad",
+          "boat"
+        ],
+        "illustrationIcon": "🌬️🐸",
+        "image": "/assets/phonics/goat-p4.jpg",
+        "imageKey": "goat-p4"
+      },
+      {
+        "pageNumber": 5,
+        "text": "The goat and the toad float in the yellow boat under the golden glow!",
+        "marathiText": "ती शेळी आणि बेडूक सोनेरी प्रकाशात पिवळ्या बोटीतून तरंगत पुढे गेले!",
+        "focusWords": [
+          "goat",
+          "toad",
+          "float",
+          "boat",
+          "glow"
+        ],
+        "illustrationIcon": "🌅💛",
+        "image": "/assets/phonics/goat-p5.jpg",
+        "imageKey": "goat-p5"
+      }
+    ],
+    "quiz": [
+      {
+        "id": "goat_q1",
+        "question": "What does Flo the goat wear?",
+        "options": [
+          "A warm red coat",
+          "A tall blue hat",
+          "Shiny black boots"
+        ],
+        "correctAnswer": "A warm red coat",
+        "explanation": "Flo wears a warm red coat!",
+        "phonicsClue": "Goat and coat belong to the '-oat' vowel team family."
+      },
+      {
+        "id": "goat_q2",
+        "question": "Who hops onto the boat with Flo?",
+        "options": [
+          "A little brown toad",
+          "A fluffy white cat",
+          "A big scary fish"
+        ],
+        "correctAnswer": "A little brown toad",
+        "explanation": "A little brown toad hops onto the boat!",
+        "phonicsClue": "Toad has the 'oa' vowel team like boat."
+      },
+      {
+        "id": "goat_q3",
+        "question": "Which word rhymes with 'goat' and 'boat'?",
+        "options": [
+          "coat",
+          "road",
+          "toad"
+        ],
+        "correctAnswer": "coat",
+        "explanation": "Goat, boat, and coat all rhyme with the '-oat' sound!",
+        "phonicsClue": "g-oat, b-oat, c-oat share the exact same ending."
+      }
+    ]
+  },
+  {
+    "id": "king-shiny-ring",
+    "slug": "king-shiny-ring",
+    "title": "The King with a Shiny Ring",
+    "marathiTitle": "चमकदार अंगठी असलेला राजा (Glued Sounds -ing)",
+    "grade": "Grade 1",
+    "categoryId": "glued-sounds",
+    "phonicsFocus": "Glued Sounds (-ing, -ang, -ink)",
+    "targetVowel": "Glued Sounds (-ing)",
+    "icon": "🤴",
+    "coverImage": "/assets/phonics/king-shiny-ring.jpg",
+    "color": "#7C3AED",
+    "headerBg": "linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%)",
+    "bgGradient": "linear-gradient(135deg, #FAF5FF 0%, #F3E8FF 100%)",
+    "badge": "⭐ Grade 1 • Glued Sounds",
+    "summary": "King Ming loves to sing happy songs in the spring. He wears a shiny gold ring and helps a little bird with a wounded wing!",
+    "funFact": "The glued sound '-ing' is special because the letters 'n' and 'g' fuse together into one ringing nasal sound!",
+    "decodableWords": [
+      "king",
+      "ring",
+      "sing",
+      "wing",
+      "spring",
+      "thing",
+      "ping",
+      "bring",
+      "pink",
+      "wink",
+      "blink",
+      "drink",
+      "Ming"
+    ],
+    "sightWords": [
+      "the",
+      "a",
+      "his",
+      "he",
+      "to",
+      "and",
+      "of",
+      "with",
+      "in",
+      "was",
+      "began"
+    ],
+    "pages": [
+      {
+        "pageNumber": 1,
+        "text": "Ming is a kind and merry king. King Ming loves to sing in the spring!",
+        "marathiText": "मिंग हा एक दयाळू आणि आनंदी राजा आहे. राजा मिंगला वसंतात गाणी गायला खूप आवडते!",
+        "focusWords": [
+          "king",
+          "Ming",
+          "sing",
+          "spring"
+        ],
+        "illustrationIcon": "🤴🎵",
+        "image": "/assets/phonics/king-p1.jpg",
+        "imageKey": "king-p1"
+      },
+      {
+        "pageNumber": 2,
+        "text": "On his finger, the king has a shiny gold ring. It was a grand thing!",
+        "marathiText": "त्याच्या बोटात राजाची एक चमकदार सोन्याची अंगठी आहे. ती खूप सुंदर वस्तू होती!",
+        "focusWords": [
+          "king",
+          "ring",
+          "thing"
+        ],
+        "illustrationIcon": "💍✨",
+        "image": "/assets/phonics/king-p2.jpg",
+        "imageKey": "king-p2"
+      },
+      {
+        "pageNumber": 3,
+        "text": "King Ming hears a soft ping, ping! A little blue bird had hurt its wing.",
+        "marathiText": "राजा मिंगला हळूच आवाज ऐकू येतो! एका लहान निळ्या पक्ष्याच्या पंखाला दुखापत झाली होती.",
+        "focusWords": [
+          "king",
+          "Ming",
+          "ping",
+          "wing"
+        ],
+        "illustrationIcon": "🐦🩹",
+        "image": "/assets/phonics/king-p3.jpg",
+        "imageKey": "king-p3"
+      },
+      {
+        "pageNumber": 4,
+        "text": "The king gave the bird cold water to drink. The bird gave a quick wink!",
+        "marathiText": "राजाने पक्ष्याला पिण्यासाठी थंड पाणी दिले. पक्ष्याने राजाकडे मिश्कीलपणे पाहिले!",
+        "focusWords": [
+          "king",
+          "drink",
+          "wink"
+        ],
+        "illustrationIcon": "💧😉",
+        "image": "/assets/phonics/king-p4.jpg",
+        "imageKey": "king-p4"
+      },
+      {
+        "pageNumber": 5,
+        "text": "The bird flapped its wing. Together, the bird and the king began to sing!",
+        "marathiText": "पक्ष्याने आपले पंख फडफडवले. पक्षी आणि राजा दोघांनी मिळून छान गाणे गायले!",
+        "focusWords": [
+          "wing",
+          "king",
+          "sing"
+        ],
+        "illustrationIcon": "🎶🕊️",
+        "image": "/assets/phonics/king-p5.jpg",
+        "imageKey": "king-p5"
+      }
+    ],
+    "quiz": [
+      {
+        "id": "king_q1",
+        "question": "What does King Ming love to do in spring?",
+        "options": [
+          "Sing happy songs",
+          "Sleep all day",
+          "Bake cold pies"
+        ],
+        "correctAnswer": "Sing happy songs",
+        "explanation": "King Ming loves to sing in the spring!",
+        "phonicsClue": "Sing, spring, and ring all have the glued sound '-ing'."
+      },
+      {
+        "id": "king_q2",
+        "question": "What is on the king's finger?",
+        "options": [
+          "A shiny gold ring",
+          "A heavy stone",
+          "A tiny bell"
+        ],
+        "correctAnswer": "A shiny gold ring",
+        "explanation": "The king has a shiny gold ring on his finger!",
+        "phonicsClue": "Ring rhymes with king and wing."
+      },
+      {
+        "id": "king_q3",
+        "question": "Which word rhymes with 'king' and 'wing'?",
+        "options": [
+          "ring",
+          "wink",
+          "drink"
+        ],
+        "correctAnswer": "ring",
+        "explanation": "King, wing, and ring all share the '-ing' glued rhyme!",
+        "phonicsClue": "k-ing, w-ing, r-ing are in the same word family."
+      }
+    ]
+  },
+  {
+    "id": "rain-on-train",
+    "slug": "rain-on-train",
+    "title": "Ray and the Rain on the Train",
+    "marathiTitle": "रे आणि ट्रेनमधील पाऊस (Vowel Teams ai, ay)",
+    "grade": "Grade 1",
+    "categoryId": "vowel-teams",
+    "phonicsFocus": "Long A Vowel Teams (ai, ay)",
+    "targetVowel": "Vowel Teams (ai, ay)",
+    "icon": "🚂",
+    "coverImage": "/assets/phonics/rain-on-train.jpg",
+    "color": "#2563EB",
+    "headerBg": "linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)",
+    "bgGradient": "linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)",
+    "badge": "⭐ Grade 1 • Vowel Team Long A",
+    "summary": "Ray rides a fast silver train on a gray rainy day. He looks out the glass window as water splashes along the bay!",
+    "funFact": "The vowel team 'ai' is usually in the middle of words (rain, wait, train), while 'ay' comes at the end (day, play, stay)!",
+    "decodableWords": [
+      "Ray",
+      "rain",
+      "train",
+      "wait",
+      "tail",
+      "sail",
+      "main",
+      "day",
+      "gray",
+      "play",
+      "say",
+      "stay",
+      "bay"
+    ],
+    "sightWords": [
+      "the",
+      "a",
+      "on",
+      "he",
+      "out",
+      "of",
+      "was",
+      "to",
+      "his",
+      "with",
+      "took"
+    ],
+    "pages": [
+      {
+        "pageNumber": 1,
+        "text": "Ray gets on a big silver train. Outside, it is a cold gray day of rain.",
+        "marathiText": "रे एका मोठ्या चंदेरी ट्रेनमध्ये चढतो. बाहेर पावसाचा थंड आणि ढगाळ दिवस होता.",
+        "focusWords": [
+          "Ray",
+          "train",
+          "gray",
+          "day",
+          "rain"
+        ],
+        "illustrationIcon": "🚂🌧️",
+        "image": "/assets/phonics/rain-p1.jpg",
+        "imageKey": "rain-p1"
+      },
+      {
+        "pageNumber": 2,
+        "text": "Drip, drop! The rain taps on the train. Ray does not have to wait.",
+        "marathiText": "टप, टप! पाऊस ट्रेनच्या खिडकीवर वाजतो. रे ला जास्त वाट पाहावी लागत नाही.",
+        "focusWords": [
+          "rain",
+          "train",
+          "Ray",
+          "wait"
+        ],
+        "illustrationIcon": "💧🪟",
+        "image": "/assets/phonics/rain-p2.jpg",
+        "imageKey": "rain-p2"
+      },
+      {
+        "pageNumber": 3,
+        "text": "The train zips down the main track past the blue water bay.",
+        "marathiText": "ट्रेन मुख्य रुळांवरून निळ्या खाडीच्या बाजूने सुसाट धावते.",
+        "focusWords": [
+          "train",
+          "main",
+          "bay"
+        ],
+        "illustrationIcon": "🛤️🌊",
+        "image": "/assets/phonics/rain-p3.jpg",
+        "imageKey": "rain-p3"
+      },
+      {
+        "pageNumber": 4,
+        "text": "Ray can see a ship with a white sail. A wet dog wags its tail!",
+        "marathiText": "रे ला पांढरे शीड असलेले एक जहाज दिसते. एक ओला कुत्रा शेपटी हलवतो!",
+        "focusWords": [
+          "Ray",
+          "sail",
+          "tail"
+        ],
+        "illustrationIcon": "⛵🐕",
+        "image": "/assets/phonics/rain-p4.jpg",
+        "imageKey": "rain-p4"
+      },
+      {
+        "pageNumber": 5,
+        "text": "The rain stops and the clouds clear away. Ray is glad he took the train today!",
+        "marathiText": "पाऊस थांबतो आणि ढग दूर जातात. आज ट्रेनने प्रवास केल्याने रे खूप खुश झाला!",
+        "focusWords": [
+          "rain",
+          "away",
+          "Ray",
+          "train",
+          "day"
+        ],
+        "illustrationIcon": "🌤️🎉",
+        "image": "/assets/phonics/rain-p5.jpg",
+        "imageKey": "rain-p5"
+      }
+    ],
+    "quiz": [
+      {
+        "id": "train_q1",
+        "question": "What kind of day was it outside the train?",
+        "options": [
+          "A rainy gray day",
+          "A hot sunny desert day",
+          "A snowy dark night"
+        ],
+        "correctAnswer": "A rainy gray day",
+        "explanation": "It was a cold gray day of rain!",
+        "phonicsClue": "Gray and day have the 'ay' long 'a' vowel team."
+      },
+      {
+        "id": "train_q2",
+        "question": "What did the wet dog wag?",
+        "options": [
+          "Its tail",
+          "Its hat",
+          "Its ball"
+        ],
+        "correctAnswer": "Its tail",
+        "explanation": "A wet dog wags its tail!",
+        "phonicsClue": "Tail and sail belong to the '-ail' vowel team family."
+      },
+      {
+        "id": "train_q3",
+        "question": "Which word rhymes with 'train' and 'rain'?",
+        "options": [
+          "main",
+          "day",
+          "sail"
+        ],
+        "correctAnswer": "main",
+        "explanation": "Train, rain, and main all end with the '-ain' rhyme!",
+        "phonicsClue": "tr-ain, r-ain, and m-ain rhyme together."
+      }
+    ]
+  },
+  {
+    "id": "mark-spark-barn",
+    "slug": "mark-spark-barn",
+    "title": "Mark and Spark in the Dark Barn",
+    "marathiTitle": "मार्क आणि स्पार्क अंधाऱ्या कोठारात (Bossy R - ar)",
+    "grade": "Grade 1",
+    "categoryId": "bossy-r",
+    "phonicsFocus": "Bossy R (-ar, -ark, -arm, -arn)",
+    "targetVowel": "Bossy R (ar)",
+    "icon": "⭐",
+    "coverImage": "/assets/phonics/mark-spark-barn.jpg",
+    "color": "#B45309",
+    "headerBg": "linear-gradient(135deg, #B45309 0%, #92400E 100%)",
+    "bgGradient": "linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)",
+    "badge": "⭐ Grade 1 • Bossy R",
+    "summary": "Mark the farmer and his brave dog Spark hear a sound in the dark red barn. They shine a light and find a tiny lost chick near a cart!",
+    "funFact": "When the letter 'r' follows a vowel, it bosses the vowel around and changes its sound, like in car, star, and barn!",
+    "decodableWords": [
+      "Mark",
+      "Spark",
+      "dark",
+      "barn",
+      "farm",
+      "cart",
+      "part",
+      "star",
+      "hard",
+      "bark",
+      "arm",
+      "yard",
+      "sharp"
+    ],
+    "sightWords": [
+      "the",
+      "a",
+      "his",
+      "he",
+      "in",
+      "to",
+      "and",
+      "they",
+      "was",
+      "for",
+      "held"
+    ],
+    "pages": [
+      {
+        "pageNumber": 1,
+        "text": "Mark lives on a big green farm with his smart brown dog, Spark.",
+        "marathiText": "मार्क त्याच्या हुशार ब्राऊन कुत्रा स्पार्कसोबत एका मोठ्या शेतात राहतो.",
+        "focusWords": [
+          "Mark",
+          "farm",
+          "Spark"
+        ],
+        "illustrationIcon": "🚜🐕",
+        "image": "/assets/phonics/mark-p1.jpg",
+        "imageKey": "mark-p1"
+      },
+      {
+        "pageNumber": 2,
+        "text": "Night falls on the farm. The big wooden barn looks dark.",
+        "marathiText": "शेतावर रात्र होते. ते मोठे लाकडी कोठार अंधारात दिसते.",
+        "focusWords": [
+          "farm",
+          "barn",
+          "dark"
+        ],
+        "illustrationIcon": "🌙🏚️",
+        "image": "/assets/phonics/mark-p2.jpg",
+        "imageKey": "mark-p2"
+      },
+      {
+        "pageNumber": 3,
+        "text": "Spark lets out a sharp bark: 'Arf, arf!' Spark runs into the barn yard.",
+        "marathiText": "स्पार्क जोरात भुंकतो: 'भौ, भौ!' स्पार्क कोठाराच्या आवारात धावतो.",
+        "focusWords": [
+          "Spark",
+          "sharp",
+          "bark",
+          "barn",
+          "yard"
+        ],
+        "illustrationIcon": "🐕⚡",
+        "image": "/assets/phonics/mark-p3.jpg",
+        "imageKey": "mark-p3"
+      },
+      {
+        "pageNumber": 4,
+        "text": "Mark shines a torch by a wooden cart. A bright star shines in the dark sky.",
+        "marathiText": "मार्क लाकडी बैलगाडीजवळ बॅटरीचा प्रकाश टाकतो. आकाशात एक तेजस्वी तारा चमकतो.",
+        "focusWords": [
+          "Mark",
+          "cart",
+          "star",
+          "dark"
+        ],
+        "illustrationIcon": "🔦🛒",
+        "image": "/assets/phonics/mark-p4.jpg",
+        "imageKey": "mark-p4"
+      },
+      {
+        "pageNumber": 5,
+        "text": "Under the cart was a soft lost chick. Mark held it in his warm arm safely!",
+        "marathiText": "गाडीखाली एक मऊ हरवलेले पिल्लू होते. मार्कने त्याला आपल्या हातात सुरक्षित घेतले!",
+        "focusWords": [
+          "cart",
+          "Mark",
+          "arm"
+        ],
+        "illustrationIcon": "🐥❤️",
+        "image": "/assets/phonics/mark-p5.jpg",
+        "imageKey": "mark-p5"
+      }
+    ],
+    "quiz": [
+      {
+        "id": "mark_q1",
+        "question": "Who is Mark's brave dog on the farm?",
+        "options": [
+          "Spark",
+          "Ben",
+          "Gus"
+        ],
+        "correctAnswer": "Spark",
+        "explanation": "Mark lives with his smart dog Spark!",
+        "phonicsClue": "Mark and Spark have the bossy 'ar' sound."
+      },
+      {
+        "id": "mark_q2",
+        "question": "Where did Spark bark in the night?",
+        "options": [
+          "Near the dark barn",
+          "In a swimming pool",
+          "On top of an airplane"
+        ],
+        "correctAnswer": "Near the dark barn",
+        "explanation": "Spark runs into the barn yard near the dark barn!",
+        "phonicsClue": "Barn and dark both contain the 'ar' phonics pattern."
+      },
+      {
+        "id": "mark_q3",
+        "question": "Which word rhymes with 'dark' and 'bark'?",
+        "options": [
+          "Spark",
+          "barn",
+          "farm"
+        ],
+        "correctAnswer": "Spark",
+        "explanation": "Spark, dark, and bark all end in the '-ark' rhyme!",
+        "phonicsClue": "Sp-ark, d-ark, and b-ark belong to the same word family."
+      }
+    ]
+  },
+  {
+    "id": "camp-in-the-sand",
+    "slug": "camp-in-the-sand",
+    "title": "Camp in the Sand Under the Bright Lamp",
+    "marathiTitle": "वाळूतील तंबू आणि चमकदार दिवा (Ending Blends -mp, -nd, -st)",
+    "grade": "Grade 1",
+    "categoryId": "blends",
+    "phonicsFocus": "Ending Consonant Blends (-mp, -nd, -st, -nt)",
+    "targetVowel": "Ending Blends",
+    "icon": "⛺",
+    "coverImage": "/assets/phonics/camp-in-the-sand.jpg",
+    "color": "#0284C7",
+    "headerBg": "linear-gradient(135deg, #0284C7 0%, #0369A1 100%)",
+    "bgGradient": "linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%)",
+    "badge": "⭐ Level 2 • Ending Blends",
+    "summary": "Kent and Champ set up a sturdy tent on the soft sand by the pond. With a warm lamp and a cozy blanket, they have the best camp under the twinkling stars!",
+    "funFact": "Ending blends like -mp, -nd, and -st have two consonant sounds pronounced together at the end of a word!",
+    "decodableWords": [
+      "Kent",
+      "Champ",
+      "camp",
+      "lamp",
+      "jump",
+      "sand",
+      "hand",
+      "pond",
+      "best",
+      "rest",
+      "tent",
+      "went",
+      "fast"
+    ],
+    "sightWords": [
+      "the",
+      "a",
+      "by",
+      "in",
+      "with",
+      "they",
+      "had",
+      "to",
+      "on",
+      "under",
+      "all"
+    ],
+    "pages": [
+      {
+        "pageNumber": 1,
+        "text": "Kent went to the pond. He held Champ's hand on the soft sand.",
+        "marathiText": "केंट तलावाकडे गेला. त्याने मऊ वाळूवर चॅम्पचा हात धरला.",
+        "focusWords": [
+          "Kent",
+          "went",
+          "pond",
+          "hand",
+          "sand"
+        ],
+        "illustrationIcon": "🏖️🤝",
+        "image": "/assets/phonics/camp-p1.jpg",
+        "imageKey": "camp-p1"
+      },
+      {
+        "pageNumber": 2,
+        "text": "Kent and Champ pitch a green tent. It was the best spot to camp!",
+        "marathiText": "केंट आणि चॅम्पने एक हिरवा तंबू उभारला. कॅम्प करण्यासाठी ही सर्वात उत्तम जागा होती!",
+        "focusWords": [
+          "Kent",
+          "Champ",
+          "tent",
+          "best",
+          "camp"
+        ],
+        "illustrationIcon": "⛺🌲",
+        "image": "/assets/phonics/camp-p2.jpg",
+        "imageKey": "camp-p2"
+      },
+      {
+        "pageNumber": 3,
+        "text": "Kent lit a warm brass lamp. Small frogs jump past the damp sand.",
+        "marathiText": "केंटने एक उबदार पितळेचा दिवा लावला. ओलसर वाळूवरून लहान बेडूक उड्या मारत गेले.",
+        "focusWords": [
+          "lamp",
+          "jump",
+          "damp",
+          "sand"
+        ],
+        "illustrationIcon": "🏮🐸"
+      },
+      {
+        "pageNumber": 4,
+        "text": "Champ ran fast to fetch a quilt. They rest in the warm tent.",
+        "marathiText": "चॅम्प पांघरूण आणण्यासाठी वेगाने धावला. ते उबदार तंबूत विश्रांती घेतात.",
+        "focusWords": [
+          "fast",
+          "rest",
+          "tent"
+        ],
+        "illustrationIcon": "🏃‍♂️🛏️"
+      },
+      {
+        "pageNumber": 5,
+        "text": "Under the stars, they hum a tune. The camp on the sand was grand!",
+        "marathiText": "चांदण्यांच्या छताखाली ते गुणगुणतात. वाळूवरील हा कॅम्प खरोखरच खूप छान होता!",
+        "focusWords": [
+          "camp",
+          "sand",
+          "grand"
+        ],
+        "illustrationIcon": "✨⛺"
+      }
+    ],
+    "quiz": [
+      {
+        "id": "camp_q1",
+        "question": "Where did Kent and Champ set up their tent?",
+        "options": [
+          "On the soft sand by the pond",
+          "Inside a high castle tower",
+          "In a busy supermarket"
+        ],
+        "correctAnswer": "On the soft sand by the pond",
+        "explanation": "Kent and Champ pitched their tent on the soft sand by the pond!",
+        "phonicsClue": "Sand ends in the consonant blend -nd: s-a-nd."
+      },
+      {
+        "id": "camp_q2",
+        "question": "What did Kent light to keep the camp warm?",
+        "options": [
+          "A warm brass lamp",
+          "A giant firecracker",
+          "A noisy flashlight"
+        ],
+        "correctAnswer": "A warm brass lamp",
+        "explanation": "Kent lit a warm brass lamp inside the tent!",
+        "phonicsClue": "Lamp ends in the consonant blend -mp: l-a-mp."
+      },
+      {
+        "id": "camp_q3",
+        "question": "Which word ends with the same blend sound as 'best' and 'rest'?",
+        "options": [
+          "fast",
+          "jump",
+          "pond"
+        ],
+        "correctAnswer": "fast",
+        "explanation": "Fast, best, and rest all end in the '-st' consonant blend!",
+        "phonicsClue": "f-a-st and b-e-st share the final -st sound."
+      }
+    ]
+  },
+  {
+    "id": "white-whale-phil",
+    "slug": "white-whale-phil",
+    "title": "The White Whale and Phil the Dolphin",
+    "marathiTitle": "पांढरा देवमासा आणि फिल डॉल्फिन (Digraphs wh, ph)",
+    "grade": "Grade 1",
+    "categoryId": "digraphs",
+    "phonicsFocus": "Digraphs (wh, ph)",
+    "targetVowel": "Digraphs (wh, ph)",
+    "icon": "🐳",
+    "coverImage": "/assets/phonics/white-whale-phil.jpg",
+    "color": "#0891B2",
+    "headerBg": "linear-gradient(135deg, #0891B2 0%, #0E7490 100%)",
+    "bgGradient": "linear-gradient(135deg, #ECFEFF 0%, #CFFAFE 100%)",
+    "badge": "⭐ Level 3 • Digraphs wh, ph",
+    "summary": "Whitney the gentle white whale swims through blue waves with Phil the happy dolphin. They play games, whistle funny tunes, and share a photo moment!",
+    "funFact": "In the digraph 'wh', the letters team up to make /hw/ or /w/. In 'ph', the letters make the /f/ sound, like in dolphin and phone!",
+    "decodableWords": [
+      "whale",
+      "white",
+      "wheel",
+      "where",
+      "whistle",
+      "Phil",
+      "dolphin",
+      "photo",
+      "graph",
+      "phase"
+    ],
+    "sightWords": [
+      "the",
+      "a",
+      "in",
+      "they",
+      "to",
+      "with",
+      "two",
+      "see",
+      "over",
+      "play",
+      "was"
+    ],
+    "pages": [
+      {
+        "pageNumber": 1,
+        "text": "Whitney is a gentle white whale. She glides in the deep blue ocean.",
+        "marathiText": "व्हिटनी ही एक शांत पांढरी देवमासा आहे. ती खोल निळ्या समुद्रात पोहते.",
+        "focusWords": [
+          "Whitney",
+          "white",
+          "whale"
+        ],
+        "illustrationIcon": "🐳🌊"
+      },
+      {
+        "pageNumber": 2,
+        "text": "Phil is a quick dolphin. Phil can whistle a cheerful tune!",
+        "marathiText": "फिल एक चपळ डॉल्फिन आहे. फिल आनंदाने शिटीसारखा छान आवाज काढू शकतो!",
+        "focusWords": [
+          "Phil",
+          "dolphin",
+          "whistle"
+        ],
+        "illustrationIcon": "🐬🎶"
+      },
+      {
+        "pageNumber": 3,
+        "text": "Whish! Whitney spins like a giant wheel. Water sprays everywhere!",
+        "marathiText": "सूं-सूं! व्हिटनी मोठ्या चाकासारखी गिरकी घेते. पाण्याचे थेंब सर्वत्र उडतात!",
+        "focusWords": [
+          "Whish",
+          "Whitney",
+          "wheel",
+          "everywhere"
+        ],
+        "illustrationIcon": "🌀💦"
+      },
+      {
+        "pageNumber": 4,
+        "text": "A friendly diver snapped a photo of Phil and the white whale.",
+        "marathiText": "एका दयाळू पाणबुड्याने फिल आणि त्या पांढऱ्या देवमाशाचा सुंदर फोटो काढला.",
+        "focusWords": [
+          "photo",
+          "Phil",
+          "white",
+          "whale"
+        ],
+        "illustrationIcon": "📸🐬"
+      },
+      {
+        "pageNumber": 5,
+        "text": "'Where shall we swim next?' asked Whitney. They leap over waves with joy!",
+        "marathiText": "'आता आपण पुढे कुठे पोहायचे?' व्हिटनीने विचारले. ते दोघे लाटांवरून आनंदाने उड्या मारतात!",
+        "focusWords": [
+          "Where",
+          "Whitney"
+        ],
+        "illustrationIcon": "🌊✨"
+      }
+    ],
+    "quiz": [
+      {
+        "id": "whale_q1",
+        "question": "What color is Whitney the whale?",
+        "options": [
+          "White",
+          "Red",
+          "Green"
+        ],
+        "correctAnswer": "White",
+        "explanation": "Whitney is a gentle white whale!",
+        "phonicsClue": "White begins with the 'wh' digraph: wh-i-te."
+      },
+      {
+        "id": "whale_q2",
+        "question": "What kind of sea creature is Phil?",
+        "options": [
+          "A dolphin",
+          "A crab",
+          "A shark"
+        ],
+        "correctAnswer": "A dolphin",
+        "explanation": "Phil is a quick and friendly dolphin!",
+        "phonicsClue": "Dolphin and Phil have the 'ph' digraph that sounds like /f/."
+      },
+      {
+        "id": "whale_q3",
+        "question": "What sound does the 'ph' make in 'photo' and 'dolphin'?",
+        "options": [
+          "The /f/ sound",
+          "The /p/ sound",
+          "The /m/ sound"
+        ],
+        "correctAnswer": "The /f/ sound",
+        "explanation": "The digraph 'ph' teams up to make the /f/ sound!",
+        "phonicsClue": "ph makes the /f/ sound in phone, photo, and dolphin."
+      }
+    ]
+  },
+  {
+    "id": "mike-and-spike-bike",
+    "slug": "mike-and-spike-bike",
+    "title": "Mike and Spike Ride a Nice White Bike",
+    "marathiTitle": "माईक आणि स्पाईक यांची छान पांढरी सायकल (Magic E i_e)",
+    "grade": "Grade 1",
+    "categoryId": "magic-e",
+    "phonicsFocus": "Magic E Long I (i_e)",
+    "targetVowel": "Magic E (i_e)",
+    "icon": "🚲",
+    "coverImage": "/assets/phonics/mike-and-spike-bike.jpg",
+    "color": "#16A34A",
+    "headerBg": "linear-gradient(135deg, #16A34A 0%, #15803D 100%)",
+    "bgGradient": "linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)",
+    "badge": "⭐ Level 4 • Magic E Long I",
+    "summary": "Mike and his playful pup Spike ride a shiny white bike down the pine hill. They fly a colorful kite in the bright sunshine with big wide smiles!",
+    "funFact": "Magic 'e' at the end of a word is quiet, but it tells the vowel 'i' to say its long name: /aɪ/ like in bike, kite, and smile!",
+    "decodableWords": [
+      "Mike",
+      "Spike",
+      "bike",
+      "hike",
+      "kite",
+      "white",
+      "smile",
+      "pine",
+      "line",
+      "time",
+      "ride",
+      "fine",
+      "wide",
+      "shine"
+    ],
+    "sightWords": [
+      "the",
+      "a",
+      "his",
+      "down",
+      "in",
+      "they",
+      "to",
+      "had",
+      "with",
+      "of",
+      "fly"
+    ],
+    "pages": [
+      {
+        "pageNumber": 1,
+        "text": "Mike has a fine white bike. His pup Spike likes to ride in the front basket.",
+        "marathiText": "माईककडे एक छान पांढरी सायकल आहे. त्याच्या स्पाईक कुत्र्याला पुढच्या टोपलीत बसायला आवडते.",
+        "focusWords": [
+          "Mike",
+          "fine",
+          "white",
+          "bike",
+          "Spike",
+          "likes",
+          "ride"
+        ],
+        "illustrationIcon": "🚲🐶"
+      },
+      {
+        "pageNumber": 2,
+        "text": "They ride in a line past nine tall pine trees. The sunshine is warm.",
+        "marathiText": "ते नऊ उंच पाईनच्या झाडांच्या रांगेतून सायकल चालवतात. सूर्यप्रकाश उबदार असतो.",
+        "focusWords": [
+          "ride",
+          "line",
+          "nine",
+          "pine",
+          "shine"
+        ],
+        "illustrationIcon": "🌲☀️"
+      },
+      {
+        "pageNumber": 3,
+        "text": "It is time to fly a kite! The kite rises high into the wide blue sky.",
+        "marathiText": "आता पतंग उडवण्याची वेळ आली आहे! पतंग विशाल निळ्या आकाशात उंच उडतो.",
+        "focusWords": [
+          "time",
+          "kite",
+          "wide"
+        ],
+        "illustrationIcon": "🪁🌤️"
+      },
+      {
+        "pageNumber": 4,
+        "text": "Spike gives a wide canine smile. Mike holds the kite twine tight.",
+        "marathiText": "स्पाईक एक गोड मोठं हसू देतो. माईक पतंगाचा दोरा घट्ट धरून ठेवतो.",
+        "focusWords": [
+          "Spike",
+          "wide",
+          "smile",
+          "Mike",
+          "twine"
+        ],
+        "illustrationIcon": "😊🪁"
+      },
+      {
+        "pageNumber": 5,
+        "text": "They hike back home at five. Mike and Spike had a prime time!",
+        "marathiText": "ते पाच वाजता चालत घरी परत येतात. माईक आणि स्पाईकचा वेळ खूप छान गेला!",
+        "focusWords": [
+          "hike",
+          "five",
+          "Mike",
+          "Spike",
+          "prime",
+          "time"
+        ],
+        "illustrationIcon": "🏡🌅"
+      }
+    ],
+    "quiz": [
+      {
+        "id": "mike_q1",
+        "question": "What color is Mike's bike?",
+        "options": [
+          "White",
+          "Pink",
+          "Black"
+        ],
+        "correctAnswer": "White",
+        "explanation": "Mike has a fine white bike!",
+        "phonicsClue": "White has the magic 'e' making the long 'i' sound: wh-i-te."
+      },
+      {
+        "id": "mike_q2",
+        "question": "What do Mike and Spike fly high in the sky?",
+        "options": [
+          "A kite",
+          "A balloon",
+          "A plane"
+        ],
+        "correctAnswer": "A kite",
+        "explanation": "They fly a kite high into the wide sky!",
+        "phonicsClue": "Kite has the magic 'e' rule: k-i-t-e."
+      },
+      {
+        "id": "mike_q3",
+        "question": "Which word rhymes with 'bike' and 'hike'?",
+        "options": [
+          "Spike",
+          "pine",
+          "kite"
+        ],
+        "correctAnswer": "Spike",
+        "explanation": "Spike, bike, and hike all share the '-ike' magic 'e' ending!",
+        "phonicsClue": "Sp-ike and b-ike belong to the same word family."
+      }
+    ]
+  },
+  {
+    "id": "rose-and-luke-mule",
+    "slug": "rose-and-luke-mule",
+    "title": "Rose the Fox and Luke the Cute Mule",
+    "marathiTitle": "रोझ कोल्हा आणि ल्यूक गोंडस खेचर (Magic E o_e, u_e)",
+    "grade": "Grade 1",
+    "categoryId": "magic-e",
+    "phonicsFocus": "Magic E Long O & Long U (o_e, u_e)",
+    "targetVowel": "Magic E (o_e, u_e)",
+    "icon": "🦊",
+    "coverImage": "/assets/phonics/rose-and-luke-mule.jpg",
+    "color": "#D97706",
+    "headerBg": "linear-gradient(135deg, #D97706 0%, #B45309 100%)",
+    "bgGradient": "linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)",
+    "badge": "⭐ Level 4 • Magic E Long O & U",
+    "summary": "Rose the friendly fox meets Luke, a cute little mule who loves playing sweet tunes on his flute. Together they hike along the stone path all the way home!",
+    "funFact": "Magic 'e' turns short 'o' (hop) into long 'o' (hope), and short 'u' (tub) into long 'u' (tube / cute)!",
+    "decodableWords": [
+      "Rose",
+      "rope",
+      "home",
+      "hope",
+      "stone",
+      "cone",
+      "Luke",
+      "cute",
+      "mule",
+      "tune",
+      "flute",
+      "huge",
+      "tube",
+      "rule"
+    ],
+    "sightWords": [
+      "the",
+      "a",
+      "his",
+      "her",
+      "of",
+      "to",
+      "and",
+      "they",
+      "along",
+      "played",
+      "went"
+    ],
+    "pages": [
+      {
+        "pageNumber": 1,
+        "text": "Rose is a red fox who lives in a cozy home by a huge stone.",
+        "marathiText": "रोझ ही एका मोठ्या खडकाजवळ राहणारी गोंडस लाल कोल्ही आहे.",
+        "focusWords": [
+          "Rose",
+          "home",
+          "huge",
+          "stone"
+        ],
+        "illustrationIcon": "🦊🪨"
+      },
+      {
+        "pageNumber": 2,
+        "text": "Rose sees Luke. Luke is a cute mule wearing a soft wool robe.",
+        "marathiText": "रोझला ल्यूक दिसतो. ल्यूक एक मऊ कपडे घातलेला गोंडस खेचर आहे.",
+        "focusWords": [
+          "Rose",
+          "Luke",
+          "cute",
+          "mule",
+          "robe"
+        ],
+        "illustrationIcon": "🐴🧥"
+      },
+      {
+        "pageNumber": 3,
+        "text": "Luke plays a sweet tune on a shiny wooden flute. Note by note!",
+        "marathiText": "ल्यूक एका सुंदर लाकडी बासरीवर गोड धून वाजवतो. एकामागोमाग एक सूर!",
+        "focusWords": [
+          "Luke",
+          "tune",
+          "flute",
+          "note"
+        ],
+        "illustrationIcon": "🎶🪈"
+      },
+      {
+        "pageNumber": 4,
+        "text": "Rose holds a rope and skips to the tune. They hope the song will not stop.",
+        "marathiText": "रोझ दोरी पकडून त्या सुरांवर उड्या मारते. ते गाणे थांबू नये अशी त्यांची आशा असते.",
+        "focusWords": [
+          "Rose",
+          "rope",
+          "tune",
+          "hope"
+        ],
+        "illustrationIcon": "🪢🎵"
+      },
+      {
+        "pageNumber": 5,
+        "text": "Luke and Rose share a sweet fruit cone. Then they walk home together!",
+        "marathiText": "ल्यूक आणि रोझ फळांचा गोड कोन वाटून खातात. मग ते एकत्र घरी जातात!",
+        "focusWords": [
+          "Luke",
+          "Rose",
+          "cone",
+          "home"
+        ],
+        "illustrationIcon": "🍦🏡"
+      }
+    ],
+    "quiz": [
+      {
+        "id": "rose_q1",
+        "question": "What musical instrument does Luke the mule play?",
+        "options": [
+          "A shiny wooden flute",
+          "A loud drum",
+          "A heavy piano"
+        ],
+        "correctAnswer": "A shiny wooden flute",
+        "explanation": "Luke plays a sweet tune on a shiny wooden flute!",
+        "phonicsClue": "Flute and tune have the magic 'e' long 'u' sound: fl-u-te."
+      },
+      {
+        "id": "rose_q2",
+        "question": "Where is Rose the fox's cozy home?",
+        "options": [
+          "By a huge stone",
+          "Under deep water",
+          "Inside a hollow shell"
+        ],
+        "correctAnswer": "By a huge stone",
+        "explanation": "Rose lives in a cozy home by a huge stone!",
+        "phonicsClue": "Stone and home have the magic 'e' long 'o' pattern: st-o-ne."
+      },
+      {
+        "id": "rose_q3",
+        "question": "Which word rhymes with 'mule'?",
+        "options": [
+          "rule",
+          "cone",
+          "rope"
+        ],
+        "correctAnswer": "rule",
+        "explanation": "Mule and rule both end with the long 'u' magic 'e' sound!",
+        "phonicsClue": "m-u-le and r-u-le share the same rhyming family."
+      }
+    ]
+  },
+  {
+    "id": "roy-the-joyful-boy",
+    "slug": "roy-the-joyful-boy",
+    "title": "Roy the Joyful Boy and the Shiny Coin",
+    "marathiTitle": "आनंदी रॉय आणि चमकदार नाणे (Diphthongs oi, oy)",
+    "grade": "Grade 2",
+    "categoryId": "diphthongs",
+    "phonicsFocus": "Diphthongs (oi, oy)",
+    "targetVowel": "Diphthongs (oi, oy)",
+    "icon": "🪙",
+    "coverImage": "/assets/phonics/roy-the-joyful-boy.jpg",
+    "color": "#EAB308",
+    "headerBg": "linear-gradient(135deg, #EAB308 0%, #CA8A04 100%)",
+    "bgGradient": "linear-gradient(135deg, #FEFCE8 0%, #FEF9C3 100%)",
+    "badge": "⭐ Level 5 • Diphthongs oi, oy",
+    "summary": "Roy is a joyful young boy playing with his toy boat by the garden. He points down at the dark soil and discovers a sparkling gold coin that fills him with joy!",
+    "funFact": "The diphthongs 'oi' and 'oy' make the gliding /ɔɪ/ sound! Use 'oi' in the middle of words (coin, soil) and 'oy' at the end (boy, toy)!",
+    "decodableWords": [
+      "Roy",
+      "boy",
+      "joy",
+      "toy",
+      "coin",
+      "point",
+      "soil",
+      "boil",
+      "join",
+      "voice",
+      "spoil",
+      "foil"
+    ],
+    "sightWords": [
+      "the",
+      "a",
+      "his",
+      "in",
+      "down",
+      "with",
+      "he",
+      "was",
+      "saw",
+      "found",
+      "to"
+    ],
+    "pages": [
+      {
+        "pageNumber": 1,
+        "text": "Roy is a cheerful young boy. Roy has a bright blue toy boat.",
+        "marathiText": "रॉय हा एक आनंदी लहान मुलगा आहे. रॉयकडे एक चमकदार निळी खेळण्यातील बोट आहे.",
+        "focusWords": [
+          "Roy",
+          "boy",
+          "toy"
+        ],
+        "illustrationIcon": "👦⛵"
+      },
+      {
+        "pageNumber": 2,
+        "text": "Roy plays by the garden pond. His heart is full of joy!",
+        "marathiText": "रॉय बागेतील तलावाजवळ खेळतो. त्याचे मन आनंदाने भरून जाते!",
+        "focusWords": [
+          "Roy",
+          "joy"
+        ],
+        "illustrationIcon": "🏡💖"
+      },
+      {
+        "pageNumber": 3,
+        "text": "Roy points his finger at the damp soil. What is that shiny thing?",
+        "marathiText": "रॉय ओलसर मातीकडे बोट दाखवतो. ती चमकणारी वस्तू काय आहे?",
+        "focusWords": [
+          "Roy",
+          "points",
+          "soil"
+        ],
+        "illustrationIcon": "👉🌱"
+      },
+      {
+        "pageNumber": 4,
+        "text": "He picks up a shiny gold coin! It was wrapped in silver foil.",
+        "marathiText": "तो एक चमकदार सोन्याचे नाणे उचलतो! ते चांदीच्या कागदात गुंडाळलेले होते.",
+        "focusWords": [
+          "coin",
+          "foil"
+        ],
+        "illustrationIcon": "🪙✨"
+      },
+      {
+        "pageNumber": 5,
+        "text": "'Look at my prize!' Roy says with a joyful voice. His friends join to cheer!",
+        "marathiText": "'माझे बक्षीस पाहा!' रॉय आनंदी आवाजात म्हणाला. त्याचे मित्र टाळ्या वाजवण्यासाठी येतात!",
+        "focusWords": [
+          "Roy",
+          "joyful",
+          "voice",
+          "join"
+        ],
+        "illustrationIcon": "🎉🗣️"
+      }
+    ],
+    "quiz": [
+      {
+        "id": "roy_q1",
+        "question": "What does Roy find in the damp soil?",
+        "options": [
+          "A shiny gold coin",
+          "A heavy stone",
+          "A lost shoe"
+        ],
+        "correctAnswer": "A shiny gold coin",
+        "explanation": "Roy finds a shiny gold coin wrapped in foil in the soil!",
+        "phonicsClue": "Coin and soil have the diphthong 'oi': c-oi-n."
+      },
+      {
+        "id": "roy_q2",
+        "question": "Where do we usually find the 'oy' spelling in a word?",
+        "options": [
+          "At the end of a word (boy, toy)",
+          "In the very middle of a word",
+          "Only in sight words"
+        ],
+        "correctAnswer": "At the end of a word (boy, toy)",
+        "explanation": "The 'oy' spelling usually comes at the end of a syllable or word!",
+        "phonicsClue": "B-oy, t-oy, and j-oy all end in 'oy'."
+      },
+      {
+        "id": "roy_q3",
+        "question": "Which word rhymes with 'coin'?",
+        "options": [
+          "join",
+          "toy",
+          "soil"
+        ],
+        "correctAnswer": "join",
+        "explanation": "Coin and join share the same '-oin' rhyming pattern!",
+        "phonicsClue": "c-oin and j-oin rhyme with the 'oi' diphthong sound."
+      }
+    ]
+  },
+  {
+    "id": "brown-owl-loud-clown",
+    "slug": "brown-owl-loud-clown",
+    "title": "The Brown Owl and the Loud Town Clown",
+    "marathiTitle": "तपकिरी घुबड आणि मोठ्या आवाजातील विदूषक (Diphthongs ou, ow)",
+    "grade": "Grade 2",
+    "categoryId": "diphthongs",
+    "phonicsFocus": "Diphthongs (ou, ow)",
+    "targetVowel": "Diphthongs (ou, ow)",
+    "icon": "🦉",
+    "coverImage": "/assets/phonics/brown-owl-loud-clown.jpg",
+    "color": "#9333EA",
+    "headerBg": "linear-gradient(135deg, #9333EA 0%, #7E22CE 100%)",
+    "bgGradient": "linear-gradient(135deg, #FAF5FF 0%, #F3E8FF 100%)",
+    "badge": "⭐ Level 5 • Diphthongs ou, ow",
+    "summary": "Howie the fluffy brown owl perches on a round oak branch high above town. Down below, a proud, cheerful clown juggles round balls under a soft white cloud!",
+    "funFact": "The diphthongs 'ou' and 'ow' make the /aʊ/ sound, like when you say 'Ouch!'! Think of 'brown owl' and 'loud shout'!",
+    "decodableWords": [
+      "owl",
+      "brown",
+      "town",
+      "down",
+      "clown",
+      "how",
+      "now",
+      "loud",
+      "proud",
+      "cloud",
+      "shout",
+      "round",
+      "found",
+      "house"
+    ],
+    "sightWords": [
+      "the",
+      "a",
+      "high",
+      "on",
+      "he",
+      "saw",
+      "of",
+      "with",
+      "they",
+      "from",
+      "up"
+    ],
+    "pages": [
+      {
+        "pageNumber": 1,
+        "text": "Howie is a fluffy brown owl. He sits on a round branch above the town.",
+        "marathiText": "हाउई हा एक मऊ तपकिरी घुबड आहे. तो गावावरील एका गोल फांदीवर बसतो.",
+        "focusWords": [
+          "Howie",
+          "brown",
+          "owl",
+          "round",
+          "town"
+        ],
+        "illustrationIcon": "🦉🏘️"
+      },
+      {
+        "pageNumber": 2,
+        "text": "Down in the town square, a funny clown wears a brown gown.",
+        "marathiText": "खाली गावातील चौकात एक मजेशीर विदूषक तपकिरी झगा घालून उभा आहे.",
+        "focusWords": [
+          "Down",
+          "town",
+          "clown",
+          "brown",
+          "gown"
+        ],
+        "illustrationIcon": "🤡👗"
+      },
+      {
+        "pageNumber": 3,
+        "text": "The clown lets out a loud shout: 'Look at my round balls now!'",
+        "marathiText": "तो विदूषक मोठ्याने ओरडतो: 'आता माझे गोल चेंडू पाहा!'",
+        "focusWords": [
+          "clown",
+          "loud",
+          "shout",
+          "round",
+          "now"
+        ],
+        "illustrationIcon": "🎪🤹"
+      },
+      {
+        "pageNumber": 4,
+        "text": "A soft white cloud drifts over the house. The crowd claps with a loud cheer.",
+        "marathiText": "एक मऊ पांढरा ढग घरावरून तरंगत जातो. लोक मोठ्याने टाळ्या वाजवून दाद देतात.",
+        "focusWords": [
+          "cloud",
+          "house",
+          "crowd",
+          "loud"
+        ],
+        "illustrationIcon": "☁️👏"
+      },
+      {
+        "pageNumber": 5,
+        "text": "The brown owl swoops down to take a proud bow beside the clown!",
+        "marathiText": "तो तपकिरी घुबड खाली येतो आणि विदूषकाजवळ अभिमानाने मान झुकवून वंदन करतो!",
+        "focusWords": [
+          "brown",
+          "owl",
+          "down",
+          "proud",
+          "bow",
+          "clown"
+        ],
+        "illustrationIcon": "🦉🎭"
+      }
+    ],
+    "quiz": [
+      {
+        "id": "owl_q1",
+        "question": "What color is Howie the owl?",
+        "options": [
+          "Brown",
+          "Purple",
+          "Green"
+        ],
+        "correctAnswer": "Brown",
+        "explanation": "Howie is a fluffy brown owl!",
+        "phonicsClue": "Brown has the 'ow' diphthong sound: br-ow-n."
+      },
+      {
+        "id": "owl_q2",
+        "question": "What sound does the crowd make for the clown?",
+        "options": [
+          "A loud cheer",
+          "A quiet whisper",
+          "A sleepy yawn"
+        ],
+        "correctAnswer": "A loud cheer",
+        "explanation": "The crowd claps with a loud cheer!",
+        "phonicsClue": "Loud has the 'ou' diphthong: l-ou-d."
+      },
+      {
+        "id": "owl_q3",
+        "question": "Which word rhymes with 'town' and 'clown'?",
+        "options": [
+          "brown",
+          "cloud",
+          "shout"
+        ],
+        "correctAnswer": "brown",
+        "explanation": "Town, clown, and brown all end in the '-own' rhyming sound!",
+        "phonicsClue": "t-own, cl-own, and br-own belong to the same word family."
+      }
+    ]
+  },
+  {
+    "id": "cool-cook-magic-book",
+    "slug": "cool-cook-magic-book",
+    "title": "The Cool Cook and the Magic Story Book",
+    "marathiTitle": "छान शेफ आणि जादुई गोष्टींचे पुस्तक (Vowel Team oo)",
+    "grade": "Grade 1",
+    "categoryId": "vowel-teams",
+    "phonicsFocus": "Vowel Team OO (Short /ʊ/ and Long /uː/)",
+    "targetVowel": "Vowel Team OO",
+    "icon": "📖",
+    "coverImage": "/assets/phonics/cool-cook-magic-book.jpg",
+    "color": "#4F46E5",
+    "headerBg": "linear-gradient(135deg, #4F46E5 0%, #4338CA 100%)",
+    "bgGradient": "linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%)",
+    "badge": "⭐ Level 5 • Vowel Team OO",
+    "summary": "Brooke is a cool chef who loves to cook delicious food with a big wooden spoon. After cooking, she sits by the moonlit pool and reads an enchanted storybook!",
+    "funFact": "The vowel team 'oo' can make two sounds: the short sound in 'book' and 'cook', and the long sound in 'moon' and 'spoon'!",
+    "decodableWords": [
+      "cook",
+      "book",
+      "look",
+      "took",
+      "wood",
+      "foot",
+      "cool",
+      "moon",
+      "spoon",
+      "pool",
+      "zoo",
+      "food",
+      "room"
+    ],
+    "sightWords": [
+      "the",
+      "a",
+      "she",
+      "her",
+      "by",
+      "with",
+      "after",
+      "into",
+      "read",
+      "good",
+      "had"
+    ],
+    "pages": [
+      {
+        "pageNumber": 1,
+        "text": "Brooke is a cool cook in a bright kitchen room. She prepares yummy food.",
+        "marathiText": "ब्रुक ही एका सुंदर स्वयंपाकघरातील छान शेफ आहे. ती चवदार जेवण बनवते.",
+        "focusWords": [
+          "Brooke",
+          "cool",
+          "cook",
+          "room",
+          "food"
+        ],
+        "illustrationIcon": "👩‍🍳🍳"
+      },
+      {
+        "pageNumber": 2,
+        "text": "Brooke stirs soup with a smooth wooden spoon. Look at the soup boil!",
+        "marathiText": "ब्रुक लाकडी चमच्याने सूप ढवळते. सूप उकळताना पाहा!",
+        "focusWords": [
+          "Brooke",
+          "wooden",
+          "spoon",
+          "Look"
+        ],
+        "illustrationIcon": "🥄🍲"
+      },
+      {
+        "pageNumber": 3,
+        "text": "She took off her apron and walked on foot to the cool blue pool.",
+        "marathiText": "ती आपला ॲप्रन काढते आणि चालत निळ्या पाण्याच्या तलावाकडे जाते.",
+        "focusWords": [
+          "took",
+          "foot",
+          "cool",
+          "pool"
+        ],
+        "illustrationIcon": "👟🏊"
+      },
+      {
+        "pageNumber": 4,
+        "text": "A silver moon shines high above. Brooke opens a magic story book.",
+        "marathiText": "आकाशात रुपेरी चंद्र चमकतो. ब्रुक एक जादुई गोष्टींचे पुस्तक उघडते.",
+        "focusWords": [
+          "moon",
+          "Brooke",
+          "book"
+        ],
+        "illustrationIcon": "🌙📖"
+      },
+      {
+        "pageNumber": 5,
+        "text": "Brooke had a good look at the pictures. It was a cool night for a good book!",
+        "marathiText": "ब्रुक पुस्तकातील चित्रांकडे छान लक्ष देऊन पाहते. चांगल्या पुस्तकासाठी ही एक मस्त रात्र होती!",
+        "focusWords": [
+          "Brooke",
+          "good",
+          "look",
+          "cool",
+          "book"
+        ],
+        "illustrationIcon": "✨📚"
+      }
+    ],
+    "quiz": [
+      {
+        "id": "cook_q1",
+        "question": "What utensil does Brooke use to stir the soup?",
+        "options": [
+          "A smooth wooden spoon",
+          "A silver fork",
+          "A plastic knife"
+        ],
+        "correctAnswer": "A smooth wooden spoon",
+        "explanation": "Brooke stirs her soup with a smooth wooden spoon!",
+        "phonicsClue": "Wooden and spoon both contain the 'oo' vowel team."
+      },
+      {
+        "id": "cook_q2",
+        "question": "What does Brooke read under the silver moon?",
+        "options": [
+          "A magic story book",
+          "A map of the zoo",
+          "A train ticket"
+        ],
+        "correctAnswer": "A magic story book",
+        "explanation": "Brooke opens and reads a magic story book under the moon!",
+        "phonicsClue": "Book and moon both feature the double 'o' letters."
+      },
+      {
+        "id": "cook_q3",
+        "question": "Which word rhymes with 'cook' and 'look'?",
+        "options": [
+          "book",
+          "spoon",
+          "moon"
+        ],
+        "correctAnswer": "book",
+        "explanation": "Cook, look, and book all share the short /ʊ/ 'oo' ending!",
+        "phonicsClue": "c-ook, l-ook, and b-ook rhyme in the -ook family."
+      }
+    ]
+  },
+  {
+    "id": "fern-the-bird-corn",
+    "slug": "fern-the-bird-corn",
+    "title": "Fern the Bird and the Golden Corn",
+    "marathiTitle": "फर्न लहान पक्षी आणि सोनेरी मका (Bossy R - or, er, ir, ur)",
+    "grade": "Grade 2",
+    "categoryId": "bossy-r",
+    "phonicsFocus": "Bossy R (-or, -er, -ir, -ur)",
+    "targetVowel": "Bossy R (or, er, ir, ur)",
+    "icon": "🌽",
+    "coverImage": "/assets/phonics/fern-the-bird-corn.jpg",
+    "color": "#EA580C",
+    "headerBg": "linear-gradient(135deg, #EA580C 0%, #C2410C 100%)",
+    "bgGradient": "linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%)",
+    "badge": "⭐ Level 6 • Bossy R (or, er, ir, ur)",
+    "summary": "Fern the little purple bird chirps merrily from a tall pine tree. When a short storm blows through, she helps a gentle horse find golden sweet corn near the barn!",
+    "funFact": "The letter 'r' changes vowel sounds! 'or' sounds like 'fork' and 'corn', while 'er', 'ir', and 'ur' make the exact same /ɜːr/ sound in fern, bird, and fur!",
+    "decodableWords": [
+      "corn",
+      "horn",
+      "horse",
+      "storm",
+      "fork",
+      "Fern",
+      "bird",
+      "chirp",
+      "girl",
+      "swirl",
+      "fur",
+      "curl",
+      "turn"
+    ],
+    "sightWords": [
+      "the",
+      "a",
+      "her",
+      "to",
+      "and",
+      "in",
+      "of",
+      "was",
+      "saw",
+      "helped",
+      "sweet"
+    ],
+    "pages": [
+      {
+        "pageNumber": 1,
+        "text": "Fern is a sweet little purple bird. Fern loves to chirp in the morning.",
+        "marathiText": "फर्न ही एक गोड लहान जांभळी पक्षी आहे. फर्नला सकाळी चिवचिव करायला आवडते.",
+        "focusWords": [
+          "Fern",
+          "bird",
+          "chirp",
+          "morning"
+        ],
+        "illustrationIcon": "🐦🌅"
+      },
+      {
+        "pageNumber": 2,
+        "text": "A short storm brings wind and swirl. Fern perches under a big green fern.",
+        "marathiText": "एका लहान वादळामुळे वारा आणि चक्रीवादळ येते. फर्न एका मोठ्या हिरव्या झाडाखाली बसते.",
+        "focusWords": [
+          "short",
+          "storm",
+          "swirl",
+          "Fern"
+        ],
+        "illustrationIcon": "🌪️🌿"
+      },
+      {
+        "pageNumber": 3,
+        "text": "Across the yard stands a brown horse with soft curly fur.",
+        "marathiText": "आवारात मऊ कुरळ्या केसांचा एक तपकिरी घोडा उभा असतो.",
+        "focusWords": [
+          "horse",
+          "curl",
+          "fur"
+        ],
+        "illustrationIcon": "🐴🌾"
+      },
+      {
+        "pageNumber": 4,
+        "text": "Fern chirps to help the horse turn toward a wagon of sweet yellow corn.",
+        "marathiText": "फर्न त्या घोड्याला गोड पिवळ्या मक्याच्या गाडीकडे वळण्यासाठी चिवचिव करून मार्ग दाखवते.",
+        "focusWords": [
+          "Fern",
+          "chirps",
+          "horse",
+          "turn",
+          "corn"
+        ],
+        "illustrationIcon": "🌽🚜"
+      },
+      {
+        "pageNumber": 5,
+        "text": "The horse munches the corn. Fern perches on his horn with a joyful chirp!",
+        "marathiText": "घोडा आनंदाने मका खातो. फर्न त्याच्या पाठीवर बसून आनंदाने गाणे गाते!",
+        "focusWords": [
+          "horse",
+          "corn",
+          "Fern",
+          "chirp"
+        ],
+        "illustrationIcon": "💖🌽"
+      }
+    ],
+    "quiz": [
+      {
+        "id": "fern_q1",
+        "question": "What kind of creature is Fern?",
+        "options": [
+          "A sweet little bird",
+          "A big red turtle",
+          "A noisy frog"
+        ],
+        "correctAnswer": "A sweet little bird",
+        "explanation": "Fern is a sweet little purple bird who loves to chirp!",
+        "phonicsClue": "Fern has the 'er' bossy R sound, and bird has 'ir'."
+      },
+      {
+        "id": "fern_q2",
+        "question": "What food does the horse munch near the barn?",
+        "options": [
+          "Sweet yellow corn",
+          "Cold salty soup",
+          "Spicy pepper cake"
+        ],
+        "correctAnswer": "Sweet yellow corn",
+        "explanation": "The horse munches sweet yellow corn from the wagon!",
+        "phonicsClue": "Corn has the 'or' bossy R sound: c-or-n."
+      },
+      {
+        "id": "fern_q3",
+        "question": "Which of these words has the same bossy R sound as 'storm'?",
+        "options": [
+          "corn",
+          "bird",
+          "fern"
+        ],
+        "correctAnswer": "corn",
+        "explanation": "Storm and corn both share the bossy 'or' sound!",
+        "phonicsClue": "st-or-m and c-or-n belong to the -or word family."
+      }
+    ]
+  }
+];

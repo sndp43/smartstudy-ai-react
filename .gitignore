@@ -59,3 +59,27 @@ desktop.ini
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
+
+# Temporary & cache files
+*.tmp
+*.hprof
+
+# React Native & Android
+.gradle/
+**/.gradle/
+.kotlin/
+**/.kotlin/
+.bundle/
+**/.bundle/
+local.properties
+**/local.properties
+.cxx/
+**/.cxx/
+*.keystore
+!debug.keystore
+*.jsbundle
+apps/tv/android/app/build/
+apps/tv/android/build/
+apps/tv/ios/build/
+apps/tv/ios/Pods/
+

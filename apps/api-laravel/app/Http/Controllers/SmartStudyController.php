@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class SmartStudyController extends Controller
@@ -21,19 +22,41 @@ class SmartStudyController extends Controller
         return response()->json(DB::table('children')->where('id', $childId)->first());
     }
 
-    public function children()
+    public function children(Request $request)
     {
-        return response()->json(DB::table('children')->select('id', 'name', 'username', 'grade', 'board')->orderBy('name')->get());
+        $query = DB::table('children')->select('id', 'name', 'username', 'grade', 'board', 'medium');
+        if (Schema::hasTable('children') && Schema::hasColumn('children', 'parent_id') && $request->filled('parentId')) {
+            $query->where('parent_id', $request->parentId);
+        }
+        return response()->json($query->orderBy('name')->get());
     }
 
     public function createChild(Request $request)
     {
-        $data = $request->validate(['name' => ['required', 'string', 'max:100'], 'grade' => ['required', 'string', 'max:20'], 'board' => ['nullable', 'string', 'max:50'], 'medium' => ['nullable', 'string', 'max:50']]);
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:100'],
+            'grade' => ['required', 'string', 'max:20'],
+            'board' => ['nullable', 'string', 'max:50'],
+            'medium' => ['nullable', 'string', 'max:50'],
+            'parentId' => ['nullable', 'string'],
+        ]);
         $base = Str::of($data['name'])->lower()->replaceMatches('/[^a-z0-9]+/', '_')->trim('_')->value() ?: 'child';
         $username = $base;
         $counter = 1;
         while (DB::table('children')->where('username', $username)->exists()) $username = $base . '_' . $counter++;
-        $child = ['id' => (string) Str::uuid(), 'name' => $data['name'], 'username' => $username, 'grade' => $data['grade'], 'board' => $data['board'] ?? null, 'medium' => $data['medium'] ?? 'English', 'created_at' => now(), 'updated_at' => now()];
+        $child = [
+            'id' => (string) Str::uuid(),
+            'name' => $data['name'],
+            'username' => $username,
+            'grade' => $data['grade'],
+            'board' => $data['board'] ?? null,
+            'medium' => $data['medium'] ?? 'English',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
+        if (Schema::hasTable('children') && Schema::hasColumn('children', 'parent_id') && !empty($data['parentId'])) {
+            $child['parent_id'] = $data['parentId'];
+        }
         DB::table('children')->insert($child);
         return response()->json($child, 201);
     }
@@ -85,6 +108,7 @@ class SmartStudyController extends Controller
         $birdsPracticed = $progress->where('chart_slug', 'birds')->pluck('item_key')->unique()->count();
         $emotionsPracticed = $progress->where('chart_slug', 'emotions')->pluck('item_key')->unique()->count();
         $phonicsPracticed = $progress->where('chart_slug', 'phonics')->pluck('item_key')->unique()->count();
+        $poemsPracticed = $progress->where('chart_slug', 'poems')->pluck('item_key')->unique()->count();
         $totalSessions = (int) $progress->sum('practice_count');
 
         $recordsMap = [];
@@ -127,6 +151,9 @@ class SmartStudyController extends Controller
                 'phonics' => $phonicsPracticed,
                 'phonicsPracticed' => $phonicsPracticed,
                 'phonicsTotal' => 249,
+                'poems' => $poemsPracticed,
+                'poemsPracticed' => $poemsPracticed,
+                'poemsTotal' => 11,
                 'totalPracticed' => $totalSessions,
                 'totalPracticeSessions' => $totalSessions,
             ],
@@ -385,6 +412,30 @@ class SmartStudyController extends Controller
             $item = $rhymeTrios[$i % count($rhymeTrios)];
             return ["Which 3 words rhyme with {$item[0]}?", $item[1], $item[2]];
         }
+        if (str_contains(strtolower($name), 'shape')) {
+            $shapeItems = [
+                ['Circle', '⭕', '0 sides · 0 corners', 'C _ R C L _', 'I, E', ['I, E', 'A, O', 'U, E', 'O, Y']],
+                ['Square', '⬛', '4 equal sides · 4 corners', 'S Q _ A R _', 'U, E', ['U, E', 'O, Y', 'A, T', 'I, E']],
+                ['Triangle', '🔺', '3 straight sides · 3 corners', 'T R _ A N G L _', 'I, E', ['I, E', 'A, O', 'O, E', 'E, Y']],
+                ['Hexagon', '⬡', '6 sides · 6 corners (honeycomb)', 'H E X _ G _ N', 'A, O', ['A, O', 'E, U', 'I, E', 'O, A']],
+                ['Octagon', '🛑', '8 sides · 8 corners (stop sign)', 'O C T _ G _ N', 'A, O', ['A, O', 'O, A', 'E, O', 'I, U']],
+                ['Cylinder', '🥫', '2 circle faces + curved body', 'C Y L _ N D _ R', 'I, E', ['I, E', 'E, O', 'A, E', 'U, E']],
+            ];
+            $item = $shapeItems[$i % count($shapeItems)];
+            return ["What shape am I? Fill in the missing letters: {$item[3]}", $item[4], $item[5]];
+        }
+        if (str_contains(strtolower($name), 'magic') || str_contains(strtolower($name), 'manner')) {
+            $magicItems = [
+                ['Rohan wants to borrow a yellow crayon from Maya. What magic word should he say?', 'Please (कृपया)', ['Please (कृपया)', 'Sorry (माफ करा)', 'Thank You (धन्यवाद)', 'Excuse Me (ऐका ना)']],
+                ['Auntie gives Anaya a sweet birthday present. What magic words should Anaya say?', 'Thank You (धन्यवाद)', ['Thank You (धन्यवाद)', 'Please (कृपया)', 'Sorry (माफ करा)', 'You\'re Welcome (काही हरकत नाही)']],
+                ['Kabir accidentally bumps into Aarav in the hallway. What should Kabir say right away?', 'Sorry (माफ करा)', ['Sorry (माफ करा)', 'Thank You (धन्यवाद)', 'You\'re Welcome (काही हरकत नाही)', 'Please (कृपया)']],
+                ['Priya needs to pass between two teachers talking in the doorway. What magic words should she say?', 'Excuse Me (माफ करा / ऐका ना)', ['Excuse Me (माफ करा / ऐका ना)', 'Sorry (माफ करा)', 'Thank You (धन्यवाद)', 'Please (कृपया)']],
+                ['Reyansh says "Thank you for sharing your stickers, Mira!" What should Mira reply?', 'You\'re Welcome (काही हरकत नाही)', ['You\'re Welcome (काही हरकत नाही)', 'Sorry (माफ करा)', 'Excuse Me (ऐका ना)', 'Please (कृपया)']],
+                ['Tara feels thirsty in class. What polite words should she use to ask Teacher for water?', 'May I drink water, please? (मी पाणी पिऊ का?)', ['May I drink water, please? (मी पाणी पिऊ का?)', 'I need water now', 'Give water bottle', 'Sorry for water']],
+            ];
+            $item = $magicItems[$i % count($magicItems)];
+            return [$item[0], $item[1], $item[2]];
+        }
         $a = 5 + $i % 5; $b = 1 + $i % 4; return ["{$a} - {$b} = ?", (string) ($a - $b), [(string) ($a - $b - 1), (string) ($a - $b), (string) ($a - $b + 1)]];
     }
 
@@ -508,7 +559,7 @@ class SmartStudyController extends Controller
             'name' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string', 'max:500'],
             'difficulty' => ['nullable', 'integer', 'min:1', 'max:5'],
-            'template' => ['nullable', 'string', 'in:standard,image_prompt,story_card,flashcard,fill_blank,true_false,rhyme_card'],
+            'template' => ['nullable', 'string', 'in:standard,image_prompt,story_card,flashcard,fill_blank,true_false,rhyme_card,shape_card'],
             'table_range' => ['nullable', 'string', 'max:50'],
         ]);
         $subject = DB::table('subjects')->where('name', $data['subject'])->first();
@@ -533,7 +584,7 @@ class SmartStudyController extends Controller
             'name' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string', 'max:500'],
             'difficulty' => ['nullable', 'integer', 'min:1', 'max:5'],
-            'template' => ['nullable', 'string', 'in:standard,image_prompt,story_card,flashcard,fill_blank,true_false,rhyme_card'],
+            'template' => ['nullable', 'string', 'in:standard,image_prompt,story_card,flashcard,fill_blank,true_false,rhyme_card,shape_card'],
             'table_range' => ['nullable', 'string', 'max:50'],
         ]);
         $skill = DB::table('skills')->where('id', $skillId)->first();
@@ -646,7 +697,7 @@ class SmartStudyController extends Controller
 
     public function updateExercise(Request $request, string $exerciseId)
     {
-        $data = $request->validate(['question' => ['required', 'string', 'max:1000'], 'options' => ['required', 'array', 'min:2'], 'options.*' => ['string', 'max:200'], 'correctAnswer' => ['required', 'string', 'max:200'], 'explanation' => ['required', 'string', 'max:1000'], 'difficulty' => ['required', 'integer', 'min:1', 'max:5'], 'imageUrl' => ['nullable', 'string', 'max:10000000'], 'imageQuestion' => ['nullable', 'string', 'max:1000'], 'template' => ['nullable', 'in:standard,image_prompt,story_card,flashcard,fill_blank,true_false,rhyme_card']]);
+        $data = $request->validate(['question' => ['required', 'string', 'max:1000'], 'options' => ['required', 'array', 'min:2'], 'options.*' => ['string', 'max:200'], 'correctAnswer' => ['required', 'string', 'max:200'], 'explanation' => ['required', 'string', 'max:1000'], 'difficulty' => ['required', 'integer', 'min:1', 'max:5'], 'imageUrl' => ['nullable', 'string', 'max:10000000'], 'imageQuestion' => ['nullable', 'string', 'max:1000'], 'template' => ['nullable', 'in:standard,image_prompt,story_card,flashcard,fill_blank,true_false,rhyme_card,shape_card']]);
         if (!in_array($data['correctAnswer'], $data['options'], true)) return response()->json(['error' => 'Correct answer must be one of the options.'], 422);
         $exercise = DB::table('exercises')->where('id', $exerciseId)->first();
         if (!$exercise) return response()->json(['error' => 'Exercise not found'], 404);
@@ -660,7 +711,7 @@ class SmartStudyController extends Controller
 
     public function createExercise(Request $request, string $skillId)
     {
-        $data = $request->validate(['question' => ['required', 'string', 'max:1000'], 'options' => ['required', 'array', 'min:2'], 'options.*' => ['string', 'max:200'], 'correctAnswer' => ['required', 'string', 'max:200'], 'explanation' => ['required', 'string', 'max:1000'], 'difficulty' => ['required', 'integer', 'min:1', 'max:5'], 'imageUrl' => ['nullable', 'string', 'max:10000000'], 'imageQuestion' => ['nullable', 'string', 'max:1000'], 'template' => ['nullable', 'in:standard,image_prompt,story_card,flashcard,fill_blank,true_false,rhyme_card']]);
+        $data = $request->validate(['question' => ['required', 'string', 'max:1000'], 'options' => ['required', 'array', 'min:2'], 'options.*' => ['string', 'max:200'], 'correctAnswer' => ['required', 'string', 'max:200'], 'explanation' => ['required', 'string', 'max:1000'], 'difficulty' => ['required', 'integer', 'min:1', 'max:5'], 'imageUrl' => ['nullable', 'string', 'max:10000000'], 'imageQuestion' => ['nullable', 'string', 'max:1000'], 'template' => ['nullable', 'in:standard,image_prompt,story_card,flashcard,fill_blank,true_false,rhyme_card,shape_card']]);
         $skill = DB::table('skills')->where('id', $skillId)->first();
         if (!$skill) return response()->json(['error' => 'Skill not found'], 404);
         if (!in_array($data['correctAnswer'], $data['options'], true)) return response()->json(['error' => 'Correct answer must be one of the options.'], 422);
@@ -755,5 +806,79 @@ class SmartStudyController extends Controller
                 ->select('id', 'name', 'email', 'role', 'created_at')
                 ->get()
         );
+    }
+
+    public function register(Request $request)
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'email' => ['required', 'string', 'email', 'max:255'],
+            'password' => ['required', 'string', 'min:6'],
+            'role' => ['nullable', 'string', 'in:parent,teacher'],
+        ]);
+
+        $existing = DB::table('teachers')->where('email', $data['email'])->first();
+        if ($existing) {
+            return response()->json(['error' => 'An account with this email already exists.'], 409);
+        }
+
+        $userId = (string) Str::uuid();
+        $role = $data['role'] ?? 'parent';
+        DB::table('teachers')->insert([
+            'id' => $userId,
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+            'role' => $role,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return response()->json([
+            'ok' => true,
+            'role' => $role,
+            'user' => [
+                'id' => $userId,
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'role' => $role,
+            ],
+            'token' => Str::random(40),
+        ], 201);
+    }
+
+    public function parentLogin(Request $request)
+    {
+        $data = $request->validate([
+            'email' => ['required', 'string'],
+            'password' => ['required', 'string'],
+        ]);
+
+        $user = DB::table('teachers')
+            ->where('email', $data['email'])
+            ->first();
+
+        if (!$user || !Hash::check($data['password'], $user->password)) {
+            return response()->json(['error' => 'Invalid email or password.'], 401);
+        }
+
+        $role = $user->role ?? 'parent';
+
+        return response()->json([
+            'ok' => true,
+            'role' => $role,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $role,
+            ],
+            'token' => Str::random(40),
+        ]);
+    }
+
+    public function logout(Request $request)
+    {
+        return response()->json(['ok' => true, 'message' => 'Logged out successfully.']);
     }
 }
