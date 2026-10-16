@@ -2378,7 +2378,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "damp",
           "sand"
         ],
-        "illustrationIcon": "🏮🐸"
+        "illustrationIcon": "🏮🐸",
+        "image": "/assets/phonics/camp-p3.jpg",
+        "imageKey": "camp-p3"
       },
       {
         "pageNumber": 4,
@@ -2389,7 +2391,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "rest",
           "tent"
         ],
-        "illustrationIcon": "🏃‍♂️🛏️"
+        "illustrationIcon": "🏃‍♂️🛏️",
+        "image": "/assets/phonics/camp-p4.jpg",
+        "imageKey": "camp-p4"
       },
       {
         "pageNumber": 5,
@@ -2400,7 +2404,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "sand",
           "grand"
         ],
-        "illustrationIcon": "✨⛺"
+        "illustrationIcon": "✨⛺",
+        "image": "/assets/phonics/camp-p5.jpg",
+        "imageKey": "camp-p5"
       }
     ],
     "quiz": [
@@ -2494,7 +2500,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "white",
           "whale"
         ],
-        "illustrationIcon": "🐳🌊"
+        "illustrationIcon": "🐳🌊",
+        "image": "/assets/phonics/whale-p1.jpg",
+        "imageKey": "whale-p1"
       },
       {
         "pageNumber": 2,
@@ -2505,7 +2513,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "dolphin",
           "whistle"
         ],
-        "illustrationIcon": "🐬🎶"
+        "illustrationIcon": "🐬🎶",
+        "image": "/assets/phonics/whale-p2.jpg",
+        "imageKey": "whale-p2"
       },
       {
         "pageNumber": 3,
@@ -2517,7 +2527,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "wheel",
           "everywhere"
         ],
-        "illustrationIcon": "🌀💦"
+        "illustrationIcon": "🌀💦",
+        "image": "/assets/phonics/whale-p3.jpg",
+        "imageKey": "whale-p3"
       },
       {
         "pageNumber": 4,
@@ -2529,7 +2541,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "white",
           "whale"
         ],
-        "illustrationIcon": "📸🐬"
+        "illustrationIcon": "📸🐬",
+        "image": "/assets/phonics/whale-p4.jpg",
+        "imageKey": "whale-p4"
       },
       {
         "pageNumber": 5,
@@ -2539,7 +2553,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "Where",
           "Whitney"
         ],
-        "illustrationIcon": "🌊✨"
+        "illustrationIcon": "🌊✨",
+        "image": "/assets/phonics/whale-p5.jpg",
+        "imageKey": "whale-p5"
       }
     ],
     "quiz": [
@@ -2641,7 +2657,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "likes",
           "ride"
         ],
-        "illustrationIcon": "🚲🐶"
+        "illustrationIcon": "🚲🐶",
+        "image": "/assets/phonics/mike-p1.jpg",
+        "imageKey": "mike-p1"
       },
       {
         "pageNumber": 2,
@@ -2654,7 +2672,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "pine",
           "shine"
         ],
-        "illustrationIcon": "🌲☀️"
+        "illustrationIcon": "🌲☀️",
+        "image": "/assets/phonics/mike-p2.jpg",
+        "imageKey": "mike-p2"
       },
       {
         "pageNumber": 3,
@@ -2665,7 +2685,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "kite",
           "wide"
         ],
-        "illustrationIcon": "🪁🌤️"
+        "illustrationIcon": "🪁🌤️",
+        "image": "/assets/phonics/mike-p3.jpg",
+        "imageKey": "mike-p3"
       },
       {
         "pageNumber": 4,
@@ -2678,7 +2700,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "Mike",
           "twine"
         ],
-        "illustrationIcon": "😊🪁"
+        "illustrationIcon": "😊🪁",
+        "image": "/assets/phonics/mike-p4.jpg",
+        "imageKey": "mike-p4"
       },
       {
         "pageNumber": 5,
@@ -2692,7 +2716,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "prime",
           "time"
         ],
-        "illustrationIcon": "🏡🌅"
+        "illustrationIcon": "🏡🌅",
+        "image": "/assets/phonics/mike-p5.jpg",
+        "imageKey": "mike-p5"
       }
     ],
     "quiz": [

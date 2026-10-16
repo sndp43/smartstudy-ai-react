@@ -1376,6 +1376,8 @@ const stories = [
         marathiText: "केंटने एक उबदार पितळेचा दिवा लावला. ओलसर वाळूवरून लहान बेडूक उड्या मारत गेले.",
         focusWords: ["lamp", "jump", "damp", "sand"],
         illustrationIcon: "🏮🐸",
+        image: "/assets/phonics/camp-p3.jpg",
+        imageKey: "camp-p3",
       },
       {
         pageNumber: 4,
@@ -1383,6 +1385,8 @@ const stories = [
         marathiText: "चॅम्प पांघरूण आणण्यासाठी वेगाने धावला. ते उबदार तंबूत विश्रांती घेतात.",
         focusWords: ["fast", "rest", "tent"],
         illustrationIcon: "🏃‍♂️🛏️",
+        image: "/assets/phonics/camp-p4.jpg",
+        imageKey: "camp-p4",
       },
       {
         pageNumber: 5,
@@ -1390,6 +1394,8 @@ const stories = [
         marathiText: "चांदण्यांच्या छताखाली ते गुणगुणतात. वाळूवरील हा कॅम्प खरोखरच खूप छान होता!",
         focusWords: ["camp", "sand", "grand"],
         illustrationIcon: "✨⛺",
+        image: "/assets/phonics/camp-p5.jpg",
+        imageKey: "camp-p5",
       },
     ],
     quiz: [
@@ -1447,6 +1453,8 @@ const stories = [
         marathiText: "व्हिटनी ही एक शांत पांढरी देवमासा आहे. ती खोल निळ्या समुद्रात पोहते.",
         focusWords: ["Whitney", "white", "whale"],
         illustrationIcon: "🐳🌊",
+        image: "/assets/phonics/whale-p1.jpg",
+        imageKey: "whale-p1",
       },
       {
         pageNumber: 2,
@@ -1454,6 +1462,8 @@ const stories = [
         marathiText: "फिल एक चपळ डॉल्फिन आहे. फिल आनंदाने शिटीसारखा छान आवाज काढू शकतो!",
         focusWords: ["Phil", "dolphin", "whistle"],
         illustrationIcon: "🐬🎶",
+        image: "/assets/phonics/whale-p2.jpg",
+        imageKey: "whale-p2",
       },
       {
         pageNumber: 3,
@@ -1461,6 +1471,8 @@ const stories = [
         marathiText: "सूं-सूं! व्हिटनी मोठ्या चाकासारखी गिरकी घेते. पाण्याचे थेंब सर्वत्र उडतात!",
         focusWords: ["Whish", "Whitney", "wheel", "everywhere"],
         illustrationIcon: "🌀💦",
+        image: "/assets/phonics/whale-p3.jpg",
+        imageKey: "whale-p3",
       },
       {
         pageNumber: 4,
@@ -1468,6 +1480,8 @@ const stories = [
         marathiText: "एका दयाळू पाणबुड्याने फिल आणि त्या पांढऱ्या देवमाशाचा सुंदर फोटो काढला.",
         focusWords: ["photo", "Phil", "white", "whale"],
         illustrationIcon: "📸🐬",
+        image: "/assets/phonics/whale-p4.jpg",
+        imageKey: "whale-p4",
       },
       {
         pageNumber: 5,
@@ -1475,6 +1489,8 @@ const stories = [
         marathiText: "'आता आपण पुढे कुठे पोहायचे?' व्हिटनीने विचारले. ते दोघे लाटांवरून आनंदाने उड्या मारतात!",
         focusWords: ["Where", "Whitney"],
         illustrationIcon: "🌊✨",
+        image: "/assets/phonics/whale-p5.jpg",
+        imageKey: "whale-p5",
       },
     ],
     quiz: [
@@ -1532,6 +1548,8 @@ const stories = [
         marathiText: "माईककडे एक छान पांढरी सायकल आहे. त्याच्या स्पाईक कुत्र्याला पुढच्या टोपलीत बसायला आवडते.",
         focusWords: ["Mike", "fine", "white", "bike", "Spike", "likes", "ride"],
         illustrationIcon: "🚲🐶",
+        image: "/assets/phonics/mike-p1.jpg",
+        imageKey: "mike-p1",
       },
       {
         pageNumber: 2,
@@ -1539,6 +1557,8 @@ const stories = [
         marathiText: "ते नऊ उंच पाईनच्या झाडांच्या रांगेतून सायकल चालवतात. सूर्यप्रकाश उबदार असतो.",
         focusWords: ["ride", "line", "nine", "pine", "shine"],
         illustrationIcon: "🌲☀️",
+        image: "/assets/phonics/mike-p2.jpg",
+        imageKey: "mike-p2",
       },
       {
         pageNumber: 3,
@@ -1546,6 +1566,8 @@ const stories = [
         marathiText: "आता पतंग उडवण्याची वेळ आली आहे! पतंग विशाल निळ्या आकाशात उंच उडतो.",
         focusWords: ["time", "kite", "wide"],
         illustrationIcon: "🪁🌤️",
+        image: "/assets/phonics/mike-p3.jpg",
+        imageKey: "mike-p3",
       },
       {
         pageNumber: 4,
@@ -1553,6 +1575,8 @@ const stories = [
         marathiText: "स्पाईक एक गोड मोठं हसू देतो. माईक पतंगाचा दोरा घट्ट धरून ठेवतो.",
         focusWords: ["Spike", "wide", "smile", "Mike", "twine"],
         illustrationIcon: "😊🪁",
+        image: "/assets/phonics/mike-p4.jpg",
+        imageKey: "mike-p4",
       },
       {
         pageNumber: 5,
@@ -1560,6 +1584,8 @@ const stories = [
         marathiText: "ते पाच वाजता चालत घरी परत येतात. माईक आणि स्पाईकचा वेळ खूप छान गेला!",
         focusWords: ["hike", "five", "Mike", "Spike", "prime", "time"],
         illustrationIcon: "🏡🌅",
+        image: "/assets/phonics/mike-p5.jpg",
+        imageKey: "mike-p5",
       },
     ],
     quiz: [
@@ -2152,8 +2178,8 @@ export const PHONICS_STORY_IMAGES: Record<string, any> = {
   'rain-on-train': require('../assets/phonics/rain-on-train.jpg'),
   'mark-spark-barn': require('../assets/phonics/mark-spark-barn.jpg'),
   'camp-in-the-sand': require('../assets/phonics/camp-in-the-sand.jpg'),
-  'white-whale-phil': require('../assets/phonics/fish-and-ship.jpg'),
-  'mike-and-spike-bike': require('../assets/phonics/jake-the-snake.jpg'),
+  'white-whale-phil': require('../assets/phonics/white-whale-phil.jpg'),
+  'mike-and-spike-bike': require('../assets/phonics/mike-and-spike-bike.jpg'),
   'rose-and-luke-mule': require('../assets/phonics/fox-on-box.jpg'),
   'roy-the-joyful-boy': require('../assets/phonics/king-shiny-ring.jpg'),
   'brown-owl-loud-clown': require('../assets/phonics/tim-and-pig.jpg'),
@@ -2234,6 +2260,19 @@ export const PHONICS_PAGE_IMAGES: Record<string, any> = {
   'mark-p5': require('../assets/phonics/mark-p5.jpg'),
   'camp-p1': require('../assets/phonics/camp-p1.jpg'),
   'camp-p2': require('../assets/phonics/camp-p2.jpg'),
+  'camp-p3': require('../assets/phonics/camp-p3.jpg'),
+  'camp-p4': require('../assets/phonics/camp-p4.jpg'),
+  'camp-p5': require('../assets/phonics/camp-p5.jpg'),
+  'whale-p1': require('../assets/phonics/whale-p1.jpg'),
+  'whale-p2': require('../assets/phonics/whale-p2.jpg'),
+  'whale-p3': require('../assets/phonics/whale-p3.jpg'),
+  'whale-p4': require('../assets/phonics/whale-p4.jpg'),
+  'whale-p5': require('../assets/phonics/whale-p5.jpg'),
+  'mike-p1': require('../assets/phonics/mike-p1.jpg'),
+  'mike-p2': require('../assets/phonics/mike-p2.jpg'),
+  'mike-p3': require('../assets/phonics/mike-p3.jpg'),
+  'mike-p4': require('../assets/phonics/mike-p4.jpg'),
+  'mike-p5': require('../assets/phonics/mike-p5.jpg'),
 };
 
 export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = ${JSON.stringify(stories, null, 2)};
