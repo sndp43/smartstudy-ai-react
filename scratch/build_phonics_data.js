@@ -1643,6 +1643,8 @@ const stories = [
         marathiText: "रोझ ही एका मोठ्या खडकाजवळ राहणारी गोंडस लाल कोल्ही आहे.",
         focusWords: ["Rose", "home", "huge", "stone"],
         illustrationIcon: "🦊🪨",
+        image: "/assets/phonics/rose-p1.jpg",
+        imageKey: "rose-p1",
       },
       {
         pageNumber: 2,
@@ -1650,6 +1652,8 @@ const stories = [
         marathiText: "रोझला ल्यूक दिसतो. ल्यूक एक मऊ कपडे घातलेला गोंडस खेचर आहे.",
         focusWords: ["Rose", "Luke", "cute", "mule", "robe"],
         illustrationIcon: "🐴🧥",
+        image: "/assets/phonics/rose-p2.jpg",
+        imageKey: "rose-p2",
       },
       {
         pageNumber: 3,
@@ -1657,6 +1661,8 @@ const stories = [
         marathiText: "ल्यूक एका सुंदर लाकडी बासरीवर गोड धून वाजवतो. एकामागोमाग एक सूर!",
         focusWords: ["Luke", "tune", "flute", "note"],
         illustrationIcon: "🎶🪈",
+        image: "/assets/phonics/rose-p3.jpg",
+        imageKey: "rose-p3",
       },
       {
         pageNumber: 4,
@@ -1664,6 +1670,8 @@ const stories = [
         marathiText: "रोझ दोरी पकडून त्या सुरांवर उड्या मारते. ते गाणे थांबू नये अशी त्यांची आशा असते.",
         focusWords: ["Rose", "rope", "tune", "hope"],
         illustrationIcon: "🪢🎵",
+        image: "/assets/phonics/rose-p4.jpg",
+        imageKey: "rose-p4",
       },
       {
         pageNumber: 5,
@@ -1671,6 +1679,8 @@ const stories = [
         marathiText: "ल्यूक आणि रोझ फळांचा गोड कोन वाटून खातात. मग ते एकत्र घरी जातात!",
         focusWords: ["Luke", "Rose", "cone", "home"],
         illustrationIcon: "🍦🏡",
+        image: "/assets/phonics/rose-p5.jpg",
+        imageKey: "rose-p5",
       },
     ],
     quiz: [
@@ -1728,6 +1738,8 @@ const stories = [
         marathiText: "रॉय हा एक आनंदी लहान मुलगा आहे. रॉयकडे एक चमकदार निळी खेळण्यातील बोट आहे.",
         focusWords: ["Roy", "boy", "toy"],
         illustrationIcon: "👦⛵",
+        image: "/assets/phonics/roy-p1.jpg",
+        imageKey: "roy-p1",
       },
       {
         pageNumber: 2,
@@ -1735,6 +1747,8 @@ const stories = [
         marathiText: "रॉय बागेतील तलावाजवळ खेळतो. त्याचे मन आनंदाने भरून जाते!",
         focusWords: ["Roy", "joy"],
         illustrationIcon: "🏡💖",
+        image: "/assets/phonics/roy-p2.jpg",
+        imageKey: "roy-p2",
       },
       {
         pageNumber: 3,
@@ -1742,6 +1756,8 @@ const stories = [
         marathiText: "रॉय ओलसर मातीकडे बोट दाखवतो. ती चमकणारी वस्तू काय आहे?",
         focusWords: ["Roy", "points", "soil"],
         illustrationIcon: "👉🌱",
+        image: "/assets/phonics/roy-p3.jpg",
+        imageKey: "roy-p3",
       },
       {
         pageNumber: 4,
@@ -1749,6 +1765,8 @@ const stories = [
         marathiText: "तो एक चमकदार सोन्याचे नाणे उचलतो! ते चांदीच्या कागदात गुंडाळलेले होते.",
         focusWords: ["coin", "foil"],
         illustrationIcon: "🪙✨",
+        image: "/assets/phonics/roy-p4.jpg",
+        imageKey: "roy-p4",
       },
       {
         pageNumber: 5,
@@ -1756,6 +1774,8 @@ const stories = [
         marathiText: "'माझे बक्षीस पाहा!' रॉय आनंदी आवाजात म्हणाला. त्याचे मित्र टाळ्या वाजवण्यासाठी येतात!",
         focusWords: ["Roy", "joyful", "voice", "join"],
         illustrationIcon: "🎉🗣️",
+        image: "/assets/phonics/roy-p5.jpg",
+        imageKey: "roy-p5",
       },
     ],
     quiz: [
@@ -1813,6 +1833,8 @@ const stories = [
         marathiText: "हाउई हा एक मऊ तपकिरी घुबड आहे. तो गावावरील एका गोल फांदीवर बसतो.",
         focusWords: ["Howie", "brown", "owl", "round", "town"],
         illustrationIcon: "🦉🏘️",
+        image: "/assets/phonics/owl-p1.jpg",
+        imageKey: "owl-p1",
       },
       {
         pageNumber: 2,
@@ -1820,6 +1842,8 @@ const stories = [
         marathiText: "खाली गावातील चौकात एक मजेशीर विदूषक तपकिरी झगा घालून उभा आहे.",
         focusWords: ["Down", "town", "clown", "brown", "gown"],
         illustrationIcon: "🤡👗",
+        image: "/assets/phonics/owl-p2.jpg",
+        imageKey: "owl-p2",
       },
       {
         pageNumber: 3,
@@ -1827,6 +1851,8 @@ const stories = [
         marathiText: "तो विदूषक मोठ्याने ओरडतो: 'आता माझे गोल चेंडू पाहा!'",
         focusWords: ["clown", "loud", "shout", "round", "now"],
         illustrationIcon: "🎪🤹",
+        image: "/assets/phonics/owl-p3.jpg",
+        imageKey: "owl-p3",
       },
       {
         pageNumber: 4,
@@ -2180,9 +2206,9 @@ export const PHONICS_STORY_IMAGES: Record<string, any> = {
   'camp-in-the-sand': require('../assets/phonics/camp-in-the-sand.jpg'),
   'white-whale-phil': require('../assets/phonics/white-whale-phil.jpg'),
   'mike-and-spike-bike': require('../assets/phonics/mike-and-spike-bike.jpg'),
-  'rose-and-luke-mule': require('../assets/phonics/fox-on-box.jpg'),
-  'roy-the-joyful-boy': require('../assets/phonics/king-shiny-ring.jpg'),
-  'brown-owl-loud-clown': require('../assets/phonics/tim-and-pig.jpg'),
+  'rose-and-luke-mule': require('../assets/phonics/rose-and-luke-mule.jpg'),
+  'roy-the-joyful-boy': require('../assets/phonics/roy-the-joyful-boy.jpg'),
+  'brown-owl-loud-clown': require('../assets/phonics/brown-owl-loud-clown.jpg'),
   'cool-cook-magic-book': require('../assets/phonics/queen-green-bee.jpg'),
   'fern-the-bird-corn': require('../assets/phonics/mark-spark-barn.jpg'),
 };
@@ -2273,6 +2299,19 @@ export const PHONICS_PAGE_IMAGES: Record<string, any> = {
   'mike-p3': require('../assets/phonics/mike-p3.jpg'),
   'mike-p4': require('../assets/phonics/mike-p4.jpg'),
   'mike-p5': require('../assets/phonics/mike-p5.jpg'),
+  'rose-p1': require('../assets/phonics/rose-p1.jpg'),
+  'rose-p2': require('../assets/phonics/rose-p2.jpg'),
+  'rose-p3': require('../assets/phonics/rose-p3.jpg'),
+  'rose-p4': require('../assets/phonics/rose-p4.jpg'),
+  'rose-p5': require('../assets/phonics/rose-p5.jpg'),
+  'roy-p1': require('../assets/phonics/roy-p1.jpg'),
+  'roy-p2': require('../assets/phonics/roy-p2.jpg'),
+  'roy-p3': require('../assets/phonics/roy-p3.jpg'),
+  'roy-p4': require('../assets/phonics/roy-p4.jpg'),
+  'roy-p5': require('../assets/phonics/roy-p5.jpg'),
+  'owl-p1': require('../assets/phonics/owl-p1.jpg'),
+  'owl-p2': require('../assets/phonics/owl-p2.jpg'),
+  'owl-p3': require('../assets/phonics/owl-p3.jpg'),
 };
 
 export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = ${JSON.stringify(stories, null, 2)};

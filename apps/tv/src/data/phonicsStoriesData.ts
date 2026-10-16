@@ -110,9 +110,9 @@ export const PHONICS_STORY_IMAGES: Record<string, any> = {
   'camp-in-the-sand': require('../assets/phonics/camp-in-the-sand.jpg'),
   'white-whale-phil': require('../assets/phonics/white-whale-phil.jpg'),
   'mike-and-spike-bike': require('../assets/phonics/mike-and-spike-bike.jpg'),
-  'rose-and-luke-mule': require('../assets/phonics/fox-on-box.jpg'),
-  'roy-the-joyful-boy': require('../assets/phonics/king-shiny-ring.jpg'),
-  'brown-owl-loud-clown': require('../assets/phonics/tim-and-pig.jpg'),
+  'rose-and-luke-mule': require('../assets/phonics/rose-and-luke-mule.jpg'),
+  'roy-the-joyful-boy': require('../assets/phonics/roy-the-joyful-boy.jpg'),
+  'brown-owl-loud-clown': require('../assets/phonics/brown-owl-loud-clown.jpg'),
   'cool-cook-magic-book': require('../assets/phonics/queen-green-bee.jpg'),
   'fern-the-bird-corn': require('../assets/phonics/mark-spark-barn.jpg'),
 };
@@ -203,6 +203,19 @@ export const PHONICS_PAGE_IMAGES: Record<string, any> = {
   'mike-p3': require('../assets/phonics/mike-p3.jpg'),
   'mike-p4': require('../assets/phonics/mike-p4.jpg'),
   'mike-p5': require('../assets/phonics/mike-p5.jpg'),
+  'rose-p1': require('../assets/phonics/rose-p1.jpg'),
+  'rose-p2': require('../assets/phonics/rose-p2.jpg'),
+  'rose-p3': require('../assets/phonics/rose-p3.jpg'),
+  'rose-p4': require('../assets/phonics/rose-p4.jpg'),
+  'rose-p5': require('../assets/phonics/rose-p5.jpg'),
+  'roy-p1': require('../assets/phonics/roy-p1.jpg'),
+  'roy-p2': require('../assets/phonics/roy-p2.jpg'),
+  'roy-p3': require('../assets/phonics/roy-p3.jpg'),
+  'roy-p4': require('../assets/phonics/roy-p4.jpg'),
+  'roy-p5': require('../assets/phonics/roy-p5.jpg'),
+  'owl-p1': require('../assets/phonics/owl-p1.jpg'),
+  'owl-p2': require('../assets/phonics/owl-p2.jpg'),
+  'owl-p3': require('../assets/phonics/owl-p3.jpg'),
 };
 
 export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
@@ -2930,7 +2943,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "huge",
           "stone"
         ],
-        "illustrationIcon": "🦊🪨"
+        "illustrationIcon": "🦊🪨",
+        "image": "/assets/phonics/rose-p1.jpg",
+        "imageKey": "rose-p1"
       },
       {
         "pageNumber": 2,
@@ -2943,7 +2958,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "mule",
           "robe"
         ],
-        "illustrationIcon": "🐴🧥"
+        "illustrationIcon": "🐴🧥",
+        "image": "/assets/phonics/rose-p2.jpg",
+        "imageKey": "rose-p2"
       },
       {
         "pageNumber": 3,
@@ -2955,7 +2972,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "flute",
           "note"
         ],
-        "illustrationIcon": "🎶🪈"
+        "illustrationIcon": "🎶🪈",
+        "image": "/assets/phonics/rose-p3.jpg",
+        "imageKey": "rose-p3"
       },
       {
         "pageNumber": 4,
@@ -2967,7 +2986,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "tune",
           "hope"
         ],
-        "illustrationIcon": "🪢🎵"
+        "illustrationIcon": "🪢🎵",
+        "image": "/assets/phonics/rose-p4.jpg",
+        "imageKey": "rose-p4"
       },
       {
         "pageNumber": 5,
@@ -2979,7 +3000,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "cone",
           "home"
         ],
-        "illustrationIcon": "🍦🏡"
+        "illustrationIcon": "🍦🏡",
+        "image": "/assets/phonics/rose-p5.jpg",
+        "imageKey": "rose-p5"
       }
     ],
     "quiz": [
@@ -3075,7 +3098,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "boy",
           "toy"
         ],
-        "illustrationIcon": "👦⛵"
+        "illustrationIcon": "👦⛵",
+        "image": "/assets/phonics/roy-p1.jpg",
+        "imageKey": "roy-p1"
       },
       {
         "pageNumber": 2,
@@ -3085,7 +3110,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "Roy",
           "joy"
         ],
-        "illustrationIcon": "🏡💖"
+        "illustrationIcon": "🏡💖",
+        "image": "/assets/phonics/roy-p2.jpg",
+        "imageKey": "roy-p2"
       },
       {
         "pageNumber": 3,
@@ -3096,7 +3123,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "points",
           "soil"
         ],
-        "illustrationIcon": "👉🌱"
+        "illustrationIcon": "👉🌱",
+        "image": "/assets/phonics/roy-p3.jpg",
+        "imageKey": "roy-p3"
       },
       {
         "pageNumber": 4,
@@ -3106,7 +3135,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "coin",
           "foil"
         ],
-        "illustrationIcon": "🪙✨"
+        "illustrationIcon": "🪙✨",
+        "image": "/assets/phonics/roy-p4.jpg",
+        "imageKey": "roy-p4"
       },
       {
         "pageNumber": 5,
@@ -3118,7 +3149,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "voice",
           "join"
         ],
-        "illustrationIcon": "🎉🗣️"
+        "illustrationIcon": "🎉🗣️",
+        "image": "/assets/phonics/roy-p5.jpg",
+        "imageKey": "roy-p5"
       }
     ],
     "quiz": [
@@ -3218,7 +3251,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "round",
           "town"
         ],
-        "illustrationIcon": "🦉🏘️"
+        "illustrationIcon": "🦉🏘️",
+        "image": "/assets/phonics/owl-p1.jpg",
+        "imageKey": "owl-p1"
       },
       {
         "pageNumber": 2,
@@ -3231,7 +3266,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "brown",
           "gown"
         ],
-        "illustrationIcon": "🤡👗"
+        "illustrationIcon": "🤡👗",
+        "image": "/assets/phonics/owl-p2.jpg",
+        "imageKey": "owl-p2"
       },
       {
         "pageNumber": 3,
@@ -3244,7 +3281,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "round",
           "now"
         ],
-        "illustrationIcon": "🎪🤹"
+        "illustrationIcon": "🎪🤹",
+        "image": "/assets/phonics/owl-p3.jpg",
+        "imageKey": "owl-p3"
       },
       {
         "pageNumber": 4,

@@ -2817,7 +2817,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "huge",
           "stone"
         ],
-        "illustrationIcon": "🦊🪨"
+        "illustrationIcon": "🦊🪨",
+        "image": "/assets/phonics/rose-p1.jpg",
+        "imageKey": "rose-p1"
       },
       {
         "pageNumber": 2,
@@ -2830,7 +2832,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "mule",
           "robe"
         ],
-        "illustrationIcon": "🐴🧥"
+        "illustrationIcon": "🐴🧥",
+        "image": "/assets/phonics/rose-p2.jpg",
+        "imageKey": "rose-p2"
       },
       {
         "pageNumber": 3,
@@ -2842,7 +2846,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "flute",
           "note"
         ],
-        "illustrationIcon": "🎶🪈"
+        "illustrationIcon": "🎶🪈",
+        "image": "/assets/phonics/rose-p3.jpg",
+        "imageKey": "rose-p3"
       },
       {
         "pageNumber": 4,
@@ -2854,7 +2860,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "tune",
           "hope"
         ],
-        "illustrationIcon": "🪢🎵"
+        "illustrationIcon": "🪢🎵",
+        "image": "/assets/phonics/rose-p4.jpg",
+        "imageKey": "rose-p4"
       },
       {
         "pageNumber": 5,
@@ -2866,7 +2874,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "cone",
           "home"
         ],
-        "illustrationIcon": "🍦🏡"
+        "illustrationIcon": "🍦🏡",
+        "image": "/assets/phonics/rose-p5.jpg",
+        "imageKey": "rose-p5"
       }
     ],
     "quiz": [
@@ -2962,7 +2972,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "boy",
           "toy"
         ],
-        "illustrationIcon": "👦⛵"
+        "illustrationIcon": "👦⛵",
+        "image": "/assets/phonics/roy-p1.jpg",
+        "imageKey": "roy-p1"
       },
       {
         "pageNumber": 2,
@@ -2972,7 +2984,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "Roy",
           "joy"
         ],
-        "illustrationIcon": "🏡💖"
+        "illustrationIcon": "🏡💖",
+        "image": "/assets/phonics/roy-p2.jpg",
+        "imageKey": "roy-p2"
       },
       {
         "pageNumber": 3,
@@ -2983,7 +2997,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "points",
           "soil"
         ],
-        "illustrationIcon": "👉🌱"
+        "illustrationIcon": "👉🌱",
+        "image": "/assets/phonics/roy-p3.jpg",
+        "imageKey": "roy-p3"
       },
       {
         "pageNumber": 4,
@@ -2993,7 +3009,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "coin",
           "foil"
         ],
-        "illustrationIcon": "🪙✨"
+        "illustrationIcon": "🪙✨",
+        "image": "/assets/phonics/roy-p4.jpg",
+        "imageKey": "roy-p4"
       },
       {
         "pageNumber": 5,
@@ -3005,7 +3023,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "voice",
           "join"
         ],
-        "illustrationIcon": "🎉🗣️"
+        "illustrationIcon": "🎉🗣️",
+        "image": "/assets/phonics/roy-p5.jpg",
+        "imageKey": "roy-p5"
       }
     ],
     "quiz": [
@@ -3105,7 +3125,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "round",
           "town"
         ],
-        "illustrationIcon": "🦉🏘️"
+        "illustrationIcon": "🦉🏘️",
+        "image": "/assets/phonics/owl-p1.jpg",
+        "imageKey": "owl-p1"
       },
       {
         "pageNumber": 2,
@@ -3118,7 +3140,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "brown",
           "gown"
         ],
-        "illustrationIcon": "🤡👗"
+        "illustrationIcon": "🤡👗",
+        "image": "/assets/phonics/owl-p2.jpg",
+        "imageKey": "owl-p2"
       },
       {
         "pageNumber": 3,
@@ -3131,7 +3155,9 @@ export const GRADE1_PHONICS_STORIES: PhonicsStoryItem[] = [
           "round",
           "now"
         ],
-        "illustrationIcon": "🎪🤹"
+        "illustrationIcon": "🎪🤹",
+        "image": "/assets/phonics/owl-p3.jpg",
+        "imageKey": "owl-p3"
       },
       {
         "pageNumber": 4,
